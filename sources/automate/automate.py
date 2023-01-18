@@ -3,6 +3,7 @@ from enum import Enum
 import os
 import time
 import datetime
+import random
 
 
 class STATE(Enum):
@@ -18,9 +19,8 @@ global request
 global state
 global start_time
 global last_time_state_changed
-global has_to_open
-global has_to_close
 global is_opened
+global opened_date
 
 
 def get_millis():
@@ -51,16 +51,14 @@ def main():
     global state
     global start_time
     global last_time_state_changed
-    global has_to_open
-    global has_to_close
     global is_opened
+    global opened_date
 
     request = STATE.INIT
     state = STATE.INIT
 
-    has_to_open = False
-    has_to_close = False
     is_opened = False
+    opened_date = 0
 
     start_time = 0
     last_time_state_changed = 0
@@ -123,11 +121,14 @@ def automate_state():
     global request
     global start_time
     global last_time_state_changed
+    global is_opened
+    global opened_date
 
     delay = get_millis() - last_time_state_changed
 
     if state == STATE.INIT:
         start_time = get_millis()
+        force_close_tanks()
         log("Automate initialized")
         request = STATE.EXPLORATION
         
@@ -136,6 +137,8 @@ def automate_state():
             log("RTH file detected!")
             request = STATE.RETURN_TO_HOME
             return
+
+        force_close_tanks()
 
         if delay > 5000:
             log("Exploration done")
@@ -147,21 +150,34 @@ def automate_state():
             request = STATE.RETURN_TO_HOME
             return
 
+        if is_opened:
+            if get_millis() - opened_date > 3000:
+                close_tanks()
+        else:
+
+            if get_millis() - opened_date > 6000 and is_near_to():
+                open_tanks()
+
         if delay > 15000:
             log("Mission done")
             request = STATE.DO_NOTHING
 
     elif state == STATE.RETURN_TO_HOME:
+        force_close_tanks()
+
         if delay > 5000:
             log("Return to home done")
             request = STATE.DO_NOTHING
 
     elif state == STATE.DO_NOTHING:
+        force_close_tanks()
+
         if delay > 3000:
             request = STATE.SHUTDOWN
 
     elif state == STATE.SHUTDOWN:
         log("Shutting down...")
+        force_close_tanks()
         remove_rth_file()
 
     else:
@@ -169,9 +185,28 @@ def automate_state():
 
 
 def is_near_to():
-    return False
+    return random.random() > 0.95
+
+
+def force_close_tanks():
+    global is_opened
+    if is_opened:
+        close_tanks()
+
+
+def close_tanks():
+    global is_opened
+    is_opened = False
+    log("Tanks closing...")
+
+
+def open_tanks():
+    global is_opened
+    global opened_date
+    opened_date = get_millis()
+    is_opened = True
+    log("Tanks opening...")
 
 
 if __name__ == "__main__":
     main()
-
