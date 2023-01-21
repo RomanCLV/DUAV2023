@@ -1,6 +1,9 @@
 #!/bin/bash
 
 clear
+
+echo process starting...
+
 cd ./sources/
 
 cd ./rtCam/
@@ -12,3 +15,4 @@ cd ../automate/
 file=automate.py
 echo Start $file
 python3 $file
+
