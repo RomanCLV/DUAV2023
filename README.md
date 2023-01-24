@@ -1,6 +1,10 @@
 # DUAV2023
 
-Clone the project: `git clone https://github.com/RomanCLV/DUAV2023.git`
+Clone the project: 
+
+`git clone https://github.com/RomanCLV/DUAV2023.git`
+
+`cd DUAV2023`
 
 ## Install OpenCV on Linux
 
