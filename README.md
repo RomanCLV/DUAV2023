@@ -34,7 +34,7 @@ It will remove the `\r` character.
 
 ## Compute C++ file
 
-Stay in the `rtCam` folder.
+Go back to the `rtCam` folder: `cd ..`
 
 `chmod 755 compile.sh`
 
