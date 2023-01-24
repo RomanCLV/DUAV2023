@@ -5,6 +5,9 @@
 The following lines come from:
 https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
 
+Move to the rtCam folder:
+`cd sources/rtCam/`
+
 ### Install minimal prerequisites (Ubuntu 18.04 as reference)
 `sudo apt update && sudo apt install -y cmake g++ wget unzip`
 
@@ -31,8 +34,7 @@ It will remove the `\r` character.
 
 ## Compute C++ file
 
-Then, compute the c++ file:
-`cd ./sources/rtCam/`
+Stay in the `rtCam` folder.
 
 `chmod 755 compile.sh`
 
