@@ -23,6 +23,8 @@ Move to the rtCam folder:
 `cmake  ../opencv-4.x`
 
 ### Build
+Warning: The build process takes a lot of time (more than an hour, maybe 2 or 3).
+
 `cmake --build .`
 
 ## Possible error for bash file
