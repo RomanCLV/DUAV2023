@@ -35,6 +35,9 @@ Warning: The build process takes a lot of time (from 3 to 4 hours)!
 
 `cmake --build .`
 
+## Install Python librairies
+`pip install RPi.GPIO`
+
 ## Possible error for bash file
 About bash files, if the `\r command not found` error occures, please execute:
 
