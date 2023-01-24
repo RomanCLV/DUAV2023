@@ -243,7 +243,6 @@ fabric.properties
 
 # opencv folder
 opencv/
-opencv/*
 
 # Prerequisites
 *.d
