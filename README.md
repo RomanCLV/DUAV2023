@@ -26,10 +26,12 @@ Move to the rtCam folder:
 `mkdir -p build && cd build`
 
 ### Configure
+This operation takes few minutes.
+
 `cmake  ../opencv-4.x`
 
 ### Build
-Warning: The build process takes a lot of time (more than an hour, maybe 2 or 3).
+Warning: The build process takes a lot of time (from 3 to 4 hours)!
 
 `cmake --build .`
 
