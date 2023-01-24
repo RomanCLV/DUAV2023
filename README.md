@@ -42,7 +42,7 @@ And execute the script: `bash compile.sh` or `compile.sh`
 
 ## Ready to run
 
-Now go back to the root folder.
+Now go back to the root folder: `cd ../..`
 
 `chmod 755 run.sh`
 
