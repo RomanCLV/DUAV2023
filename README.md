@@ -18,17 +18,17 @@ Move to the rtCam folder:
 ### Warning
 - Configure cmake takes few minutes.
 - The build process takes a lot of time (from 4 to 7 hours)!
-
-## Installation
-Follow this guide :
-
-https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
-
-Please have a look at the Python version used because an error can occures at the end while building...
+- Before installation, please have a look at the Python version used because an error can occures at the end while building...
 
 https://forum.opencv.org/t/not-able-to-build-opencv-from-source/1542
 
 https://docs.opencv.org/4.x/d2/de6/tutorial_py_setup_in_ubuntu.html
+
+## Installation
+
+Follow this guide :
+
+https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
 
 ---
 
