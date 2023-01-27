@@ -241,6 +241,9 @@ fabric.properties
 
 # c++ .gitignore
 
+# opencv folder
+opencv/
+
 # Prerequisites
 *.d
 
