@@ -31,7 +31,7 @@ This operation takes few minutes.
 `cmake  ../opencv-4.x`
 
 ### Build
-Warning: The build process takes a lot of time (from 3 to 4 hours)!
+Warning: The build process takes a lot of time (from 4 to 7 hours)!
 
 `cmake --build .`
 
