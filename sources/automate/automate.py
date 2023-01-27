@@ -1,9 +1,12 @@
+#-- coding: utf-8 --
 
 from enum import Enum
 import os
 import time
 import datetime
 import random
+
+import servo
 
 
 class STATE(Enum):
@@ -15,26 +18,29 @@ class STATE(Enum):
     SHUTDOWN = 5
 
 
+class Logger():
+    
+    def log(self, o):
+        global start_time
+        delay = datetime.datetime.fromtimestamp((get_millis() - start_time) / 1000.0)
+        hour = delay.hour - 1
+        minute = delay.minute
+        second = delay.second
+        milli = round(delay.microsecond / 1000)
+        print(f"{hour:02d}:{minute:02d}:{second:02d}.{milli:03d} : {o}")
+
+
 global request
 global state
 global start_time
 global last_time_state_changed
 global is_opened
 global opened_date
+global logger
 
 
 def get_millis():
     return round(time.time() * 1000)
-
-
-def log(o):
-    global start_time
-    delay = datetime.datetime.fromtimestamp((get_millis() - start_time) / 1000.0)
-    hour = delay.hour - 1
-    minute = delay.minute
-    second = delay.second
-    milli = round(delay.microsecond / 1000)
-    print(f"{hour:02d}:{minute:02d}:{second:02d}.{milli:03d} : {o}")
 
 
 def rth_file_exists():
@@ -46,6 +52,11 @@ def remove_rth_file():
         os.remove("RTH")
 
 
+def log(o):
+    global logger
+    logger.log(o)
+
+
 def main():
     global request
     global state
@@ -53,6 +64,7 @@ def main():
     global last_time_state_changed
     global is_opened
     global opened_date
+    global logger
 
     request = STATE.INIT
     state = STATE.INIT
@@ -62,8 +74,15 @@ def main():
 
     start_time = 0
     last_time_state_changed = 0
-
+    
+    logger = Logger()
+    logger.log("rta")
+    
+    servo.init(32, 50) # pin, frequence
+    servo.add_log_listener(logger)
+    
     remove_rth_file()
+    
     while True:
         # read GPS signal
         time.sleep(0.100)    # delete after
@@ -129,6 +148,7 @@ def automate_state():
     if state == STATE.INIT:
         start_time = get_millis()
         force_close_tanks()
+        servo.start(90)
         log("Automate initialized")
         request = STATE.EXPLORATION
         
@@ -178,6 +198,7 @@ def automate_state():
     elif state == STATE.SHUTDOWN:
         log("Shutting down...")
         force_close_tanks()
+        servo.close()
         remove_rth_file()
 
     else:
@@ -197,6 +218,7 @@ def force_close_tanks():
 def close_tanks():
     global is_opened
     is_opened = False
+    servo.move(90)
     log("Tanks closing...")
 
 
@@ -204,6 +226,7 @@ def open_tanks():
     global is_opened
     global opened_date
     opened_date = get_millis()
+    servo.move(0)
     is_opened = True
     log("Tanks opening...")
 
