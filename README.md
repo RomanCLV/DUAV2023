@@ -49,7 +49,9 @@ Module to control Servo: RPi.GPIO
 ### Install Python librairies
 
 `sudo pip3 install RPi.GPIO`
+
 https://pypi.org/project/RPi.GPIO/
+
 https://sourceforge.net/projects/raspberry-gpio-python/
 
 
