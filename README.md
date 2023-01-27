@@ -43,6 +43,8 @@ Warning: The build process takes a lot of time (from 4 to 7 hours)!
 
 ## Python Automate
 
+Python3 is used.
+
 ### Install Python librairies
 
 `sudo pip3 install RPi.GPIO`
