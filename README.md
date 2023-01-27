@@ -35,11 +35,15 @@ Warning: The build process takes a lot of time (from 4 to 7 hours)!
 
 `cmake --build .`
 
-## Install Python librairies
+## Python Automate
+
+### Install Python librairies
 
 `sudo pip3 install RPi.GPIO`
 
+## GPIO configuration
 The servo must be plugged to the PIN 32 (GPIO 12).
+
 
 ## Possible error for bash file
 About bash files, if the `\r command not found` error occures, please execute:
