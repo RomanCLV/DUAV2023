@@ -55,6 +55,8 @@ https://pypi.org/project/RPi.GPIO/
 ## GPIO configuration
 The servo must be plugged to the PIN 32 (GPIO 12).
 
+You can use execute the python script `./sources/automate/test_servo.py` to check communication between the Raspberry and the Servo is working.
+
 ---
 
 ## Possible error for bash file
