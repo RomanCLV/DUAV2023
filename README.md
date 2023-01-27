@@ -12,6 +12,14 @@ Clone the project:
 
 ## Install OpenCV on Linux
 
+Move to the rtCam folder:
+`cd sources/rtCam/`
+
+### Warning
+- Configure cmake takes few minutes.
+- The build process takes a lot of time (from 4 to 7 hours)!
+
+## Installation
 Follow this guide :
 
 https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
@@ -21,30 +29,6 @@ Please have a look at the Python version used because an error can occures at th
 https://forum.opencv.org/t/not-able-to-build-opencv-from-source/1542
 
 https://docs.opencv.org/4.x/d2/de6/tutorial_py_setup_in_ubuntu.html
-
-Move to the rtCam folder:
-`cd sources/rtCam/`
-
-### Install minimal prerequisites (Ubuntu 18.04 as reference)
-`sudo apt update && sudo apt install -y cmake g++ wget unzip`
-
-### Download and unpack sources
-`wget -O opencv.zip https://github.com/opencv/opencv/archive/4.x.zip`
-
-`unzip opencv.zip`
-
-### Create build directory
-`mkdir -p build && cd build`
-
-### Configure
-This operation takes few minutes.
-
-`cmake  ../opencv-4.x`
-
-### Build
-Warning: The build process takes a lot of time (from 4 to 7 hours)!
-
-`cmake --build .`
 
 ---
 
