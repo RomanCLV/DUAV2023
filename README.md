@@ -44,16 +44,13 @@ Warning: The build process takes a lot of time (from 4 to 7 hours)!
 ## Python Automate
 
 Python3.7 is used.
-Module to control Servo: RPi.GPIO
+Module to control Servo: RPi.GPIO 0.7.1 
 
 ### Install Python librairies
 
 `sudo pip3 install RPi.GPIO`
 
 https://pypi.org/project/RPi.GPIO/
-
-https://sourceforge.net/projects/raspberry-gpio-python/
-
 
 ## GPIO configuration
 The servo must be plugged to the PIN 32 (GPIO 12).
