@@ -36,9 +36,8 @@ Warning: The build process takes a lot of time (from 4 to 7 hours)!
 `cmake --build .`
 
 ## Install Python librairies
-`sudo apt-get install python3-rpi.gpio`
 
-`sudo pip3 install gpiozero`
+`sudo pip3 install RPi.GPIO`
 
 ## Possible error for bash file
 About bash files, if the `\r command not found` error occures, please execute:
