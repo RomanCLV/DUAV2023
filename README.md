@@ -6,6 +6,10 @@ Clone the project:
 
 `cd DUAV2023/`
 
+---
+
+## RealTime Camera using OpenCV
+
 ## Install OpenCV on Linux
 
 The following lines come from:
@@ -35,6 +39,8 @@ Warning: The build process takes a lot of time (from 4 to 7 hours)!
 
 `cmake --build .`
 
+---
+
 ## Python Automate
 
 ### Install Python librairies
@@ -44,6 +50,7 @@ Warning: The build process takes a lot of time (from 4 to 7 hours)!
 ## GPIO configuration
 The servo must be plugged to the PIN 32 (GPIO 12).
 
+---
 
 ## Possible error for bash file
 About bash files, if the `\r command not found` error occures, please execute:
@@ -52,6 +59,8 @@ About bash files, if the `\r command not found` error occures, please execute:
 
 It will remove the `\r` character.
 
+---
+
 ## Compute C++ file
 
 Go back to the `rtCam` folder: `cd ..`
@@ -59,6 +68,8 @@ Go back to the `rtCam` folder: `cd ..`
 `chmod 755 compile.sh`
 
 And execute the script: `bash compile.sh` or `compile.sh`
+
+---
 
 ## Ready to run
 
