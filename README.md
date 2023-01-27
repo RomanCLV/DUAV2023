@@ -15,6 +15,10 @@ Clone the project:
 The following lines come from:
 https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
 
+Please have a look at the Python version used because an error can occures at the end while building...
+https://forum.opencv.org/t/not-able-to-build-opencv-from-source/1542
+https://docs.opencv.org/4.x/d2/de6/tutorial_py_setup_in_ubuntu.html
+
 Move to the rtCam folder:
 `cd sources/rtCam/`
 
