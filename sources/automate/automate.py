@@ -78,6 +78,7 @@ def main():
     logger = Logger()
     logger.log("rta")
     
+    # Connect to GPIO 12
     servo.init(32, 50) # pin, frequence
     servo.add_log_listener(logger)
     
