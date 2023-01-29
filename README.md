@@ -76,8 +76,8 @@ And execute the script: `bash compile.sh` or `compile.sh`
 
 ## Ready to run
 
-Now go back to the root folder: `cd ../..`
+Now go back to the DUAV2023 root folder: `cd ../..` and use:
 
 `chmod 755 run.sh`
 
-Launch the script with `run.sh` or `bash run.sh`
+Launch the script with `bash run.sh` or `run.sh`
