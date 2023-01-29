@@ -1,21 +1,9 @@
 # DUAV2023
 
-Clone the project: 
-
-`git clone https://github.com/RomanCLV/DUAV2023.git`
-
-`cd ./DUAV2023/`
-
----
-
-## RealTime Camera using OpenCV
-
 ## Install OpenCV on Linux
 
 Make sure that `Preferences>Configuration>Performance : GPU memory=256`
 
-Move to the rtCam folder:
-`cd ./sources/rtCam/`
 
 ## Install OpenCV-4.x version (latest, failed for us but maybe it will be fix in the futur and can work for you)
 
@@ -42,6 +30,13 @@ https://robu.in/installing-opencv-using-cmake-in-raspberry-pi/
 
 ---
 
+You can now clone the project:
+
+`git clone https://github.com/RomanCLV/DUAV2023.git`
+
+`cd ./DUAV2023/`
+
+
 ## Python Automate
 
 Python3.7 is used.
@@ -60,7 +55,7 @@ You can use execute the python script `./sources/automate/test_servo.py` to chec
 
 ---
 
-## Possible error for bash file
+## Possible error for bash files
 About bash files, if the `\r command not found` error occures, please execute:
 
 `sed -i 's/\r$//' <filename>`
@@ -71,7 +66,7 @@ It will remove the `\r` character.
 
 ## Compute C++ file
 
-Go back to the `rtCam` folder: `cd ..`
+Go to the `./sources/rtCam/` folder.
 
 `chmod 755 compile.sh`
 
