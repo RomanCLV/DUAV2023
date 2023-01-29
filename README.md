@@ -4,7 +4,7 @@ Clone the project:
 
 `git clone https://github.com/RomanCLV/DUAV2023.git`
 
-`cd DUAV2023/`
+`cd ./DUAV2023/`
 
 ---
 
@@ -13,7 +13,7 @@ Clone the project:
 ## Install OpenCV on Linux
 
 Move to the rtCam folder:
-`cd sources/rtCam/`
+`cd ./sources/rtCam/`
 
 ## Install OpenCV-4.x version (latest, failed for us but maybe it will be fixed in the futur and can work for you)
 
