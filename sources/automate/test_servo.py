@@ -3,10 +3,12 @@
 import time
 import servo
 import signal
+import sys
 
 
 def sigint_handler(signal, frame):
     close_servo()
+    sys.exit(0)
     
 
 def close_servo():
