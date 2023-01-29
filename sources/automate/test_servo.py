@@ -2,6 +2,19 @@
 
 import time
 import servo
+import signal
+
+
+def sigint_handler():
+    close_servo()
+    
+
+def close_servo():
+    print("close")
+    servo.close()
+
+
+signal.signal(signal.SIGINT, sigint_handler)
 
 print("\nTest-Servo\n")
 
@@ -24,7 +37,6 @@ pause = 0.5
 for loop in range(1, 4):
     deg = 0
     
-    
     print(f"\nLoop {loop}")
     while deg <= 180:
         print(f"Move: {deg}")
@@ -41,5 +53,4 @@ for loop in range(1, 4):
         time.sleep(pause)
     print("\n")
 
-print("close")
-servo.close()
+close_servo()
