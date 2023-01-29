@@ -6,6 +6,7 @@ import time
 import datetime
 import random
 import signal
+import sys
 
 import servo
 
@@ -235,6 +236,7 @@ def open_tanks():
 
 def sigint_handler(signal, frame):
     servo.close()
+    sys.exit(0)
 
 
 if __name__ == "__main__":
