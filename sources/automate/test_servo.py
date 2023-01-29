@@ -5,7 +5,7 @@ import servo
 import signal
 
 
-def sigint_handler():
+def sigint_handler(signal, frame):
     close_servo()
     
 
