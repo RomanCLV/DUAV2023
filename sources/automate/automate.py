@@ -5,6 +5,7 @@ import os
 import time
 import datetime
 import random
+import signal
 
 import servo
 
@@ -232,5 +233,10 @@ def open_tanks():
     log("Tanks opening...")
 
 
+def sigint_handler(signal, frame):
+    servo.close()
+
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, sigint_handler)
     main()
