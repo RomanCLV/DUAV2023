@@ -12,6 +12,8 @@ Clone the project:
 
 ## Install OpenCV on Linux
 
+Make sure that `Preferences>Configuration>Performance : GPU memory=256`
+
 Move to the rtCam folder:
 `cd ./sources/rtCam/`
 
