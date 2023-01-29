@@ -15,7 +15,7 @@ Clone the project:
 Move to the rtCam folder:
 `cd ./sources/rtCam/`
 
-## Install OpenCV-4.x version (latest, failed for us but maybe it will be fixed in the futur and can work for you)
+## Install OpenCV-4.x version (latest, failed for us but maybe it will be fix in the futur and can work for you)
 
 ### Installation
 
