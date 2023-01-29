@@ -15,20 +15,28 @@ Clone the project:
 Move to the rtCam folder:
 `cd sources/rtCam/`
 
+## Install OpenCV-4.x version (latest, failed for us but maybe it will be fixed in the futur and can work for you)
+
+### Installation
+
+Follow this guide :
+
+https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
+
 ### Warning
 - Configure cmake takes few minutes.
-- The build process takes a lot of time (from 4 to 7 hours)!
-- Before installation, please have a look at the Python version used because an error can occures at the end while building...
+- The build process takes a lot of time (from 4 to 7 hours on a RaspberryPi 3, probably less on a newer RaspberryPi)!
+- If build failed, check this following link:
 
 https://forum.opencv.org/t/not-able-to-build-opencv-from-source/1542
 
 https://docs.opencv.org/4.x/d2/de6/tutorial_py_setup_in_ubuntu.html
 
-## Installation
+## Install OpenCV-4.0.0
 
 Follow this guide :
 
-https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
+https://robu.in/installing-opencv-using-cmake-in-raspberry-pi/
 
 ---
 
