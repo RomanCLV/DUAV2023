@@ -22,7 +22,7 @@ https://forum.opencv.org/t/not-able-to-build-opencv-from-source/1542
 
 https://docs.opencv.org/4.x/d2/de6/tutorial_py_setup_in_ubuntu.html
 
-## Install OpenCV-4.0.0 (failed on a Raspberry3, didn't test on a Raspberry 4)
+## Install OpenCV-4.0.0 (failed on a Raspberry3, successful on a Raspberry 4)
 
 Follow this guide :
 
