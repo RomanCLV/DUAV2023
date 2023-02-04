@@ -62,6 +62,23 @@ https://pypi.org/project/RPi.GPIO/
 The servo must be plugged to the PIN 32 (GPIO 12).
 
 You can use execute the python script `./sources/automate/test_servo.py` to verify that the communication between the Raspberry and the Servo works.
+You have to specify the GPIO used.
+
+Example :
+
+`cd ./sources/automate/`
+
+`python3 test_servo.py -g 32` or `python3 test_servo.py --gpio 32`
+
+will define that PIN 12 is used.
+See https://www.raspberrypi-france.fr/comment-utiliser-les-port-gpio-raspberry-pi/ to know with number corresponding to a specify PIN.
+YOU MUST SELECT A PWM PIN!
+
+If several servo are used, no problem:
+
+`python3 test_servo.py -g 32 33`
+
+to use PINs 12 and 13.
 
 ---
 
@@ -89,5 +106,7 @@ And execute the script: `bash compile.sh` or `compile.sh`
 Now go back to the DUAV2023 root folder: `cd ../..` and use:
 
 `chmod 755 run.sh`
+
+You can modify `run.sh` to change your PIN (line 15) to suit your use.
 
 Launch the script with `bash run.sh` or `run.sh`
