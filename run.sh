@@ -7,12 +7,9 @@ echo process starting...
 cd ./sources/
 
 cd ./rtCam/
-file=rtCam.out
-echo Start $file
-./$file
+echo Start rtCam.out
+./rtCam.out
 
 cd ../automate/
-file=automate.py
-echo Start $file
-python3 $file
-
+echo Start automate.py
+python3 automate.py -g 32
