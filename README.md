@@ -60,8 +60,6 @@ Module to control Servo: RPi.GPIO 0.7.1
 https://pypi.org/project/RPi.GPIO/
 
 ## GPIO configuration
-The servo must be plugged to the PIN 32 (GPIO 12).
-
 You can use execute the python script `./sources/automate/test_servo.py` to verify that the communication between the Raspberry and the Servo works.
 You have to specify the GPIO used.
 
@@ -71,15 +69,15 @@ Example :
 
 `python3 test_servo.py -g 32` or `python3 test_servo.py --gpio 32`
 
-will define that PIN 12 is used.
-See https://www.raspberrypi-france.fr/comment-utiliser-les-port-gpio-raspberry-pi/ to know with number corresponding to a specify PIN.
-YOU MUST SELECT A PWM PIN!
+will define that PIN 32 (GPIO 12) is used.
+See https://www.raspberrypi-france.fr/comment-utiliser-les-port-gpio-raspberry-pi/ to know which PIN corresponds to which GPIO.
+YOU MUST SELECT A PWM GPIO!
 
-If several servo are used, no problem:
+If several servos are used, no problem:
 
 `python3 test_servo.py -g 32 33`
 
-to use PINs 12 and 13.
+to use GPIOs 12 and 13.
 
 ---
 
@@ -108,6 +106,6 @@ Now go back to the DUAV2023 root folder: `cd ../..` and use:
 
 `chmod 755 run.sh`
 
-You can modify `run.sh` to change your PIN (line 15) to suit your use.
+You can modify `run.sh` to change your GPIO (line 15) to suit your use.
 
 Launch the script with `bash run.sh` or `run.sh`
