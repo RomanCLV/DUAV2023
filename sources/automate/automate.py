@@ -1,4 +1,11 @@
-#-- coding: utf-8 --
+# -*- coding: utf-8 -*-
+"""
+Automate module
+Copyright ©2023 ESTI'AERO
+By Roman Clavier
+
+Module used to control the drone.
+"""
 
 from enum import Enum
 import os
@@ -6,9 +13,9 @@ import time
 import datetime
 import random
 import signal
-import sys
+import argparse
 
-import servo
+import servo as serv
 
 
 class STATE(Enum):
@@ -20,8 +27,8 @@ class STATE(Enum):
     SHUTDOWN = 5
 
 
-class Logger():
-    
+class Logger:
+
     def log(self, o):
         global start_time
         delay = datetime.datetime.fromtimestamp((get_millis() - start_time) / 1000.0)
@@ -36,6 +43,7 @@ global request
 global state
 global start_time
 global last_time_state_changed
+global servos
 global is_opened
 global opened_date
 global logger
@@ -64,6 +72,7 @@ def main():
     global state
     global start_time
     global last_time_state_changed
+    global servos
     global is_opened
     global opened_date
     global logger
@@ -76,14 +85,23 @@ def main():
 
     start_time = 0
     last_time_state_changed = 0
-    
+
+    servos = []
+
     logger = Logger()
     logger.log("rta")
-    
-    # Connect to GPIO 12
-    servo.init(32, 50) # pin, frequence
-    servo.add_log_listener(logger)
-    
+
+    args = parser.parse_args()
+
+    if args.gpio and len(args.gpio) > 0:
+        for gpio in args.gpio:
+            servo = serv.Servo(gpio, 50)  # pin, frequency
+            servo.add_log_listener(logger)
+            servos.append(servo)
+    else:
+        print("Require at least one GPIO. Use -g or --gpio to set GPIO.")
+        exit(0)
+
     remove_rth_file()
     
     while True:
@@ -143,6 +161,7 @@ def automate_state():
     global request
     global start_time
     global last_time_state_changed
+    global servos
     global is_opened
     global opened_date
 
@@ -151,7 +170,9 @@ def automate_state():
     if state == STATE.INIT:
         start_time = get_millis()
         force_close_tanks()
-        servo.start(90)
+        for servo in servos:
+            servo.start(90)
+
         log("Automate initialized")
         request = STATE.EXPLORATION
         
@@ -201,7 +222,9 @@ def automate_state():
     elif state == STATE.SHUTDOWN:
         log("Shutting down...")
         force_close_tanks()
-        servo.close()
+        for servo in servos:
+            servo.close()
+        serv.GPIO_cleanup()
         remove_rth_file()
 
     else:
@@ -219,26 +242,35 @@ def force_close_tanks():
 
 
 def close_tanks():
+    global servos
     global is_opened
     is_opened = False
-    servo.move(90)
+    for servo in servos:
+        servo.move(90)
     log("Tanks closing...")
 
 
 def open_tanks():
+    global servos
     global is_opened
     global opened_date
     opened_date = get_millis()
-    servo.move(0)
+    for servo in servos:
+        servo.move(90)
     is_opened = True
     log("Tanks opening...")
 
 
 def sigint_handler(signal, frame):
-    servo.close()
-    sys.exit(0)
+    global servos
+    for servo in servos:
+        servo.close()
+    serv.GPIO_cleanup()
+    exit(0)
 
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
+    parser = argparse.ArgumentParser(description="automate.py CLI")
+    parser.add_argument("-g", "--gpio", type=int, nargs="+", help="set the servo GPIOs.")
     main()

@@ -1,7 +1,12 @@
-#-- coding: utf-8 --
-
+# -*- coding: utf-8 -*-
 """
-Usefull links:
+Servo module
+Copyright ©2023 ESTI'AERO
+By Roman Clavier
+
+Module used to control a Servo.
+
+Usefully links:
 
 RPi.GPIO : https://sourceforge.net/p/raspberry-gpio-python/wiki/Examples/
 """
@@ -9,39 +14,8 @@ RPi.GPIO : https://sourceforge.net/p/raspberry-gpio-python/wiki/Examples/
 import RPi.GPIO as GPIO
 import time
 
-global _pwm_gpio
-global _pwm_frequence
-global _pwm
-
-global _initialized
-_initialized = False
-
-global _started
-_started = False
-
-global _log_listeners
-_log_listeners = []
-
-
-def angle_to_percent (angle: int) :
-    """
-    Set function to calculate percent from angle
-    ----------
-    Parameters
-    ----------
-        angle : int
-            The wanted angle
-    """
-    if angle > 180 or angle < 0 :
-        return False
-
-    start = 4
-    end = 12.5
-    ratio = (end - start) / 180 # Calcul ratio from angle to percent
-
-    angle_as_percent = angle * ratio
-
-    return start + angle_as_percent
+GPIO.setmode(GPIO.BOARD)  # Use Board numeration mode
+GPIO.setwarnings(False)  # Disable warnings
 
 
 def is_integer(var):
@@ -56,149 +30,157 @@ def is_integer(var):
     return isinstance(var, int)
 
 
-def init(gpio: int, frequence: int):
+def GPIO_cleanup():
     """
-    Init function.
-    ----------
-    Parameters
-    ----------
-        gpio : int (from 1 to 41)
-            The pin used to controll the servo
-        frequence : int (greater than 0)
-            Frenquence of communication
+    GPIO cleanup
     """
-    global _pwm_gpio
-    global _pwm_frequence
-    global _initialized
-    
-    if is_integer(gpio) and gpio > 0 and gpio < 41:
-        _pwm_gpio = gpio
-    else:
-        raise ValueError(f"gpio must be an integer between 1 and 41. Given: {gpio}")
-    
-    if is_integer(frequence) and frequence > 0:
-        _pwm_frequence = frequence
-    else:
-        raise ValueError(f"frequence must be an integer greater than 0. Given: {frequence}")
-    
-    _initialized = True
-
-
-def add_log_listener(listener):
-    """
-    Add a log listener.
-    ----------
-    Parameters
-    ----------
-        listener: an entity who must have a log(o) function
-            The listener to add
-    """
-    global _log_listeners
-    
-    if listener not in _log_listeners:
-        _log_listeners.append(listener)
-
-
-def remove_log_listener(listener):
-    """
-    Remove a log listener.
-    ----------
-    Parameters
-    ----------
-        listener:
-            The listener to remove
-    """
-    global _log_listeners
-    
-    if listener in _log_listeners:
-        _log_listeners.remove(listener)
-
-
-def log(o):
-    """
-    Log a message by calling all log_listeners
-    """
-    for i in range(len(_log_listeners)):
-        try:
-            _log_listeners[i].log(o)
-        except:
-            print(f"The {str(_log_listeners[i])} log listener has not log function")
-
-
-def start(start_position=90):
-    """
-    Start pwm communication
-    ----------
-    Parameters
-    ----------
-        start_position: int (from 0 to 180)
-            The default position of servo.
-    """
-    global _pwm_gpio
-    global _pwm_frequence
-    global _pwm
-    global _initialized
-    global _started
-    
-    if _started:
-        log("GPIO is already started")
-        return
-    
-    if not _initialized:
-        raise Exception("Servo not initialized! Call first the init() function")
-    
-    if not(is_integer(start_position) and start_position >= 0 and start_position <= 180):
-        raise Exception(f"start_position must be an integer from 0 to 180. Given: {start_position}")
-    
-    log("GPIO starting...")
-    GPIO.setmode(GPIO.BOARD) # Use Board numerotation mode
-    GPIO.setwarnings(False)  # Disable warnings
-    GPIO.setup(_pwm_gpio, GPIO.OUT)
-    _pwm = GPIO.PWM(_pwm_gpio, _pwm_frequence)
-    
-    _started = True
-    log(f"GPIO started to pin {_pwm_gpio} at frequence {_pwm_frequence}")
-    
-    # Init at 90°
-    _pwm.start(angle_to_percent(start_position))
-    time.sleep(1)
-
-
-def move(angle):
-    """
-    Move servo
-    ----------
-    Parameters
-    ----------
-        angle: int (from 0 to 180)
-            The wanted angle.
-    """
-    global _pwm
-    global _started
-    
-    if not _started:
-        log("Can not move because GPIO is not started")
-        return
-    
-    if not(is_integer(angle) and angle >= 0 and angle <= 180):
-        log(f"angle must be an integer from 0 to 180. Given: {angle}")
-        return
-    
-    _pwm.ChangeDutyCycle(angle_to_percent(angle))
-
-
-def close():
-    """
-    Close GPIO & cleanup
-    """
-    global _pwm
-    global _started
-    
-    if not _started:
-        log("Can not close because GPIO is not started")
-        return
-    
-    log("GPIO closing...")
-    _pwm.stop()
     GPIO.cleanup()
-    log("GPIO closed")
+
+
+class Servo:
+    def __init__(self, gpio: int, frequency: int):
+        """
+        Constructor.
+        ----------
+        Parameters
+        ----------
+            gpio : int (from 1 to 41)
+                The pin used to control the servo
+            frequency : int (greater than 0)
+                Frequency of communication
+        """
+
+        self._min_voltage = 4
+        self._max_voltage = 12.5
+        self._started = False
+        self._log_listeners = []
+        self._pwm = None
+
+        if is_integer(gpio) and 0 < gpio < 41:
+            self._gpio = gpio
+        else:
+            raise ValueError(f"gpio must be an integer between 1 and 41. Given: {gpio}")
+
+        if is_integer(frequency) and frequency > 0:
+            self._frequency = frequency
+        else:
+            raise ValueError(f"frequency must be an integer greater than 0. Given: {frequency}")
+
+    def get_name(self):
+        return f"Servo {self._gpio}"
+
+    # region log
+    def add_log_listener(self, listener):
+        """
+        Add a log listener.
+        ----------
+        Parameters
+        ----------
+            listener: an entity who must have a log(o) function
+                The listener to add
+        """
+        if listener not in self._log_listeners:
+            self._log_listeners.append(listener)
+
+    def remove_log_listener(self, listener):
+        """
+        Remove a log listener.
+        ----------
+        Parameters
+        ----------
+            listener:
+                The listener to remove
+        """
+        if listener in self._log_listeners:
+            self._log_listeners.remove(listener)
+
+    def _log(self, o):
+        """
+        Log a message by calling all log_listeners
+        """
+        if len(self._log_listeners) == 0:
+            print(o)
+        else:
+            for i in range(len(self._log_listeners)):
+                try:
+                    self._log_listeners[i].log(o)
+                except AttributeError:
+                    print(f"The {str(self._log_listeners[i])} log listener has not log function")
+
+    # endregion
+
+    def angle_to_percent(self, angle: int):
+        """
+        Set function to calculate percent from angle
+        ----------
+        Parameters
+        ----------
+            angle : int
+                The wanted angle
+        """
+        if angle > 180 or angle < 0:
+            return False
+
+        ratio = (self._max_voltage - self._min_voltage) / 180  # Calcul ratio from angle to percent
+        angle_as_percent = angle * ratio
+        return self._min_voltage + angle_as_percent
+
+    def start(self, start_position=90):
+        """
+        Start pwm communication
+        ----------
+        Parameters
+        ----------
+            start_position: int (from 0 to 180)
+                The default position of servo.
+        """
+        if self._started:
+            self._log("GPIO is already started")
+            return
+
+        if not (is_integer(start_position) and 0 <= start_position <= 180):
+            raise ValueError(f"start_position must be an integer from 0 to 180. Given: {start_position}")
+
+        self._log("Servo is starting...")
+
+        GPIO.setup(self._gpio, GPIO.OUT)
+        self._pwm = GPIO.PWM(self._gpio, self._frequency)
+
+        self._started = True
+        self._log(f"PWM initialized to pin {self._gpio} at frequency {self._frequency}")
+
+        # Init at 90°
+        self._pwm.start(self.angle_to_percent(start_position))
+        time.sleep(1)
+
+    def move(self, angle: int):
+        """
+        Move servo
+        ----------
+        Parameters
+        ----------
+            angle: int (from 0 to 180)
+                The wanted angle.
+        """
+        if not self._started:
+            self._log("Can not move because servo is not started")
+            return
+
+        if not (is_integer(angle) and 0 <= angle <= 180):
+            self._log(f"angle must be an integer from 0 to 180. Given: {angle}")
+            return
+
+        self._pwm.ChangeDutyCycle(self.angle_to_percent(angle))
+
+    def close(self):
+        """
+        Close GPIO
+        """
+        if not self._started:
+            self._log("Can not close because GPIO is not started")
+            return
+
+        self._log("PWM communication closing...")
+        self._pwm.stop()
+        self._log("PWM communication closed")
+        self._started = False
