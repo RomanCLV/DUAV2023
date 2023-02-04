@@ -1,5 +1,11 @@
 #-- coding: utf-8 --
 
+"""
+Usefull links:
+
+RPi.GPIO : https://sourceforge.net/p/raspberry-gpio-python/wiki/Examples/
+"""
+
 import RPi.GPIO as GPIO
 import time
 
