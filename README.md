@@ -68,7 +68,7 @@ Example :
 `python3 test_servo.py -g 32` or `python3 test_servo.py --gpio 32`
 
 will define that PIN 32 (GPIO 12) is used.
-See https://www.raspberrypi-france.fr/comment-utiliser-les-port-gpio-raspberry-pi/ to know which PIN corresponds to which GPIO.
+See https: https://github.com/RomanCLV/DUAV2023/blob/main/gpio.jpg to know which PIN corresponds to which GPIO.
 YOU MUST SELECT A PWM GPIO!
 
 If several servos are used, no problem:
