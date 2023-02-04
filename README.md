@@ -5,7 +5,7 @@
 Make sure that `Preferences>Configuration>Performance : GPU memory=256`
 
 
-## Install OpenCV-4.x version (latest, failed for us but maybe it will be fix in the futur and can work for you)
+## Install OpenCV-4.x version (failed on a Raspberry3, didn't test on a Raspberry 4)
 
 ### Installation
 
@@ -22,11 +22,21 @@ https://forum.opencv.org/t/not-able-to-build-opencv-from-source/1542
 
 https://docs.opencv.org/4.x/d2/de6/tutorial_py_setup_in_ubuntu.html
 
-## Install OpenCV-4.0.0
+## Install OpenCV-4.0.0 (failed on a Raspberry3, didn't test on a Raspberry 4)
 
 Follow this guide :
 
 https://robu.in/installing-opencv-using-cmake-in-raspberry-pi/
+
+(Last command is `make` and not `Make`)
+
+Or watch this video:
+
+https://www.youtube.com/watch?v=rdBTLOx0gi4   (The guy follows the previous guide)
+
+### Warning
+- Configure cmake takes few minutes.
+- The build process takes some time (at least 1h on a RaspberryPi 3, 30 minutes on a RaspberryPi 4)!
 
 ---
 
