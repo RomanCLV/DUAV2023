@@ -65,8 +65,6 @@ You have to specify the GPIO used.
 
 Example :
 
-`cd ./sources/automate/`
-
 `python3 test_servo.py -g 32` or `python3 test_servo.py --gpio 32`
 
 will define that PIN 32 (GPIO 12) is used.
@@ -102,7 +100,7 @@ And execute the script: `bash compile.sh` or `compile.sh`
 
 ## Ready to run
 
-Now go back to the DUAV2023 root folder: `cd ../..` and use:
+Now go back to the DUAV2023 folder and use:
 
 `chmod 755 run.sh`
 
