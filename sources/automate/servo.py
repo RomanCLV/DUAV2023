@@ -52,7 +52,7 @@ def check_angle(angle: float):
         angle : float
             The wanted angle
     """
-    return (is_integer(angle) or is_float(angle)) and 0 <= angle <= 180:    
+    return (is_integer(angle) or is_float(angle)) and 0 <= angle <= 180
 
 
 def angle_to_percent(angle: float):
@@ -66,12 +66,12 @@ def angle_to_percent(angle: float):
     """
     if not check_angle(angle):
         return False
-    """
+    
     ratio = (12.5 - 4) / 180  # Calcul ratio from angle to percent
     angle_as_percent = angle * ratio
     return 4 + angle_as_percent
-    """
-    return (angle * 100) / 180
+    
+    # return (angle * 100) / 180
 
 
 def GPIO_cleanup():
@@ -214,5 +214,5 @@ class Servo:
         self._started = False
         self._pwm = None
         if clean_up:
-            GPIO.clean_up(self._gpio)
+            GPIO.cleanup(self._gpio)
             self._log(f"{self.get_name()} GPIO cleaned up.")

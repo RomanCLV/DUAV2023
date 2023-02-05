@@ -137,24 +137,29 @@ def automate_request():
     
     if request == STATE.INIT:
         set_state(STATE.INIT)
-        
+    
     elif request == STATE.EXPLORATION:
+        close_tanks()
         log("Ready to exploration")
         set_state(STATE.EXPLORATION)
 
     elif request == STATE.MISSION:
+        close_tanks()
         log("Ready to mission")
         set_state(STATE.MISSION)
 
     elif request == STATE.DO_NOTHING:
+        close_tanks()
         log("Do nothing engaged")
         set_state(STATE.DO_NOTHING)
 
     elif request == STATE.RETURN_TO_HOME:
+        close_tanks()
         log("Return to home engaged")
         set_state(STATE.RETURN_TO_HOME)
 
     elif request == STATE.SHUTDOWN:
+        close_tanks()
         set_state(STATE.SHUTDOWN)
 
     else:
@@ -182,7 +187,7 @@ def automate_state():
 
         log("Automate initialized")
         request = STATE.EXPLORATION
-        
+    
     elif state == STATE.EXPLORATION:
         if rth_file_exists():
             log("RTH file detected!")
@@ -214,21 +219,18 @@ def automate_state():
             request = STATE.DO_NOTHING
 
     elif state == STATE.RETURN_TO_HOME:
-        close_tanks()
 
         if delay > 5000:
             log("Return to home done")
             request = STATE.DO_NOTHING
 
     elif state == STATE.DO_NOTHING:
-        close_tanks()
 
         if delay > 3000:
             request = STATE.SHUTDOWN
 
     elif state == STATE.SHUTDOWN:
         log("Shutting down...")
-        close_tanks()
         close_all_servo()
         remove_rth_file()
 
@@ -245,10 +247,11 @@ def close_tanks():
     global servos
     global is_opened
     global closed_tank_position
-    is_opened = False
-    for servo in servos:
-        servo.move(closed_tank_position)
-    log("Tanks closing...")
+    if is_opened:
+        is_opened = False
+        for servo in servos:
+            servo.move(closed_tank_position)
+        log("Tanks closing...")
 
 
 def open_tanks():
@@ -257,9 +260,9 @@ def open_tanks():
     global opened_tank_position
     global opened_date
     opened_date = get_millis()
+    is_opened = True
     for servo in servos:
         servo.move(opened_tank_position)
-    is_opened = True
     log("Tanks opening...")
 
 
