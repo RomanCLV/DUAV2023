@@ -20,7 +20,7 @@ GPIO.setwarnings(False)  # Disable warnings
 
 def is_integer(var):
     """
-    Return True if the given variable is an integer, else return False.
+    Returns True if the given variable is an integer, else returns False.
     ----------
     Parameters
     ----------
@@ -30,9 +30,53 @@ def is_integer(var):
     return isinstance(var, int)
 
 
+def is_float(var):
+    """
+    Returns True if the given variable is a float, else returns False.
+    ----------
+    Parameters
+    ----------
+        var : object
+            The variable to test
+    """
+    return isinstance(var, float)
+
+
+def check_angle(angle: float):
+    """
+    Returns True if the angle is a number between 0.0 and 180.0, else returns False.
+    
+    ----------
+    Parameters
+    ----------
+        angle : float
+            The wanted angle
+    """
+    return (is_integer(angle) or is_float(angle)) and 0 <= angle <= 180:    
+
+
+def angle_to_percent(angle: float):
+    """
+    Compute percent from angle. If angle is not a number between 0 and 180, returns False, else returns a number between 0 and 100.
+    ----------
+    Parameters
+    ----------
+        angle : float
+            The wanted angle
+    """
+    if not check_angle(angle):
+        return False
+    """
+    ratio = (12.5 - 4) / 180  # Calcul ratio from angle to percent
+    angle_as_percent = angle * ratio
+    return 4 + angle_as_percent
+    """
+    return (angle * 100) / 180
+
+
 def GPIO_cleanup():
     """
-    GPIO cleanup
+    Clean up all GPIO.
     """
     GPIO.cleanup()
 
@@ -50,8 +94,8 @@ class Servo:
                 Frequency of communication
         """
 
-        self._min_voltage = 4
-        self._max_voltage = 12.5
+        # self._min_voltage = 4
+        # self._max_voltage = 12.5
         self._started = False
         self._log_listeners = []
         self._pwm = None
@@ -108,40 +152,24 @@ class Servo:
                     print(f"The {str(self._log_listeners[i])} log listener has not log function")
 
     # endregion
-
-    def angle_to_percent(self, angle: int):
-        """
-        Set function to calculate percent from angle
-        ----------
-        Parameters
-        ----------
-            angle : int
-                The wanted angle
-        """
-        if angle > 180 or angle < 0:
-            return False
-
-        ratio = (self._max_voltage - self._min_voltage) / 180  # Calcul ratio from angle to percent
-        angle_as_percent = angle * ratio
-        return self._min_voltage + angle_as_percent
-
-    def start(self, start_position=90):
+    
+    def start(self, start_position=90.0):
         """
         Start pwm communication
         ----------
         Parameters
         ----------
-            start_position: int (from 0 to 180)
-                The default position of servo.
+            start_position: float (from 0.0 to 180.0)
+                The default servo position.
         """
         if self._started:
-            self._log("GPIO is already started")
+            self._log(f"{self.get_name()} is already started")
             return
 
-        if not (is_integer(start_position) and 0 <= start_position <= 180):
-            raise ValueError(f"start_position must be an integer from 0 to 180. Given: {start_position}")
+        if not check_angle(start_position):
+            raise ValueError(f"angle must be a float from 0.0 to 180.0. Given: {angle}")
 
-        self._log("Servo is starting...")
+        self._log(f"{self.get_name()} is starting...")
 
         GPIO.setup(self._gpio, GPIO.OUT)
         self._pwm = GPIO.PWM(self._gpio, self._frequency)
@@ -149,32 +177,32 @@ class Servo:
         self._started = True
         self._log(f"PWM initialized to pin {self._gpio} at frequency {self._frequency}")
 
-        # Init at 90°
-        self._pwm.start(self.angle_to_percent(start_position))
+        self._pwm.start(angle_to_percent(start_position))
         time.sleep(1)
-
-    def move(self, angle: int):
+    
+    def move(self, angle: float):
         """
         Move servo
         ----------
         Parameters
         ----------
-            angle: int (from 0 to 180)
+            angle: float (from 0.0 to 180.0)
                 The wanted angle.
         """
         if not self._started:
             self._log("Can not move because servo is not started")
             return
+        percent = angle_to_percent(angle)  # returns False or an number between 0 and 100
+        if percent or percent == 0:        # case percent == 0 because if angle = 0, so percent = 0, and so 0 is like False (but we accept the value 0)
+            self._pwm.ChangeDutyCycle(percent)
 
-        if not (is_integer(angle) and 0 <= angle <= 180):
-            self._log(f"angle must be an integer from 0 to 180. Given: {angle}")
-            return
-
-        self._pwm.ChangeDutyCycle(self.angle_to_percent(angle))
-
-    def close(self):
+    def close(self, clean_up=True):
         """
-        Close GPIO
+        Stop GPIO
+        ----
+        Parameters:
+            clean_up: bool
+                Clean up the current GPIO
         """
         if not self._started:
             self._log("Can not close because GPIO is not started")
@@ -184,3 +212,7 @@ class Servo:
         self._pwm.stop()
         self._log("PWM communication closed")
         self._started = False
+        self._pwm = None
+        if clean_up:
+            GPIO.clean_up(self._gpio)
+            self._log(f"{self.get_name()} GPIO cleaned up.")

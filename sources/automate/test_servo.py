@@ -46,7 +46,7 @@ def test(gpios, all_servo):
     else:
         for gpio in gpios:
             test_one(gpio)
-            serv.GPIO_cleanup()
+    serv.GPIO_cleanup()
     print("\nTest done successfully\n")
 
 
@@ -124,6 +124,7 @@ def close_servo(servo):
     global all_servos
     print(f"{servo.get_name()} closing...")
     servo.close()
+    print(f"{servo.get_name()} closed")
     all_servos.remove(servo)
 
 

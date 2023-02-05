@@ -46,6 +46,8 @@ global last_time_state_changed
 global servos
 global is_opened
 global opened_date
+global closed_tank_position
+global opened_tank_position
 global logger
 
 
@@ -74,6 +76,8 @@ def main():
     global last_time_state_changed
     global servos
     global is_opened
+    global closed_tank_position
+    global opened_tank_position
     global opened_date
     global logger
 
@@ -82,6 +86,8 @@ def main():
 
     is_opened = False
     opened_date = 0
+    closed_tank_position = 0
+    opened_tank_position = 90
 
     start_time = 0
     last_time_state_changed = 0
@@ -89,7 +95,6 @@ def main():
     servos = []
 
     logger = Logger()
-    logger.log("rta")
 
     args = parser.parse_args()
 
@@ -153,6 +158,7 @@ def automate_request():
         set_state(STATE.SHUTDOWN)
 
     else:
+        close_all_servo()
         raise ValueError(f"Unexpected request value: {request}")
 
 
@@ -163,15 +169,16 @@ def automate_state():
     global last_time_state_changed
     global servos
     global is_opened
+    global closed_tank_position
     global opened_date
 
     delay = get_millis() - last_time_state_changed
 
     if state == STATE.INIT:
         start_time = get_millis()
-        force_close_tanks()
         for servo in servos:
-            servo.start(90)
+            log(f"{servo.get_name()} starting...")
+            servo.start(closed_tank_position)
 
         log("Automate initialized")
         request = STATE.EXPLORATION
@@ -181,8 +188,8 @@ def automate_state():
             log("RTH file detected!")
             request = STATE.RETURN_TO_HOME
             return
-
-        force_close_tanks()
+        if is_opened:
+            close_tanks()
 
         if delay > 5000:
             log("Exploration done")
@@ -207,27 +214,26 @@ def automate_state():
             request = STATE.DO_NOTHING
 
     elif state == STATE.RETURN_TO_HOME:
-        force_close_tanks()
+        close_tanks()
 
         if delay > 5000:
             log("Return to home done")
             request = STATE.DO_NOTHING
 
     elif state == STATE.DO_NOTHING:
-        force_close_tanks()
+        close_tanks()
 
         if delay > 3000:
             request = STATE.SHUTDOWN
 
     elif state == STATE.SHUTDOWN:
         log("Shutting down...")
-        force_close_tanks()
-        for servo in servos:
-            servo.close()
-        serv.GPIO_cleanup()
+        close_tanks()
+        close_all_servo()
         remove_rth_file()
 
     else:
+        close_all_servo()
         raise ValueError(f"Unexpected state value: {state}")
 
 
@@ -235,37 +241,37 @@ def is_near_to():
     return random.random() > 0.95
 
 
-def force_close_tanks():
-    global is_opened
-    if is_opened:
-        close_tanks()
-
-
 def close_tanks():
     global servos
     global is_opened
+    global closed_tank_position
     is_opened = False
     for servo in servos:
-        servo.move(90)
+        servo.move(closed_tank_position)
     log("Tanks closing...")
 
 
 def open_tanks():
     global servos
     global is_opened
+    global opened_tank_position
     global opened_date
     opened_date = get_millis()
     for servo in servos:
-        servo.move(90)
+        servo.move(opened_tank_position)
     is_opened = True
     log("Tanks opening...")
 
 
-def sigint_handler(signal, frame):
+def close_all_servo():
     global servos
     for servo in servos:
-        servo.close()
-    serv.GPIO_cleanup()
+        servo.close(True)  # clean up enabled
+    serv.GPIO_cleanup()    # useless because each servo has already been closed and cleaned up, but to be sure...
+
+
+def sigint_handler(signal, frame):
+    close_all_servo()
     exit(0)
 
 

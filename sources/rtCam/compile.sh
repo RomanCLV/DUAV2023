@@ -1,3 +1,3 @@
 #!/bin/bash
 
-g++ rtCam.cpp -o rtCam.out
+g++ "rtCam.cpp" -o "rtCam.out"
