@@ -1,0 +1,22 @@
+This file is used to refer informations of Servo used.
+
+- SM-S2309S
+
+https://servodatabase.com/servo/springrc/sm-s2309s
+https://fr.aliexpress.com/item/32624438420.html
+
+Torque:
+4.8V: 13.90 oz-in (1.00 kg-cm)
+6.0V: 16.70 oz-in (1.20 kg-cm)
+Speed:
+4.8V: 0.12 sec/60°
+6.0V: 0.10 sec/60°
+
+- TowerPro SG90
+
+https://servodatabase.com/servo/towerpro/sg90
+
+Torque:
+4.8V: 25.00 oz-in (1.80 kg-cm)
+Speed:
+4.8V: 0.12 sec/60°
