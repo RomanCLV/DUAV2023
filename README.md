@@ -33,6 +33,12 @@ https://www.youtube.com/watch?v=rdBTLOx0gi4   (The guy follows the previous guid
 
 ---
 
+If `git` is not installed, install it:
+```
+sudo apt-get install git
+git --version
+```
+
 You can now clone the project:
 
 `git clone https://github.com/RomanCLV/DUAV2023.git`
