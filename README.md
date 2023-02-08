@@ -4,39 +4,34 @@
 
 Make sure that `Preferences>Configuration>Performance : GPU memory=256`
 
-
-## Install OpenCV-4.x version (failed on a Raspberry3, didn't test on a Raspberry 4)
-
 ### Installation
 
-Follow this guide :
+Ubuntu
 
-https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
+https://linuxhint.com/install-opencv-ubuntu/
 
-### Warning
-- Configure cmake takes few minutes.
-- The build process takes a lot of time (from 4 to 7 hours on a RaspberryPi 3, probably less on a newer RaspberryPi)!
-- If build failed, check this following link:
+```
+sudo apt update
+sudo apt upgrade
+sudo apt install -y cmake g++ wget unzip
+sudo apt install libopencv-dev python3-opencv
+pkg-config --modversion opencv4
+```
 
-https://forum.opencv.org/t/not-able-to-build-opencv-from-source/1542
+Others: (Raspbian, Raspberry Pi OS, ...)
+Good luck :)
 
-https://docs.opencv.org/4.x/d2/de6/tutorial_py_setup_in_ubuntu.html
+Links that may be useful to you:
 
-## Install OpenCV-4.0.0 (failed on a Raspberry3, successful on a Raspberry 4)
+Official OpenCV documentation: https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
 
-Follow this guide :
-
-https://robu.in/installing-opencv-using-cmake-in-raspberry-pi/
+Install OpenCV 4.0.0 : https://robu.in/installing-opencv-using-cmake-in-raspberry-pi/
 
 (Last command is `make` and not `Make`)
 
 Or watch this video:
 
 https://www.youtube.com/watch?v=rdBTLOx0gi4   (The guy follows the previous guide)
-
-### Warning
-- Configure cmake takes few minutes.
-- The build process takes some time (at least 1h on a RaspberryPi 3, 30 minutes on a RaspberryPi 4)!
 
 ---
 
@@ -46,10 +41,9 @@ You can now clone the project:
 
 `cd ./DUAV2023/`
 
-
 ## Python Automate
 
-Python3.7 is used.
+Python3.7 (or >=)
 
 Module to control Servo: RPi.GPIO 0.7.1 
 
@@ -90,11 +84,15 @@ It will remove the `\r` character.
 
 ## Compute C++ file
 
-Go to the `./sources/rtCam/` folder.
+The required CPP script you must compute is located at `./sources/rtCam/`
+All others script are samples to learn how to use OpenCV.
 
-`chmod 755 compile.sh`
+We are using `cmake` to build cpp files. So to build any cpp file, move into the folder where are located the main.cpp and execute:
 
-And execute the script: `bash compile.sh` or `compile.sh`
+```
+cmake .
+make
+```
 
 ---
 
