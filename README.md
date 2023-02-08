@@ -6,7 +6,7 @@ Make sure that `Preferences>Configuration>Performance : GPU memory=256`
 
 ### Installation
 
-Ubuntu
+### Ubuntu
 
 https://linuxhint.com/install-opencv-ubuntu/
 
@@ -18,7 +18,7 @@ sudo apt install libopencv-dev python3-opencv
 pkg-config --modversion opencv4
 ```
 
-Others: (Raspbian, Raspberry Pi OS, ...)
+### Others: (Raspbian, Raspberry Pi OS, ...)
 Good luck :)
 
 Links that may be useful to you:
