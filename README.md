@@ -94,7 +94,8 @@ All others script are samples to learn how to use OpenCV.
 We are using `gcc` and `cmake` to build cpp files. So to build any cpp file, move into the folder where are located the main.cpp and execute:
 
 ```
-cmake .
+mkdir build && cd build
+cmake ..
 make
 ```
 
