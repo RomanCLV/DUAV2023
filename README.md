@@ -2,8 +2,6 @@
 
 ## Install OpenCV on Linux
 
-Make sure that `Preferences>Configuration>Performance : GPU memory=256`
-
 ### Installation
 
 ### Ubuntu
