@@ -54,6 +54,8 @@ Python3.7 (or >=)
 
 Module to control Servo: RPi.GPIO 0.7.1 
 
+`RPi.GPIO` requires to be root.
+
 ### Install Python librairies
 
 If `pip3` is not installed:
@@ -74,7 +76,6 @@ https://pypi.org/project/RPi.GPIO/
 ## GPIO configuration
 You can use execute the python script `./sources/automate/test_servo.py` to verify that the communication between the Raspberry and the Servo works.
 You have to specify the GPIOs used.
-You must be root to run the scipts in the `automate` folder. Use `sudo` before the command if needed.
 
 Examples :
 
