@@ -146,11 +146,14 @@ Here are some links we used to fix that. Good luck :)
 
 First, check if camera works with the `raspistill` (or other built-in programm).
 
-Can be usefull: https://www.xmodulo.com/install-raspberry-pi-camera-board.html
+Can be usefull: 
+
+https://www.xmodulo.com/install-raspberry-pi-camera-board.html
 
 ### Others OS (Ubunto, ...)
 
 https://stackoverflow.com/questions/29583533/videocapture-open0-wont-recognize-pi-cam
+
 https://wesleych3n.medium.com/enable-camera-in-raspberry-pi-4-with-64-bit-ubuntu-21-04-d97ce728db9d
 
 ---
