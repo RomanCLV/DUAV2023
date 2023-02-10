@@ -35,7 +35,7 @@ https://www.youtube.com/watch?v=rdBTLOx0gi4   (The guy follows the previous guid
 
 ## Clone the project and configuration
 
-If `git` is not installed, install it:
+If `git` is not installed:
 ```
 sudo apt-get install git
 git --version
@@ -56,6 +56,7 @@ Module to control Servo: RPi.GPIO 0.7.1
 ### Install Python librairies
 
 If `pip3` is not installed:
+
 `sudo apt install python3-pip`
 
 `sudo pip3 install RPi.GPIO`
@@ -105,6 +106,12 @@ cmake ..
 make
 ```
 
+You can now run the programm with
+
+`./main.out`
+
+(Check the README.md of each file to know how to use it)
+
 ---
 
 ## rtCam
@@ -126,7 +133,8 @@ Can be usefull: https://www.xmodulo.com/install-raspberry-pi-camera-board.html
 
 ### Others OS (Ubunto, ...)
 
-Try: https://wesleych3n.medium.com/enable-camera-in-raspberry-pi-4-with-64-bit-ubuntu-21-04-d97ce728db9d
+https://stackoverflow.com/questions/29583533/videocapture-open0-wont-recognize-pi-cam
+https://wesleych3n.medium.com/enable-camera-in-raspberry-pi-4-with-64-bit-ubuntu-21-04-d97ce728db9d
 
 ---
 
