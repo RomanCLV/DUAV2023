@@ -73,30 +73,25 @@ https://pypi.org/project/RPi.GPIO/
 
 ## GPIO configuration
 You can use execute the python script `./sources/automate/test_servo.py` to verify that the communication between the Raspberry and the Servo works.
-You have to specify the GPIO used.
-You must be root to run the scipts. You `sudo` before the command if needed.
+You have to specify the GPIOs used.
+You must be root to run the scipts in the `automate` folder. Use `sudo` before the command if needed.
 
-Example :
+Examples :
 
 ```
-python3 test_servo.py -g 32
-``` 
-or
-```
-python3 test_servo.py --gpio 32
+python3 test_servo.py 32        // to use PIN 32 (GPIO 12)
+
+python3 test_servo.py 32 33     // to use GPIOs 12 and 13
+
+python3 test_servo.py 32 33 -a  // to use GPIOs 12 and 13 and test at the same time
 ```
 
-will define that PIN 32 (GPIO 12) is used.
 See https: https://github.com/RomanCLV/DUAV2023/blob/main/gpio.jpg to know which PIN corresponds to which GPIO.
 YOU MUST SELECT A PWM GPIO!
 
-If several servos are used, no problem:
+If you declared several servos and want to be tested at the same time, add `-a` or `--all`.
 
-```
-python3 test_servo.py -g 32 33
-```
-
-to use GPIOs 12 and 13.
+`python3 test_servo.py -h` to know more options.
 
 ---
 
