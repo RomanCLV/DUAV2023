@@ -65,17 +65,26 @@ pip3 --version
 
 Now you can install RPi.GPIO 
 
-`sudo pip3 install RPi.GPIO`
+```
+sudo pip3 install RPi.GPIO
+```
 
 https://pypi.org/project/RPi.GPIO/
 
 ## GPIO configuration
 You can use execute the python script `./sources/automate/test_servo.py` to verify that the communication between the Raspberry and the Servo works.
 You have to specify the GPIO used.
+You must be root to run the scipts. You `sudo` before the command if needed.
 
 Example :
 
-`python3 test_servo.py -g 32` or `python3 test_servo.py --gpio 32`
+```
+python3 test_servo.py -g 32
+``` 
+or
+```
+python3 test_servo.py --gpio 32
+```
 
 will define that PIN 32 (GPIO 12) is used.
 See https: https://github.com/RomanCLV/DUAV2023/blob/main/gpio.jpg to know which PIN corresponds to which GPIO.
@@ -83,7 +92,9 @@ YOU MUST SELECT A PWM GPIO!
 
 If several servos are used, no problem:
 
-`python3 test_servo.py -g 32 33`
+```
+python3 test_servo.py -g 32 33
+```
 
 to use GPIOs 12 and 13.
 
@@ -92,7 +103,9 @@ to use GPIOs 12 and 13.
 ## Possible error for bash files
 About bash files, if the `\r command not found` error occures, please execute:
 
-`sed -i 's/\r$//' <filename>`
+```
+sed -i 's/\r$//' <filename>
+```
 
 It will remove the `\r` character.
 
@@ -150,8 +163,17 @@ https://wesleych3n.medium.com/enable-camera-in-raspberry-pi-4-with-64-bit-ubuntu
 
 Now go back to the DUAV2023 folder and use:
 
-`chmod 755 run.sh`
+```
+chmod 755 run.sh
+```
 
 You can modify `run.sh` to change your GPIO (line 15) to suit your use.
 
-Launch the script with `bash run.sh` or `run.sh`
+Launch the script with 
+```
+bash run.sh
+```
+or
+```
+run.sh
+```
