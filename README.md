@@ -43,9 +43,10 @@ git --version
 
 You can now clone the project:
 
-`git clone https://github.com/RomanCLV/DUAV2023.git`
-
-`cd ./DUAV2023/`
+```
+git clone https://github.com/RomanCLV/DUAV2023.git
+cd ./DUAV2023/
+```
 
 ## Python Automate
 
@@ -57,7 +58,12 @@ Module to control Servo: RPi.GPIO 0.7.1
 
 If `pip3` is not installed:
 
-`sudo apt install python3-pip`
+```
+sudo apt install python3-pip
+pip3 --version
+```
+
+Now you can install RPi.GPIO 
 
 `sudo pip3 install RPi.GPIO`
 
@@ -108,7 +114,9 @@ make
 
 You can now run the programm with
 
-`./main.out`
+```
+./main.out
+```
 
 (Check the README.md of each file to know how to use it)
 
