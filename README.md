@@ -152,9 +152,19 @@ https://www.xmodulo.com/install-raspberry-pi-camera-board.html
 
 ### Others OS (Ubunto, ...)
 
-https://stackoverflow.com/questions/29583533/videocapture-open0-wont-recognize-pi-cam
+Get a list of video capture devices:
+```
+v4l2-ctl --list-devices
+```
+In order to use the above command, you must install package v4l-utils before. 
+```
+sudo apt-get install v4l-utils
+```
+https://stackoverflow.com/questions/4290834/how-to-get-a-list-of-video-capture-devices-web-cameras-on-linux-ubuntu-c
 
 https://wesleych3n.medium.com/enable-camera-in-raspberry-pi-4-with-64-bit-ubuntu-21-04-d97ce728db9d
+
+https://stackoverflow.com/questions/29583533/videocapture-open0-wont-recognize-pi-cam
 
 ---
 
