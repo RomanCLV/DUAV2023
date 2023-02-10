@@ -33,6 +33,8 @@ https://www.youtube.com/watch?v=rdBTLOx0gi4   (The guy follows the previous guid
 
 ---
 
+## Clone the project and configuration
+
 If `git` is not installed, install it:
 ```
 sudo apt-get install git
@@ -93,6 +95,7 @@ It will remove the `\r` character.
 
 The required CPP script you must compute is located at `./sources/rtCam/`
 All others script are samples to learn how to use OpenCV.
+Nevertheless, script `./sources/opencv-samples/5_CameraCapture` can be usefull to check if the camera is well configured. (See rtCam section)
 
 We are using `gcc` and `cmake` to build cpp files. So to build any cpp file, move into the folder where are located the main.cpp and execute:
 
@@ -101,6 +104,29 @@ mkdir build && cd build
 cmake ..
 make
 ```
+
+---
+
+## rtCam
+
+To check if the camera is well configured, you can build the `./sources/opencv-samples/5_CameraCapture` sample and run it.
+If a window is opened with your camera stream inside, all is working.
+
+If not, they are many possibilities:
+- Embedded video playback halted; module v4l2src0 reported: Failed to allocate required memory.
+- Device not detected...
+
+Here are some links we used to fix that. Good luck :)
+
+### Raspberry Pi OS / Raspbian
+
+First, check if camera works with the `raspistill` (or other built-in programm).
+
+Can be usefull: https://www.xmodulo.com/install-raspberry-pi-camera-board.html
+
+### Others OS (Ubunto, ...)
+
+Try: https://wesleych3n.medium.com/enable-camera-in-raspberry-pi-4-with-64-bit-ubuntu-21-04-d97ce728db9d
 
 ---
 
