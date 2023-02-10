@@ -53,6 +53,9 @@ Module to control Servo: RPi.GPIO 0.7.1
 
 ### Install Python librairies
 
+If `pip3` is not installed:
+`sudo apt install python3-pip`
+
 `sudo pip3 install RPi.GPIO`
 
 https://pypi.org/project/RPi.GPIO/
