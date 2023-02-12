@@ -104,7 +104,7 @@ def main():
             servo.add_log_listener(logger)
             servos.append(servo)
     else:
-        print("Require at least one GPIO. Use -g or --gpio to set GPIO.")
+        print("Require at least one GPIO")
         exit(0)
 
     remove_rth_file()
@@ -183,7 +183,13 @@ def automate_state():
         start_time = get_millis()
         for servo in servos:
             log(f"{servo.get_name()} starting...")
-            servo.start(closed_tank_position)
+
+            try:
+                servo.start(closed_tank_position)
+            except RuntimeError as err:
+                log(str(err))
+                close_all_servo()
+                exit(-1)
 
         log("Automate initialized")
         request = STATE.EXPLORATION
@@ -269,7 +275,10 @@ def open_tanks():
 def close_all_servo():
     global servos
     for servo in servos:
+        log(f"{servo.get_name()} closing...")
         servo.close(True)  # clean up enabled
+        log(f"{servo.get_name()} closed")
+
     serv.GPIO_cleanup()    # useless because each servo has already been closed and cleaned up, but to be sure...
 
 
@@ -281,5 +290,5 @@ def sigint_handler(signal, frame):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
     parser = argparse.ArgumentParser(description="automate.py CLI")
-    parser.add_argument("-g", "--gpio", type=int, nargs="+", help="set the servo GPIOs.")
+    parser.add_argument("gpio", type=int, nargs="+", help="set the servo GPIO PINs.")
     main()

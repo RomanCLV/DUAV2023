@@ -155,7 +155,8 @@ class Servo:
     
     def start(self, start_position=90.0):
         """
-        Start pwm communication
+        Start pwm communication.
+        Can raise a RunTime error if the script isn't launch as root.
         ----------
         Parameters
         ----------
@@ -172,6 +173,7 @@ class Servo:
         self._log(f"{self.get_name()} is starting...")
 
         GPIO.setup(self._gpio, GPIO.OUT)
+	
         self._pwm = GPIO.PWM(self._gpio, self._frequency)
 
         self._started = True
@@ -204,6 +206,10 @@ class Servo:
             clean_up: bool
                 Clean up the current GPIO
         """
+
+        if not self._pwm:
+            return
+
         if not self._started:
             self._log("Can not close because GPIO is not started")
             return
@@ -215,4 +221,4 @@ class Servo:
         self._pwm = None
         if clean_up:
             GPIO.cleanup(self._gpio)
-            self._log(f"{self.get_name()} GPIO cleaned up.")
+            self._log(f"{self.get_name()} GPIO cleaned up")

@@ -10,7 +10,6 @@ Module used to test the communication between a Raspberry and one (or several) S
 import time
 import servo as serv
 import signal
-import sys
 import argparse
 
 global all_servos
@@ -18,7 +17,7 @@ global all_servos
 
 def sigint_handler(signal, frame):
     close_all_servo()
-    sys.exit(0)
+    exit(0)
     
 
 def main():
@@ -30,7 +29,7 @@ def main():
     if args.gpio and len(args.gpio) > 0:
         test(args.gpio, args.all)
     else:
-        print("Require at least one GPIO. Use -g or --gpio to set GPIO.")
+        print("Require at least one GPIO")
 
 
 def wait(sec):
@@ -75,8 +74,15 @@ def init_servo(gpio):
     return servo
 
 
-def start_servo(servo):
-    servo.start(0)
+def start_servo(servo, position=0.0):
+    try:
+        servo.start(position)
+    except RuntimeError as err:
+        print(str(err))
+        close_all_servo()
+        exit(-1)
+
+
     print(f"{servo.get_name()} started to 0°")
 
 
@@ -131,7 +137,7 @@ def close_servo(servo):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, sigint_handler)
     parser = argparse.ArgumentParser(description="test_servo.py CLI")
-    parser.add_argument("-g", "--gpio", type=int, nargs="+", help="set the communication pin to test.")
+    parser.add_argument("gpio", type=int, nargs="+", help="set the communication GPIO PINs to test.")
     parser.add_argument("-a", "--all", action="store_true",
                         help="set that all servos are tested simultaneously (if several gpio are set). "
                              "By default, servos are tested one by one.")
