@@ -111,7 +111,7 @@ It will remove the `\r` character.
 
 The required CPP script you must compute is located at `./sources/rtCam/`
 All others script are samples to learn how to use OpenCV.
-Nevertheless, script `./sources/opencv-samples/5_CameraCapture` can be usefull to check if the camera is well configured. (See rtCam section)
+Nevertheless, script `./sources/opencv-samples/6_CameraCapture` can be usefull to check if the camera is well configured. (See rtCam section)
 
 We are using `gcc` and `cmake` to build cpp files. So to build any cpp file, move into the folder where are located the main.cpp and execute:
 
@@ -133,7 +133,7 @@ You can now run the programm with
 
 ## rtCam
 
-To check if the camera is well configured, you can build the `./sources/opencv-samples/5_CameraCapture` sample and run it.
+To check if the camera is well configured, you can build the `./sources/opencv-samples/6_CameraCapture` sample and run it.
 If a window is opened with your camera stream inside, all is working.
 
 If not, they are many possibilities:
