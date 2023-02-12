@@ -99,5 +99,5 @@ def main():
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="Mask main.py CLI")
 	parser.add_argument("image_path", type=str, help="path to image file")
-	parser.add_argument("-g", action="store_true", help="read the image with GRAYSCALE")
+	parser.add_argument("-g", "--grayscale", action="store_true", help="read the image with GRAYSCALE")
 	main()
