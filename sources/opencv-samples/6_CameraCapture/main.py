@@ -21,29 +21,31 @@ def main():
     args = parser.parse_args()
 
     print("Trying to open /dev/video0 with CAP_V4L2")
-    cap = cv.VideoCapture(0, cv.CAP_V4L2)
+    cap = cv.VideoCapture(0, cv.CAP_V4L2)  # Add cv::CAP_V4L2 to fix: Embedded video playback halted; module v4l2src0 reported: Failed to allocate required memory.
 
     if not cap.isOpened():
         sys.exit("Can not read the device")
 
     window_name = "Camera Capture"
+    cv.namedWindow(window_name)
+    cv.waitKey(500)
+    k = 0
     while True:
           
         ret, frame = cap.read()
         
-        if ret == False or frame is None:
-            print("frame is empty")
-            if has_to_break:
-                break
-            cv.waitKey(500)
-            continue
+        if not (ret == False or frame is None):
+            if args.grayscale:
+                frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            cv.imshow(window_name, frame)
+            k = cv.waitKey(1) & 0xFF
+        else:
+            print(f"ret: {ret}\t- frame: {frame}")
+            k = cv.waitKey(500) & 0xFF
 
-        if args.grayscale:
-            frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    
-        cv.imshow(window_name, frame)
-
-        if cv.waitKey(1) == 27 or has_to_break:  #  or cv.getWindowProperty(window_name, cv.WND_PROP_VISIBLE) == -1
+        # break the loop if Ctrl+C or key ESC
+        # cv.getWindowProperty(window_name, cv.WND_PROP_VISIBLE) == -1:  # window is closed
+        if has_to_break or k == 27:
             break
 
     print("Capture done")
