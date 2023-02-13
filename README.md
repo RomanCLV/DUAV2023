@@ -136,21 +136,18 @@ You can now run the programm with
 To check if the camera is well configured, you can build the `./sources/opencv-samples/6_CameraCapture` sample and run it.
 If a window is opened with your camera stream inside, all is working.
 
-If not, they are many possibilities:
-- Embedded video playback halted; module v4l2src0 reported: Failed to allocate required memory.
-- Device not detected...
+If not, they are many possibilities.
 
-Here are some links we used to fix that. Good luck :)
+0) for Raspberry Pi OS / Rasbian: check `raspistill` or `libcamera`
 
-### Raspberry Pi OS / Raspbian
-
-First, check if camera works with the `raspistill` (or other built-in programm).
-
-Can be usefull: 
-
-https://www.xmodulo.com/install-raspberry-pi-camera-board.html
-
-### Others OS (Ubunto, ...)
+1) check if `/boot/config.txt` or `/boot/firmware/config.txt` contains:
+```
+start_x=1
+gpu_mem=128 (can be 256)
+camera_auto_detect=1
+display_auto_detect=1
+```
+2) Check if `/dev/video0` exists
 
 Get a list of video capture devices:
 ```
@@ -160,11 +157,65 @@ In order to use the above command, you must install package v4l-utils before.
 ```
 sudo apt-get install v4l-utils
 ```
+
+Can also use:
+```
+sudo ls -l /dev/video*
+```
+
+3) Check v4l2 is loaded automatically. Edit `/etc/modules`
+```
+cd /etc
+sudo nano modules.conf
+```
+add `bcm2835-v4l2`:
+Mine looks like this:
+```
+# /etc/modules: kernel modules to load at boot time.
+#
+# This file contains the names of kernel modules that should be loaded
+# at boot time, one per line. Lines beginning with "#" are ignored.
+
+bcm2835-v4l2
+```
+Check that `/etc/modules-load.d/modules.conf` looks the same.
+
+Finally, do this:
+```
+sudo modprobe bcm2835-v4l2
+sudo dmesg | grep bcm2835
+```
+
+4) check if the camera is available
+```
+vcgencmd version
+```
+if it failed:
+```
+sudo usermod -aG video <username>
+```
+and reboot
+```
+vcgencmd version
+vcgencmd get_camera
+```
+must return detected=1 supported=1
+
+***
+
+Here are some links we used to fix that. Good luck :)
+
+https://www.xmodulo.com/install-raspberry-pi-camera-board.html
+
 https://stackoverflow.com/questions/4290834/how-to-get-a-list-of-video-capture-devices-web-cameras-on-linux-ubuntu-c
 
 https://wesleych3n.medium.com/enable-camera-in-raspberry-pi-4-with-64-bit-ubuntu-21-04-d97ce728db9d
 
 https://stackoverflow.com/questions/29583533/videocapture-open0-wont-recognize-pi-cam
+
+https://forum.opencv.org/t/videocapture-read-method-returns-empty-ret/7500/3
+
+http://helloraspberrypi.blogspot.com/2020/11/run-vcgencmd-on-ubuntu-for-raspberry-pi.html
 
 ---
 
