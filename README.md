@@ -138,7 +138,7 @@ If a window is opened with your camera stream inside, all is working.
 
 If not, they are many possibilities.
 
-0) for Raspberry Pi OS / Rasbian: check `raspistill` or `libcamera`
+0) Raspberry Pi OS / Rasbian: check if camera works with `raspistill` or `libcamera`
 
 1) check if `/boot/config.txt` or `/boot/firmware/config.txt` contains:
 ```
@@ -166,7 +166,7 @@ sudo ls -l /dev/video*
 3) Check v4l2 is loaded automatically. Edit `/etc/modules`
 ```
 cd /etc
-sudo nano modules.conf
+sudo nano modules
 ```
 add `bcm2835-v4l2`:
 Mine looks like this:
