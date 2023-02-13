@@ -1,4 +1,5 @@
 // https://www.selfmadetechie.com/how-to-create-a-webcam-video-capture-using-opencv-c
+// https://learnopencv.com/read-write-and-display-a-video-using-opencv-cpp-python/
 
 #include <stdio.h>
 #include <csignal>
