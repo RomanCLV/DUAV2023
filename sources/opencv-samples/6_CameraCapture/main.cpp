@@ -28,7 +28,8 @@ int main(int argc, char** argv)
     }
 
     printf("Trying to open /dev/video0 with CAP_V4L2\n");
-    VideoCapture cap(0, cv::CAP_V4L2);
+    VideoCapture cap(0, cv::CAP_V4L2);  // Add cv::CAP_V4L2 to fix: Embedded video playback halted; module v4l2src0 reported: Failed to allocate required memory.
+
     if (!cap.isOpened()) 
     {
         cout << "Can not read the device" << endl;
@@ -50,35 +51,35 @@ int main(int argc, char** argv)
         }
     }
 
-    Mat frame;
     string window_name = "Camera Capture";
+    Mat frame;
+    char k;
     namedWindow(window_name);
+    waitKey(500);
 
     while (1)
     {
         cap >> frame;
+        // cout << "frame type: " << frame.type() << "\tframe empty: " << frame.empty() << "\tvisible: " << cv::getWindowProperty(window_name, WND_PROP_AUTOSIZE) << endl;
 
-        if (frame.empty()) 
+        if (!frame.empty()) 
+        {
+            if (convertToGray) 
+            {
+                cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+            }
+            imshow(window_name, frame);
+            k = (char)waitKey(1);
+        }
+        else
         {
             printf("frame is empty\n");
-            if (hasToBreak || cv::getWindowProperty(window_name, WND_PROP_AUTOSIZE) == -1) 
-            {
-                break;
-            }
-            waitKey(500);
-            continue;
-        }
-
-        if (convertToGray) 
-        {
-            cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-        }
-
-        imshow(window_name, frame);
-
+            k = (char)waitKey(500);
+        }    
+        
         // break the loop if
         if (hasToBreak ||                                                   // due to Ctrl+C
-            waitKey(1) == 27 ||                                             // ESC key
+            k == 27 ||                                                      // ESC key
             cv::getWindowProperty(window_name, WND_PROP_AUTOSIZE) == -1)    // window is closed
         {
             break;
@@ -87,5 +88,7 @@ int main(int argc, char** argv)
 
     printf("Capture done\n");
     cap.release();
+    cv::destroyAllWindows();
+
     return 0;
 }
