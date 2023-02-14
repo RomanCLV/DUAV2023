@@ -40,7 +40,7 @@ def main():
             cv.imshow(window_name, frame)
             k = cv.waitKey(1) & 0xFF
         else:
-            print(f"ret: {ret}\t- frame: {frame}")
+            print("frame is empty")
             k = cv.waitKey(500) & 0xFF
 
         # break the loop if Ctrl+C or key ESC
