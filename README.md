@@ -136,9 +136,13 @@ You can now run the programm with
 To check if the camera is well configured, you can build the `./sources/opencv-samples/6_CameraCapture` sample and run it.
 If a window is opened with your camera stream inside, all is working.
 
-If not, they are many possibilities.
+### Camera Errors
 
-First of all, make sure you enabled the camera in the `raspi-config`.
+There are many sources of error:
+- device not found or can't be opened
+- every frames are empty
+
+First of all, make sure you enabled the `Legacy Camera` in the `raspi-config`.
 ```
 sudo raspi-config
 ```
@@ -148,16 +152,16 @@ sudo apt install raspi-config
 ```
 Then: `raspi-config > Interface Options > Legacy Camera`
 
-0) Raspberry Pi OS / Rasbian: check if camera works with `raspistill` or `libcamera`
+- Raspberry Pi OS / Rasbian: check if camera works with `raspistill` or `libcamera`
 
-1) check if `/boot/config.txt` or `/boot/firmware/config.txt` contains:
+- check if `/boot/config.txt` or `/boot/firmware/config.txt` contains:
 ```
 start_x=1
 gpu_mem=128 (can be 256)
 camera_auto_detect=1
 display_auto_detect=1
 ```
-2) Check if `/dev/video0` exists
+- Check if `/dev/video0` exists
 
 Get a list of video capture devices:
 ```
@@ -173,7 +177,7 @@ Can also use:
 sudo ls -l /dev/video*
 ```
 
-3) Check v4l2 is loaded automatically. Edit `/etc/modules`
+- Check v4l2 is loaded automatically. Edit `/etc/modules`
 ```
 cd /etc
 sudo nano modules
@@ -196,20 +200,18 @@ sudo modprobe bcm2835-v4l2
 sudo dmesg | grep bcm2835
 ```
 
-4) check if the camera is available
-```
-vcgencmd version
-```
-if it failed:
-```
-sudo usermod -aG video <username>
-```
-and reboot
+- Check if the camera is available
 ```
 vcgencmd version
 vcgencmd get_camera
 ```
-must return detected=1 supported=1
+If it failed:
+```
+sudo usermod -aG video <username>
+```
+reboot and retry the last command
+
+`vcgencmd get_camera` must return `detected=1 supported=1`
 
 ***
 
