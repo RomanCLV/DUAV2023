@@ -12,7 +12,7 @@ Display an input image.
 
 ## Usage
 
-Assuming you're in the ReadImage folder:
+Assuming you're in the `ReadImage` folder:
 
 ```
 python3 main.py <image_path>
@@ -20,7 +20,7 @@ python3 main.py <image_path>
 
 ## Example
 
-Assuming you're in the ReadImage folder:
+Assuming you're in the `ReadImage` folder:
 
 ```
 python3 main.py ../resources/earth.jpeg
@@ -40,7 +40,7 @@ make
 
 ## Usage
 
-Assuming you're in the build folder:
+Assuming you're in the `build` folder:
 
 ```
 ./main.out <image_path>
@@ -48,7 +48,7 @@ Assuming you're in the build folder:
 
 ## Example
 
-Assuming you're in the build folder:
+Assuming you're in the `build` folder:
 
 ```
 ./main.out ../../resources/earth.jpeg

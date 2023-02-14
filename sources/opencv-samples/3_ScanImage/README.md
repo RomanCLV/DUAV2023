@@ -22,17 +22,17 @@ make
 
 ## Usage
 
-Assuming you're in the build folder:
+Assuming you're in the `build` folder:
 
 ```
 ./main.out <image_path> <divide_with> [g|G]
 ```
 
-If you add a g|G parameter, the image is processed in gray scale
+If you add a `g|G` parameter, the image is processed in gray scale
 
 ## Examples
 
-Assuming you're in the build folder:
+Assuming you're in the `build` folder:
 
 ```
 ./main.out ../../resources/fruits.jpg 10

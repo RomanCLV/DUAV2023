@@ -12,13 +12,13 @@ Display the camera video.
 
 ## Usage
 
-Assuming you're in the CameraCapture folder:
+Assuming you're in the `CameraCapture` folder:
 
 ```
 python3 main.py [-g]
 ```
 
-If you add a -g parameter, the image is processed in gray scale
+If you add a `-g` parameter, the image is processed in gray scale
 
 ---
 
@@ -34,10 +34,10 @@ make
 
 ## Usage
 
-Assuming you're in the build folder:
+Assuming you're in the `build` folder:
 
 ```
 ./main.out [g|G]
 ```
 
-If you add a g|G parameter, the image is processed in gray scale
+If you add a `g|G` parameter, the image is processed in gray scale

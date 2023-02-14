@@ -10,17 +10,17 @@ This program shows how to filter images with mask: the write it yourself and the
 
 # Python
 
-Assuming you're in the Mask folder:
+Assuming you're in the `Mask` folder:
 
 ```
 python3 main.py <image_path> [-g]
 ```
 
-If you add a -g parameter, the image is processed in gray scale
+If you add a `-g` parameter, the image is processed in gray scale
 
 ## Example
 
-Assuming you're in the Mask folder:
+Assuming you're in the `Mask` folder:
 
 ```
 python3 main.py ../resources/earth.jpeg
@@ -41,15 +41,17 @@ make
 
 ## Usage
 
-Assuming you're in the build folder:
+Assuming you're in the `build` folder:
 
 ```
 ./main.out <image_path> [g|G]
 ```
 
-If you add a g|G parameter, the image is processed in gray scale
+If you add a `g|G` parameter, the image is processed in gray scale
 
 ## Examples
+
+Assuming you're in the `build` folder:
 
 ```
 ./main.out ../../resources/eath.jpeg
