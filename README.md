@@ -108,8 +108,9 @@ Make sure that `LF` type is selected. Else you will get a `\r command not found`
 ```
 sed -i 's/\r$//' <filename>
 ```
-
 It will remove the `\r` character.
+
+https://stackoverflow.com/questions/2613800/how-to-convert-dos-windows-newline-crlf-to-unix-newline-lf
 
 ---
 
