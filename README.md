@@ -138,6 +138,16 @@ If a window is opened with your camera stream inside, all is working.
 
 If not, they are many possibilities.
 
+First of all, make sure you enabled the camera in the `raspi-config`.
+```
+sudo raspi-config
+```
+If `raspi-config` is not a command, install it:
+```
+sudo apt install raspi-config
+```
+Then: `raspi-config > Interface Options > Legacy Camera`
+
 0) Raspberry Pi OS / Rasbian: check if camera works with `raspistill` or `libcamera`
 
 1) check if `/boot/config.txt` or `/boot/firmware/config.txt` contains:
@@ -210,6 +220,8 @@ https://www.xmodulo.com/install-raspberry-pi-camera-board.html
 https://stackoverflow.com/questions/4290834/how-to-get-a-list-of-video-capture-devices-web-cameras-on-linux-ubuntu-c
 
 https://wesleych3n.medium.com/enable-camera-in-raspberry-pi-4-with-64-bit-ubuntu-21-04-d97ce728db9d
+
+https://whatibroke.com/2022/12/03/raspberrypi-camera-not-detected-ubuntu-20-04-5-lts/
 
 https://stackoverflow.com/questions/29583533/videocapture-open0-wont-recognize-pi-cam
 
