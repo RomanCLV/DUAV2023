@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     bool convertToGray = false;
     if (argc == 2)
     {
-        if (!strcmp("g", argv[2]) || !strcmp("G", argv[2]))
+        if (!strcmp("g", argv[1]) || !strcmp("G", argv[1]))
         {
             convertToGray = true;
         }
@@ -60,13 +60,12 @@ int main(int argc, char** argv)
     while (1)
     {
         cap >> frame;
-        // cout << "frame type: " << frame.type() << "\tframe empty: " << frame.empty() << "\tvisible: " << cv::getWindowProperty(window_name, WND_PROP_AUTOSIZE) << endl;
 
         if (!frame.empty()) 
         {
             if (convertToGray) 
             {
-                cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+                cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
             }
             imshow(window_name, frame);
             k = (char)waitKey(1);
