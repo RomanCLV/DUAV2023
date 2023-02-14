@@ -97,7 +97,13 @@ If you declared several servos and want to be tested at the same time, add `-a` 
 ---
 
 ## Possible error for bash files
-About bash files, if the `\r command not found` error occures, please execute:
+
+If you edit a bash file, be warn to the break line type:
+- `CR LF` (Windows)
+- `LF` (Unix) 
+- `CR` (Macintosh)
+
+Make sure that `LF` type is selected. Else you will get a `\r command not found` error occures. In this case, please execute:
 
 ```
 sed -i 's/\r$//' <filename>
@@ -135,6 +141,8 @@ You can now run the programm with
 
 To check if the camera is well configured, you can build the `./sources/opencv-samples/6_CameraCapture` sample and run it.
 If a window is opened with your camera stream inside, all is working.
+
+If it's not, read the `CameraError.md` and good luck :)
 
 ---
 
