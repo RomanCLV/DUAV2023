@@ -19,6 +19,7 @@ python3 main.py <fps> <frame_delta_delay>
 ```
 
 `fps` is the frame per second
+
 `frame_delta_delay` is the delay (in second) between the two displayed frames
 
 ## Example
@@ -51,6 +52,7 @@ Assuming you're in the `build` folder:
 ```
 
 `fps` is the frame per second
+
 `frame_delta_delay` is the delay (in second) between the two displayed frames
 
 ## Example
