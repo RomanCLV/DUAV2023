@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <sys/stat.h>
 #include <csignal>
+#include <ctime>
 #include <iostream>
 #include <sstream>
 #include <opencv2/opencv.hpp>
@@ -15,13 +17,15 @@ void signal_handler(int signal)
 
 void help()
 {
-    printf("---- Touch ----\n");
     printf("\n");
-    printf("Help\t\tH\n");
-    printf("Pause\t\tSPACE BAR\n");
-    printf("Quit\t\tESC\n");
+    printf("--- Function ---   --- KEY ---\n");
     printf("\n");
-    printf("----------------\n");
+    printf("    Help               H\n");
+    printf("    Pause              SPACE BAR\n");
+    printf("    Screenshot         S\n");
+    printf("    Quit               ESC\n");
+    printf("\n");
+    printf("------------------------------\n");
 }
 
 int main(int argc, char** argv)
@@ -78,8 +82,22 @@ int main(int argc, char** argv)
     uint frame_count_total = 0;
     bool display_saved = false;
     std::queue<cv::Mat> saved_frames;
+    uint screenshot_count = 0;
+
+    std::time_t rawtime;
+    std::tm* timeinfo;
+    char buffer [80];
+
+    std::time(&rawtime);
+    timeinfo = std::localtime(&rawtime);
+
+    std::strftime(buffer, 80, "%Y-%m-%d %H-%M-%S", timeinfo);
+
+    string screenshot_name = buffer;
     bool pause = false;
     char k;
+    Mat last_frame;
+
     string window1 = "Current Frame";
     string window2 = "Previous Frame";
 
@@ -90,22 +108,23 @@ int main(int argc, char** argv)
 
     while (1)
     {
-        Mat frame;
-        cap >> frame;
-
-        if (!frame.empty()) 
+        if (pause)
         {
-            if (!pause)
+            k = (char)waitKey(frame_delay);
+        }
+        else
+        {
+            Mat frame;
+            cap >> frame;
+
+            if (!frame.empty()) 
             {
                 frame_count_total++;
                 cv::putText(frame, "frame: " + std::to_string(frame_count_total), cv::Point(30, 30), cv::FONT_HERSHEY_DUPLEX, 1, cv::Scalar(255, 255, 255), 2);
-        
                 cv::imshow(window1, frame);   // display frame
-                
                 if (display_saved)
                 {
-                    Mat old = saved_frames.front();
-                    cv::imshow(window2, old);  // display saved frame
+                    cv::imshow(window2, saved_frames.front());  // display saved frame
                     saved_frames.pop();
                 }
                 else
@@ -114,30 +133,45 @@ int main(int argc, char** argv)
                     display_saved = frame_delta_count == frame_delta;
                 }
                 saved_frames.push(frame);     // save frame
+                last_frame = frame;
+                k = (char)waitKey(frame_delay);
             }
-            k = (char)waitKey(frame_delay);
+            else
+            {
+                printf("frame is empty\n");
+                k = (char)waitKey(500);
+            } 
         }
-        else
-        {
-            printf("frame is empty\n");
-            k = (char)waitKey(500);
-        }    
         
         // break the loop if
-        if (hasToBreak ||                                                   // due to Ctrl+C
-            k == 27 ||                                                      // ESC key
+        if (hasToBreak ||                                               // due to Ctrl+C
+            k == 27 ||                                                  // ESC key
             cv::getWindowProperty(window1, WND_PROP_AUTOSIZE) == -1 ||  // window1 is closed
             cv::getWindowProperty(window2, WND_PROP_AUTOSIZE) == -1)    // window2 is closed
         {
             break;
         }
-        if (k == 32)        // SPACE BAR
-        {
-            pause = !pause;
-        }
-        else if (k == 104)  // H
+        if (k == 72 || k == 104)        // H | h
         {
             help();
+        }
+        else if (k == 32)               // SPACE BAR
+        {
+            if (saved_frames.size() > 0)  // allows pause only if we got a frame
+            {
+                pause = !pause;
+            }
+        }
+        else if (k == 83 || k == 115)   // S | s
+        {
+            if (saved_frames.size() > 0)
+            {
+                screenshot_count++;
+                string path = "./screenshot/" + screenshot_name + "_" + std::to_string(screenshot_count) + ".jpg";
+                mkdir("./screenshot", 0777);
+                imwrite(path, last_frame);
+                cout << path << endl;
+            }
         }
     }
 
