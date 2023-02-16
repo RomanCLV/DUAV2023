@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <csignal>
 #include <iostream>
+#include <sys/stat.h>
 #include <opencv2/opencv.hpp>
 using namespace cv;
 using namespace std;
@@ -51,14 +52,26 @@ int main(int argc, char** argv)
         }
     }
 
+    std::time_t rawtime;
+    std::tm* timeinfo;
+    char buffer [80];
+
+    std::time(&rawtime);
+    timeinfo = std::localtime(&rawtime);
+
+    std::strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
+
+    string screenshot_name = buffer;
+    uint screenshot_count = 0;
+
     string window_name = "Camera Capture";
-    Mat frame;
     char k;
     namedWindow(window_name);
     waitKey(500);
 
     while (1)
     {
+        Mat frame;
         cap >> frame;
 
         if (!frame.empty()) 
@@ -82,6 +95,17 @@ int main(int argc, char** argv)
             cv::getWindowProperty(window_name, WND_PROP_AUTOSIZE) == -1)    // window is closed
         {
             break;
+        }
+        if (k == 83 || k == 115)   // S | s
+        {
+            if (!frame.empty())
+            {
+                screenshot_count++;
+                string path = "./screenshot/" + screenshot_name + "_" + std::to_string(screenshot_count) + ".jpg";
+                mkdir("./screenshot", 0777);
+                imwrite(path, frame);
+                cout << path << endl;
+            }
         }
     }
 
