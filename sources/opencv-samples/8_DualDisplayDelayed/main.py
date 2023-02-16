@@ -1,8 +1,10 @@
 import cv2 as cv
 import argparse
 import sys
+import os
 import signal
 from queue import Queue
+from datetime import datetime
 
 global has_to_break
 
@@ -13,13 +15,15 @@ def sigint_handler(signal, frame):
 
 
 def help():
-    print("---- Touch ----")
     print("")
-    print("Help\t\tH")
-    print("Pause\t\tSPACE BAR")
-    print("Quit\t\tESC")
+    print("--- Function ---   --- KEY ---")
     print("")
-    print("----------------")
+    print("    Help               H")
+    print("    Pause              SPACE BAR")
+    print("    Screenshot         S")
+    print("    Quit               ESC")
+    print("")
+    print("------------------------------")
 
 
 def main():
@@ -47,8 +51,11 @@ def main():
     frame_count_total = 0
     display_saved = False
     saved_frames = Queue(frame_delta)
+    screenshot_count = 0
+    screenshot_name = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
     k = 0
     pause = False
+    last_frame = None
     window1 = "Current Frame"
     window2 = "Previous Frame"
 
@@ -59,35 +66,47 @@ def main():
 
     while True:
         
-        ret, frame = cap.read()
-            
-        if ret and frame is not None:
-            if not pause:
+        if pause:
+            k = cv.waitKey(frame_delay) & 0xFF
+        else:
+            ret, frame = cap.read()
+
+            if ret and frame is not None:
                 frame_count_total += 1
-                cv.putText(frame, "frame: {0}".format(frame_count_total), (30, 30), cv.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2)
+                cv.putText(frame, f"frame: {frame_count_total}", (30, 30), cv.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2)
                 cv.imshow(window1, frame)   # display frame
-                
                 if display_saved:
                     cv.imshow(window2, saved_frames.get())  # display saved frame
                 else:
                     frame_delta_count += 1
-                    display_saved = frame_delta_count == frame_delta
-                
+                    display_saved = frame_delta_count == frame_delta    
                 saved_frames.put(frame)     # save frame
-            k = cv.waitKey(frame_delay) & 0xFF
-        else:
-            print("frame is empty")
-            k = cv.waitKey(500) & 0xFF
+                last_frame = frame
+                k = cv.waitKey(frame_delay) & 0xFF
+            else:
+                print("frame is empty")
+                k = cv.waitKey(500) & 0xFF
 
         # break the loop if Ctrl+C or key ESC
         if has_to_break or k == 27:
             break
 
-        if k == 32:   # SPACE BAR
-            pause = not pause
-
-        elif k == 104: # H
+        if k == 72 or k == 104:     # H | h
             help()
+
+        elif k == 32:               # SPACE BAR
+            if last_frame is not None:  # allows pause only if we already got a frame
+                pause = not pause
+
+        elif k == 83 or k == 115:   # S | s
+            if last_frame is not None:
+                screenshot_count += 1
+                path = f"./screenshot/{screenshot_name}_{screenshot_count}.jpg"
+                if not os.path.exists("./screenshot"):
+                    os.mkdir("./screenshot")
+                cv.imwrite(path, last_frame)
+                print(path)
+
 
     print("Capture done")
     # After the loop release the cap object
