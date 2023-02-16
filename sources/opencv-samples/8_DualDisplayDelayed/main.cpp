@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     std::time(&rawtime);
     timeinfo = std::localtime(&rawtime);
 
-    std::strftime(buffer, 80, "%Y-%m-%d %H-%M-%S", timeinfo);
+    std::strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
 
     string screenshot_name = buffer;
     bool pause = false;
