@@ -4,7 +4,7 @@
 
 # Description
 
-RealTime Camera detection using for drone.
+Display two window, one with the current frame and one with a delayed frame.
 
 ---
 
