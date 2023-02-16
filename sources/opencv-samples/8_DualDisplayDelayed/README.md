@@ -57,7 +57,7 @@ Assuming you're in the `build` folder:
 
 ## Example
 
-Assuming you're in the `DualDisplayDelayed` folder:
+Assuming you're in the `build` folder:
 
 ```
 ./maint.out 30 2
