@@ -28,9 +28,12 @@ def main():
     if img2 is None:
         exit(f"Could not read image {path2}")
 
-    start = time()
+    if img1.shape != img2.shape or img1.dtype != img2.dtype:
+        exit(f"Not the same dimensions or data type!\timage 1: {img1.shape} ({img1.dtype})\timage 2: {img2.shape} ({img2.dtype})")
+
+    delay = time()
     subtracted = cv.subtract(img1, img2)
-    delay = 1000 * (time() - start)
+    delay = 1000 * (time() - delay)
     print(f"Subtraction delay: { round(delay * 1000) / 1000} ms")
 
     cv.imshow("Image 1", img1)
@@ -43,7 +46,7 @@ def main():
 
 if __name__ == '__main__':
     
-    parser = argparse.ArgumentParser(description="Read Image main.py CLI")
+    parser = argparse.ArgumentParser(description="Images Subtraction main.py CLI")
     parser.add_argument("img1_path", type=str, help="image 1 path to open")
     parser.add_argument("img2_path", type=str, help="image 2 path to open")
     parser.add_argument("-g", "--grayscale", action="store_true", help="read the images with GRAYSCALE")

@@ -103,7 +103,7 @@ def main():
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, sigint_handler)
-    parser = argparse.ArgumentParser(description="Camera Capture main.py CLI")
+    parser = argparse.ArgumentParser(description="Camera Recorder main.py CLI")
     parser.add_argument("output_path", type=str, help="the file where the camera video is recorded")
     parser.add_argument("video_fps", type=float, choices=fps_choices, help="fps of the recorded video")
     parser.add_argument("-g", "--grayscale", action="store_true", help="capture the camera with GRAYSCALE")

@@ -45,6 +45,24 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    int channelsImage1 = image1.channels();
+    int rowsImage1 = image1.rows;
+    int colsImage1 = image1.cols;
+    int depthImage1 = image1.depth();
+
+    int channelsImage2 = image2.channels();
+    int rowsImage2 = image2.rows;
+    int colsImage2 = image2.cols;
+    int depthImage2 = image2.depth();
+
+    if (channelsImage1 != channelsImage2 || rowsImage1 != rowsImage2 || colsImage1 != colsImage2 || depthImage1 != depthImage2)
+    {
+        cout << "Not the same dimensions or depth!\t";
+        cout << "image 1: (" << rowsImage1 << "," << colsImage1 << "," << channelsImage1 << ") (" << depthImage1 << ")\t";
+        cout << "image 2: (" << rowsImage2 << "," << colsImage2 << "," << channelsImage2 << ") (" << depthImage2 << ")" << endl;
+        return -1;
+    }
+
     double delay = (double)getTickCount();
     cv::subtract(image1, image2, subtracted);
     delay = 1000 * ((double)getTickCount() - delay) / getTickFrequency();

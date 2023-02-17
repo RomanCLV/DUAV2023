@@ -95,7 +95,7 @@ def main():
             help()
 
         elif k == 32:               # SPACE BAR
-            if last_frame is not None:  # allows pause only if we already got a frame
+            if saved_frames.qsize() > 0:  # allows pause only if we already got a frame
                 pause = not pause
 
         elif k == 83 or k == 115:   # S | s
@@ -118,7 +118,7 @@ def main():
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, sigint_handler)
-    parser = argparse.ArgumentParser(description="rtCam main.py CLI")
-    parser.add_argument("fps", type=int, help="fps of the display")
-    parser.add_argument("frame_delta_delay", type=int, help="difference in seconds between compared frames")
+    parser = argparse.ArgumentParser(description="Dual Display Delayed main.py CLI")
+    parser.add_argument("fps", type=int, help="of the camera")
+    parser.add_argument("frame_delta_delay", type=int, help="the delay (in second) between the two displayed frames")
     main()
