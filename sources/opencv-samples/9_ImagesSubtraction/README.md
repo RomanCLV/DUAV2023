@@ -26,6 +26,7 @@ Assuming you're in the `ImagesSubtraction` folder:
 
 ```
 python3 main.py ../resources/img_sub_1.jpg  ../resources/img_sub_2.jpg
+python3 main.py ../resources/img_sub_1.jpg  ../resources/img_sub_2.jpg -g
 ```
 
 ---
@@ -55,5 +56,6 @@ If you add a `g|G` parameter, the image is processed in gray scale
 Assuming you're in the `build` folder:
 
 ```
-./maint.out  ../../resources/img_sub_1.jpg  ../../resources/img_sub_2.jpg
+./maint.out ../../resources/img_sub_1.jpg  ../../resources/img_sub_2.jpg
+./maint.out ../../resources/img_sub_1.jpg  ../../resources/img_sub_2.jpg g
 ```

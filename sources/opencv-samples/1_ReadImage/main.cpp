@@ -8,7 +8,7 @@ int main(int argc, char** argv)
 {
     if ( argc != 2 )
     {
-        printf("Usage: ./main.out <Image_Path>\n");
+        printf("Usage: ./main.out <image_path>\n");
         printf("Read the README.md\n");
         return -1;
     }
@@ -23,5 +23,6 @@ int main(int argc, char** argv)
     imshow("Read Image", image);
     std::cout << "Press a key to quit" << std::endl;
     waitKey(0);
+    cv::destroyAllWindows();
     return 0;
 }

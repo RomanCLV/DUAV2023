@@ -174,10 +174,8 @@ int main(int argc, char** argv)
             }
         }
     }
-
     printf("Capture done\n");
     cap.release();
     cv::destroyAllWindows();
-
     return 0;
 }

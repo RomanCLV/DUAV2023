@@ -30,19 +30,11 @@ static void help()
 int main( int argc, char* argv[])
 {
     
-    if (argc < 3)
+    if (argc < 3 || argc > 5)
     {
         help();
-        cout << "Not enough parameters" << endl;
         return -1;
     }
-    if (argc > 5) 
-    {
-        help();
-        cout << "Not many parameters" << endl;
-        return -1;
-    }
-
 
     Mat I, R1, R2, R3, R4;
     if (argc == 4)
@@ -169,6 +161,7 @@ int main( int argc, char* argv[])
 
     cout << "Press a key to quit" << endl;
     waitKey(0);
+    cv::destroyAllWindows();
     return 0;
 }
 

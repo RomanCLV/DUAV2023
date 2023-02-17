@@ -22,17 +22,10 @@ void Sharpen(const Mat& myImage,Mat& Result);
 
 int main( int argc, char* argv[])
 {
-    if (argc < 2)
+    if (argc < 2 || argc > 3)
     {
         help();
-    	printf("Not enough parameters\n");
     	return -1;
-    }
-    if (argc > 3)
-    {
-        help();
-        printf("Too many parameters\n");
-        return -1;
     }
 
 	const char* filename = argv[1];
@@ -47,8 +40,8 @@ int main( int argc, char* argv[])
         }
         else
         {
-            printf("Unexpected parameter given");
             help();
+            printf("Unexpected parameter given");
             return -1;
         }
     }
@@ -92,6 +85,7 @@ int main( int argc, char* argv[])
 
     cout << "Press a key to quit" << endl;
     waitKey(0);
+    cv::destroyAllWindows();
     return EXIT_SUCCESS;
 }
 

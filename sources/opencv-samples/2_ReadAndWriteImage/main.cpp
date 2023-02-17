@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 
     if (argc < 3 || argc > 4) 
     {
-        printf("Usage: ./main.out <image_Path> <saved_Image_Path> [mode]\n");
+        printf("Usage: ./main.out <image_path> <saved_image_path> [mode]\n");
         printf("Read the README.md\n");
         return -1;
     }
@@ -72,5 +72,6 @@ int main(int argc, char** argv)
     imwrite(saved_image_path, img);
     cout << "Press a key to quit" << endl;
     waitKey(0);
+    cv::destroyAllWindows();
     return 0;
 }

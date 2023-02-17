@@ -4,7 +4,7 @@
 
 # Description
 
-Display two window, one with the current frame and one with a delayed frame.
+Display two windows, one with the current frame and one with a delayed frame.
 
 ---
 

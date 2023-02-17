@@ -20,6 +20,7 @@ def main():
     cv.imshow("Read Image", img)
     print("Press a key to quit")
     cv.waitKey(0)
+    cv.destroyAllWindows();
 
 
 if __name__ == '__main__':

@@ -45,6 +45,7 @@ def main():
     print(f"Image saved to {args.saved_image_path}")
     print("Press a key to quit")
     cv.waitKey(0)
+    cv.destroyAllWindows()
 
 
 if __name__ == '__main__':

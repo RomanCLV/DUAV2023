@@ -82,5 +82,6 @@ int main(int argc, char** argv)
     }
     printf("Video successfully played\n");
     cap.release();
+    cv::destroyAllWindows();
     return 0;
 }

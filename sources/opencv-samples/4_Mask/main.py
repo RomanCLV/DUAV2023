@@ -94,7 +94,7 @@ def main():
 	print("Press a key to quit")
 	cv.waitKey(0)
 	cv.destroyAllWindows()
-	return 0
+	
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="Mask main.py CLI")
