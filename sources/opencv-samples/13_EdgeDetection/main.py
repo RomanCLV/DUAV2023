@@ -33,7 +33,7 @@ def main():
 	# Convertir en niveaux de gris
 	gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
-	# cv.imshow(window1, image)
+	cv.imshow(window1, image)
 
 	t = getTime()
 

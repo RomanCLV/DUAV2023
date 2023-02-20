@@ -42,24 +42,19 @@ int main(int argc, char** argv)
     }
 
     printf("\n");
-    printf("press Left Arrow to decrease the threshold value\n");
-    printf("press Rigth Arrow to increase the threshold value\n\n");
+    printf("press Left Arrow to decrease the blur size value\n");
+    printf("press Rigth Arrow to increase the blur size value\n\n");
     printf("press ESC to quit\n\n");
 
     char k;
 
     string window1 = "Image";
-    string window2 = "Result";
+    string window2 = "Blur";
 
-    Mat gray;
-
-    // Pour la binarisation de l'image
-    int threshold_value = 100;   // seuil de binarisation
+    int blur_size = 5;
 
     double t;
     bool hasToCompute = true;
-
-    cvtColor(image, gray, cv::COLOR_BGR2GRAY);
 
     imshow(window1, image);
 
@@ -69,25 +64,17 @@ int main(int argc, char** argv)
         {
             hasToCompute = false;
             cout << endl;
-            cout << "threshold : " << threshold_value << endl;
+            cout << "blur size : " << blur_size << endl;
             
             t = getTime();
             
-            // Appliquer un seuillage binaire pour obtenir un masque de l'ombre
-            Mat binary;
-            threshold(gray, binary, threshold_value, 255, cv::THRESH_BINARY);
+            Mat blurred;
 
-            // Inverser l'image binaire pour obtenir les régions de l'ombre
-            Mat binary_inverse;
-            bitwise_not(binary, binary_inverse);
-
-            // Remplacer les pixels de l'ombre par des pixels de l'image d'origine
-            Mat image_no_shadow;
-            bitwise_or(image, image, image_no_shadow, binary_inverse);
+            GaussianBlur(image, blurred, cv::Size(blur_size, blur_size), 0);
 
             cout << "duration : " << getTimeDiff(t) << " ms" << endl;
 
-            imshow(window2, image_no_shadow);
+            imshow(window2, blurred);
         }
 
         k = (char)waitKey(0);
@@ -101,17 +88,17 @@ int main(int argc, char** argv)
         }
         else if (k == 81)  // Left Arrow
         {
-            if (threshold_value > 0)
+            if (blur_size > 1)
             {
-                threshold_value--;
+                blur_size -= 2;
                 hasToCompute = true;
             }
         }
         else if (k == 83)  // Right Arrow
         {
-            if (threshold_value < 255)
+            if (blur_size < 101)
             {
-                threshold_value++;
+                blur_size += 2;
                 hasToCompute = true;
             }
         }

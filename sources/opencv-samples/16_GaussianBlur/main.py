@@ -1,4 +1,34 @@
 import cv2 as cv
+import sys
+import argparse
+from time import time
+
+
+def getTime():
+	return time()
+
+
+def getTimeDelta(t):
+	t = 1000 * (getTime() - t)
+	return round(1000 * t) / 1000
+
+
+def main():
+	args = parser.parse_args()
+	
+	
+
+	cv.waitKey(0)
+	cv.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="GaussianBlur main.py CLI")
+    parser.add_argument("img_path", type=str, help="image path to open")
+    main()
+
+
+import cv2 as cv
 import numpy as np
 import sys
 import signal
@@ -39,48 +69,36 @@ def main():
 	if image is None:
 		sys.exit(f"Could not read the image {path}")
 
+
 	print("")
-	print("press Left Arrow to decrease the threshold value")
-	print("press Rigth Arrow to increase the threshold value\n")
+	print("press Left Arrow to decrease the blur size value")
+	print("press Rigth Arrow to increase the blur size value\n")
 	print("press ESC to quit\n")
+
+	window2 = "Blur"
+	window1 = "Image"
 
 	k = 0
 
-	window1 = "Image"
-	window2 = "Result"
-
 	# Pour la binarisation de l'image
-	threshold_value = 100   # seuil de binarisation
+	blur_size = 5
 
 	t = 0.0
 	has_to_compute = True
-
-	# Convertir en niveaux de gris
-	gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-
+ 	
 	cv.imshow(window1, image)
 
 	while True:
-
 		if has_to_compute:
 			has_to_compute = False
-
 			print("")
-			print(f"threshold : {threshold_value}")
-
+			print(f"blur size : {blur_size}")
 			t = getTime()
 
-			_, binary = cv.threshold(gray, threshold_value, 255, cv.THRESH_BINARY)
-
-			# Inverser l'image binaire pour obtenir les régions de l'ombre
-			binary_inverse = cv.bitwise_not(binary)
-
-			# Remplacer les pixels de l'ombre par des pixels de l'image d'origine
-			image_no_shadow = cv.bitwise_or(image, image, mask=binary_inverse)
-
+			blurred = cv.GaussianBlur(image, (blur_size, blur_size), 0)
 			print(f"duration: {getTimeDelta(t)} ms")
 
-			cv.imshow(window2, image_no_shadow)
+			cv.imshow(window2, blurred)
 
 		k = cv.waitKey(0) & 0xFF
 
@@ -88,19 +106,18 @@ def main():
 			break
 
 		elif k == 81:  # Left Arrow
-			if threshold_value > 0:
-				threshold_value -= 1
+			if blur_size > 1:
+				blur_size -= 2
 				has_to_compute = True
 
 		elif k == 83:  # Right Arrow
-			if threshold_value < 255:
-				threshold_value += 1
+			if blur_size < 101:
+				blur_size += 2
 				has_to_compute = True
 
-	cv.destroyAllWindows()
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, sigint_handler)
-    parser = argparse.ArgumentParser(description="Image Segmentation main.py CLI")
+    parser = argparse.ArgumentParser(description="Gaussian Blur main.py CLI")
     parser.add_argument("img_path", type=str, help="image path to open")
     main()

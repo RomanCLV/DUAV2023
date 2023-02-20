@@ -22,8 +22,8 @@ double getTimeDiff(double time_ori)
     return 1000 * (getTime() - time_ori) / getTickFrequency();
 }
 
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv)
+{
     // Install a signal handler
     std::signal(SIGINT, signal_handler);
 
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
             cv::getWindowProperty(window1, WND_PROP_AUTOSIZE) == -1 ||
             cv::getWindowProperty(window2, WND_PROP_AUTOSIZE) == -1 ||
             cv::getWindowProperty(window3, WND_PROP_AUTOSIZE) == -1 ||
-            cv::getWindowProperty(window4, WND_PROP_AUTOSIZE) == -1)    // window is closed
+            cv::getWindowProperty(window4, WND_PROP_AUTOSIZE) == -1)        // window is closed
         {
             break;
         }

@@ -4,6 +4,7 @@ import sys
 import os
 import signal
 from time import time
+import numpy as np
 
 global has_to_break
 
@@ -18,7 +19,6 @@ def help():
     print("--- Function -------   --- KEY ---")
     print("")
     print("    Display duration       D")
-    print("    Grayscale              G")
     print("    Help                   H")
     print("    Pause                  SPACE BAR")
     print("    Quit                   ESC")
@@ -46,11 +46,27 @@ def main():
     images = []
     previous_frame = None
 
+    gray_image1 = None
+    gray_image2 = None
+    diff_image = None
+
     display = False
     pause = False
-    grayscale = False
     display_duration = False
     detection_enabled = True
+
+    # Pour la binarisation de l'image
+    threshold_image = None
+    threshold_value = 50   # seuil de binarisation
+
+    # Pour l'ouverture morphologique
+    result = None
+    kernel_size = 6
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+
+    window1 = "Current"
+    window2 = "Previous"
+    window3 = "Result"
 
     if args.display_duration or args.debug:
         display_duration = True
@@ -88,8 +104,8 @@ def main():
         frame_count = frame_to_take
         frame_wait_delay = int(1000 / fps)  # if fps = 30, delay = 33 ms
         print(f"fps: {fps}")
-        print(f"frame_to_take: {frame_to_take}")
-        print(f"frame_wait_delay: {frame_wait_delay} ms")
+        print(f"frame to take: {frame_to_take}")
+        print(f"frame wait delay: {frame_wait_delay} ms")
 
 
     RTH_PATH = "../automate/RTH"
@@ -98,10 +114,6 @@ def main():
 
     if os.path.exists(RTH_PATH):
         os.remove(RTH_PATH)
-
-    window1 = "Current"
-    window2 = "Previous"
-    window3 = "Result"
 
     print("press [H] to print the help")
     if display:
@@ -136,9 +148,6 @@ def main():
                     frame_count = 1
                     duration = time()
 
-                    if grayscale:
-                        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-
                     # TODO: blur frame ?
 
                     if display:
@@ -153,12 +162,16 @@ def main():
                         # check dimensions and depth
                         if frame.shape == previous_frame.shape and frame.dtype == previous_frame.dtype:
 
-                            result = cv.subtract(previous_frame, frame)
+                            gray_image1 = cv.cvtColor(previous_frame, cv.COLOR_BGR2GRAY)
+                            gray_image2 = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+                            diff_image = cv.absdiff(gray_image1, gray_image2)
+                            _, threshold_image = cv.threshold(diff_image, threshold_value, 255, cv.THRESH_BINARY)
+                            result = cv.morphologyEx(threshold_image, cv.MORPH_OPEN, kernel)
 
                             if display:
                                 cv.imshow(window3, result)
 
-                            # TODO: check if there is light pixel.. Mask ? form recognition ? inRange() ?
+                            # TODO: check if there is white ? shape recognition ?
                             something_detected = False
 
                             if something_detected:
@@ -204,9 +217,6 @@ def main():
 
         if k == 72 or k == 104:  # H | h
             help()
-
-        elif k == 71 or k == 103:  # G | g
-            grayscale = not grayscale
 
         elif k == 68 or k == 100:  # D | d
             display_duration = not display_duration
