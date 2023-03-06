@@ -16,12 +16,18 @@ def sigint_handler(signal, frame):
 
 def help():
     print("")
-    print("--- Function -------   --- KEY ---")
+    print("--- Function -------   --- KEY -----")
     print("")
+    print("    Clear detection        C")
+    print("    Decrease threshold     Left  Arrow")
+    print("    Decrease kernel size   Down  Arrow")
     print("    Display duration       D")
+    print("    Increase threshold     Right Arrow")
+    print("    Increase kernel size   Up    Arrow")
     print("    Help                   H")
     print("    Pause                  SPACE BAR")
     print("    Quit                   ESC")
+    print("    Reset config           R")
     print("")
     print("----------------------------------")
 
@@ -36,6 +42,7 @@ def main():
 
     cap = None
     k = 0
+    arrow_keys = [81, 82, 83, 84]
     duration = 0.0
 
     fps = 0
@@ -50,28 +57,41 @@ def main():
     gray_image2 = None
     diff_image = None
 
+    debug = False
     display = False
     pause = False
+    read_next_frame = True
     display_duration = False
     detection_enabled = True
+    clear_detection = False
+
+    # to display red rectangle
+    contours=[]
+    red = (0, 0, 255)
+    detect_min_area = 500
 
     # Pour la binarisation de l'image
     threshold_image = None
-    threshold_value = 50   # seuil de binarisation
+    threshold_value = 70   # seuil de binarisation
 
     # Pour l'ouverture morphologique
     result = None
     kernel_size = 6
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    mask = None
 
-    window1 = "Current"
-    window2 = "Previous"
-    window3 = "Result"
+    window_prev_frame = "Previous frame"
+    window_curr_frame = "Current frame"
+    window_mask = "Mask"
+    window_result = "Result"
 
-    if args.display_duration or args.debug:
+    if args.debug:
+        debug = True
+
+    if debug or args.display_duration:
         display_duration = True
 
-    if args.display or args.debug:
+    if debug or args.display:
         display = True
 
     if args.image:
@@ -80,7 +100,7 @@ def main():
             path = cv.samples.findFile(args.image[i])
             if not path:
                 sys.exit(f"Cannot find: {args.image[i]}")
-            images[i] = cv.imread(path, cv.IMREAD_UNCHANGED)
+            images[i] = cv.imread(path)
             if images[i] is None:
                 sys.exit(f"Could not read the image {path}")
 
@@ -98,30 +118,31 @@ def main():
     
     if cap is not None:
         fps = cap.get(cv.CAP_PROP_FPS)
-        # if fps = 30, so frame_to_take = 15, so we take a frame every 15 => (we take a frame every 0.5 sec)
-        frame_to_take = int(fps / 2)
+        # if fps = 60, so frame_to_take = 15, so we take a frame every 15 => (we take a frame every 0.25 sec)
+        frame_to_take = int(fps / 4)
         # not initialized to 1 to take a frame directly
         frame_count = frame_to_take
         frame_wait_delay = int(1000 / fps)  # if fps = 30, delay = 33 ms
         print(f"fps: {fps}")
-        print(f"frame to take: {frame_to_take}")
+        print(f"frame took every: {frame_to_take}")
         print(f"frame wait delay: {frame_wait_delay} ms")
 
 
     RTH_PATH = "../automate/RTH"
-    if True and (args.image or args.video):      # TODO: remove True
+    if debug or args.image or args.video:
         RTH_PATH = "./RTH"
 
     if os.path.exists(RTH_PATH):
         os.remove(RTH_PATH)
 
     print("press [H] to print the help")
+    print(f"\nthreshold: {threshold_value}\tkernel: {kernel_size}\n")
+
     if display:
-        cv.namedWindow(window1)
-        cv.namedWindow(window2)
-        cv.namedWindow(window3)
-    else:
-        cv.namedWindow("rtCam")
+        cv.namedWindow(window_prev_frame)
+        cv.namedWindow(window_curr_frame)
+        cv.namedWindow(window_mask)
+    cv.namedWindow(window_result)
     cv.waitKey(500)
 
     while True:
@@ -129,62 +150,103 @@ def main():
         if has_to_break:
             break
 
+        k = 0
+
         if pause:
             k = cv.waitKey(500) & 0xFF
-        else:
-            ret = False
-            frame = None
 
-            if images:
-                previous_frame = images[0]
-                frame = images[1]
-                ret = True
+        else:
+            duration = time()
+
+            if read_next_frame:
+                ret = False
+                frame = None
+
+                if images:
+                    previous_frame = images[0]
+                    frame = images[1]
+                    ret = True
+                else:
+                    ret, frame = cap.read()
             else:
-                ret, frame = cap.read()
+                read_next_frame = True
+                frame_count = frame_to_take
 
             if ret and frame is not None:
 
                 if frame_count >= frame_to_take:
                     frame_count = 1
-                    duration = time()
-
-                    # TODO: blur frame ?
-
-                    if display:
-                        cv.imshow(window1, frame)
 
                     # if we have a previous frame
                     if previous_frame is not None:
-
-                        if display:
-                            cv.imshow(window2, previous_frame)
 
                         # check dimensions and depth
                         if frame.shape == previous_frame.shape and frame.dtype == previous_frame.dtype:
 
                             gray_image1 = cv.cvtColor(previous_frame, cv.COLOR_BGR2GRAY)
                             gray_image2 = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+                            # gray_image1 = cv.GaussianBlur(gray_image1, (5, 5), 0)
+                            # gray_image2 = cv.GaussianBlur(gray_image2, (5, 5), 0)
                             diff_image = cv.absdiff(gray_image1, gray_image2)
+
+                            # way 1 : threshold, morpho
                             _, threshold_image = cv.threshold(diff_image, threshold_value, 255, cv.THRESH_BINARY)
-                            result = cv.morphologyEx(threshold_image, cv.MORPH_OPEN, kernel)
+                            mask = cv.morphologyEx(threshold_image, cv.MORPH_OPEN, kernel)
+                            
+                            # way 2 : Canny filter
+                            # mask = cv.Canny(diff_image, 100, 200)
+                           
+                            # Trouver tous les contours dans l'image
+                            contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
-                            if display:
-                                cv.imshow(window3, result)
+                            # Trouver le plus grand contour dans l'image
+                            maxArea = -1
+                            maxAreaId = -1
+                            for i in range(len(contours)):
+                                area = cv.contourArea(contours[i])
+                                #_, _, w, h = cv.boundingRect(contours[maxAreaId])
+                                #area = w * h
 
-                            # TODO: check if there is white ? shape recognition ?
+                                if debug:
+                                    print(f"area {i}: {area}")
+                                if area > maxArea:
+                                    maxArea = area
+                                    maxAreaId = i
+
+                            result = frame.copy()
                             something_detected = False
 
-                            if something_detected:
-                                # we don't change the "good" previous_frame until there is no more detected object
+                            # Dessiner un rectangle autour du plus grand contour
+                            if maxArea >= detect_min_area:
+                                x, y, w, h = cv.boundingRect(contours[maxAreaId])
+                                cv.rectangle(result, (x, y), (x+w, y+h), red, 2)
+                                something_detected = True
 
+                            if display:
+                                cv.imshow(window_prev_frame, previous_frame)
+                                cv.imshow(window_curr_frame, frame)
+                                cv.imshow(window_mask, mask)
+                                cv.imshow(window_result, result)
+                                if debug:
+                                    k = cv.waitKey(0) & 0xFF
+
+                            else:
+                                cv.imshow(window_result, result)
+
+                            if something_detected:
                                 # TODO: detection_enabled in rtCam or in automate.py ??
                                 if detection_enabled:
-                                    print("Object detected!")
+                                    # print("Object detected!")
                                     if not os.path.exists(RTH_PATH):
                                         f = open(RTH_PATH, "x")  # create RTH file
                                         f.close()
                             else:
-                                # replace last frame with the current
+                                if k not in arrow_keys:
+                                    previous_frame = frame
+
+                            if clear_detection:
+                                clear_detection = False
+                                print("detection cleared")
                                 previous_frame = frame
 
                             if display_duration:
@@ -195,14 +257,16 @@ def main():
                             print("frames haven't the same dimensions or depth!")
                             # replace last frame with the current
                             previous_frame = frame
+                        
                         if images:
-                            cv.waitKey(0)
-                            break
+                            k = cv.waitKey(0) & 0xFF
+
                     else:
                         # replace last frame with the current
                         previous_frame = frame
 
-                    k = cv.waitKey(1) & 0xFF
+                    if k == 0:
+                        k = cv.waitKey(1) & 0xFF
                 else:
                     frame_count += 1
                     k = cv.waitKey(frame_wait_delay) & 0xFF
@@ -215,17 +279,56 @@ def main():
         if has_to_break or k == 27:  # ESC
             break
 
-        if k == 72 or k == 104:  # H | h
+        if k == 72 or k == 104:     # H | h
             help()
 
-        elif k == 68 or k == 100:  # D | d
+        elif k == 68 or k == 100:   # D | d
             display_duration = not display_duration
+            print(f"display duration: {display_duration}\n")
 
-        elif k == 32:  # SPACE BAR
+        elif k == 67 or k == 99:   # C | c
+            clear_detection = True
+
+        elif k == 82 or k == 114:   # R | r
+            threshold_value = 70
+            kernel_size = 6
+            kernel = np.ones((kernel_size, kernel_size), np.uint8)
+            print(f"\nthreshold: {threshold_value}\tkernel: {kernel_size}\n")
+
+
+        elif k == 32:               # SPACE BAR
             pause = not pause
 
+        elif k == 81:  # Left Arrow
+            if threshold_value > 0:
+                threshold_value -= 1
+                print(f"\nthreshold: {threshold_value}\tkernel: {kernel_size}\n")
+                read_next_frame = False
+
+        elif k == 83:  # Right Arrow
+            if threshold_value < 255:
+                threshold_value += 1
+                print(f"\nthreshold: {threshold_value}\tkernel: {kernel_size}\n")
+                read_next_frame = False
+
+        elif k == 84:  # Down Arrow
+            if kernel_size > 1:
+                kernel_size -= 1
+                kernel = np.ones((kernel_size, kernel_size), np.uint8)
+                print(f"\nthreshold: {threshold_value}\tkernel: {kernel_size}\n")
+                read_next_frame = False
+
+        elif k == 82:  # Up Arrow
+            if kernel_size < 255:
+                kernel_size += 1
+                kernel = np.ones((kernel_size, kernel_size), np.uint8)
+                print(f"\nthreshold: {threshold_value}\tkernel: {kernel_size}\n")
+                read_next_frame = False
+
+        if images and read_next_frame:
+            break
+
     if cap:
-        print("Capture done")
         cap.release()
     cv.destroyAllWindows()
 
