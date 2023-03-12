@@ -1,6 +1,37 @@
 # DUAV2023
 
-## Install OpenCV on Linux
+## Clone the project
+
+If `git` is not installed:
+```
+sudo apt-get install git
+git --version
+```
+
+You can now clone the project:
+
+```
+git clone https://github.com/RomanCLV/DUAV2023.git
+cd ./DUAV2023/
+```
+
+---
+
+## Quick install
+
+It will execute all commands in the following manual installation guide (install opencv on Ubuntu, and required libraries for the python automate.py and rtCam.cpp)
+
+Run the `installer.sh`:
+
+```
+sudo bash installer.sh
+```
+
+Please have a look to the section `GPIO configuration`.
+
+---
+
+## Manually install OpenCV on Linux
 
 ### Installation
 
@@ -33,28 +64,13 @@ https://www.youtube.com/watch?v=rdBTLOx0gi4   (The guy follows the previous guid
 
 ---
 
-## Clone the project and configuration
-
-If `git` is not installed:
-```
-sudo apt-get install git
-git --version
-```
-
-You can now clone the project:
-
-```
-git clone https://github.com/RomanCLV/DUAV2023.git
-cd ./DUAV2023/
-```
-
 ## Python Automate
 
 Python3.7 (or >=)
 
 Module to control Servo: RPi.GPIO 0.7.1 
 
-`RPi.GPIO` requires to be root.
+`RPi.GPIO` requires to be root (use `sudo` to run the python scripts).
 
 ### Install Python librairies
 
@@ -77,7 +93,7 @@ https://pypi.org/project/RPi.GPIO/
 You can use execute the python script `./sources/automate/test_servo.py` to verify that the communication between the Raspberry and the Servo works.
 You have to specify the GPIOs used.
 
-Examples :
+Examples:
 
 ```
 python3 test_servo.py 32        // to use PIN 32 (GPIO 12)
@@ -134,7 +150,7 @@ You can now run the programm with
 ./main.out
 ```
 
-(Check the README.md of each file to know how to use it)
+(Check the README.md of each sample to know how to use it)
 
 ---
 
@@ -144,6 +160,17 @@ To check if the camera is well configured, you can build the `./sources/opencv-s
 If a window is opened with your camera stream inside, all is working.
 
 If it's not, read the `CameraError.md` and good luck :)
+
+You will also need the `libyaml-cpp-dev` package.
+
+Check if you have it:
+```
+dpkg -s libyaml-cpp-dev
+```
+If not, install it:
+```
+sudo apt-get install libyaml-cpp-dev
+```
 
 ---
 

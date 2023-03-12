@@ -49,6 +49,7 @@ global opened_date
 global closed_tank_position
 global opened_tank_position
 global logger
+global RTH_PATH
 
 
 def get_millis():
@@ -56,12 +57,14 @@ def get_millis():
 
 
 def rth_file_exists():
-    return os.path.exists("RTH")
+    global RTH_PATH
+    return os.path.exists(RTH_PATH)
 
 
 def remove_rth_file():
+    global RTH_PATH
     if rth_file_exists():
-        os.remove("RTH")
+        os.remove(RTH_PATH)
 
 
 def log(o):
@@ -80,6 +83,8 @@ def main():
     global opened_tank_position
     global opened_date
     global logger
+    global RTH_PATH
+
 
     request = STATE.INIT
     state = STATE.INIT
@@ -97,6 +102,16 @@ def main():
     logger = Logger()
 
     args = parser.parse_args()
+
+    RTH_PATH = args.rth_path
+    print(f"RTH path: {RTH_PATH}")
+
+    RTH_FOLDER = os.path.dirname(chemin_fichier)
+    if (not os.path.exists(RTH_FOLDER))
+    {
+        print(f"RTH folder not found: {RTH_FOLDER}")
+        exit(0)
+    }
 
     if args.gpio and len(args.gpio) > 0:
         for gpio in args.gpio:
@@ -290,5 +305,6 @@ def sigint_handler(signal, frame):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
     parser = argparse.ArgumentParser(description="automate.py CLI")
+    parser.add_argument("rth_path", type=str, help="set the RTH path.")
     parser.add_argument("gpio", type=int, nargs="+", help="set the servo GPIO PINs.")
     main()
