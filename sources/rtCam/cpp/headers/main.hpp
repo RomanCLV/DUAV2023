@@ -25,5 +25,6 @@ inline bool removeFile(const std::string& name);
 inline double getTime();
 inline double getTimeDiff(const double time_ori);
 inline unsigned int myWaitKey(unsigned int millis);
+void sysExitMessage();
 void parseArgs(int argc, char** argv, std::map<std::string, std::vector<std::string>>& args);
 int main(int argc, char** argv);

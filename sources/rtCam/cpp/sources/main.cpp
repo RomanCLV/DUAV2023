@@ -61,6 +61,17 @@ inline double getTimeDiff(const double time_ori)
     return std::round((getTime() - time_ori) / getTickFrequency() * 1000000.0) / 1000.0;
 }
 
+inline unsigned int myWaitKey(unsigned int millis)
+{
+    return cv::waitKeyEx(millis) & 0xFFFF;
+}
+
+void sysExitMessage()
+{
+    cout << "Press a key to close..." << endl;
+    cin.ignore();
+}
+
 void parseArgs(int argc, char** argv, std::map<std::string, std::vector<std::string>>& args) 
 {
     std::string currentOption;
@@ -79,11 +90,6 @@ void parseArgs(int argc, char** argv, std::map<std::string, std::vector<std::str
             args[currentOption].push_back(arg);
         }
     }
-}
-
-inline unsigned int myWaitKey(unsigned int millis)
-{
-    return cv::waitKeyEx(millis) & 0xFFFF;
 }
 
 int main(int argc, char** argv)
@@ -148,6 +154,7 @@ int main(int argc, char** argv)
     Config config;
     if (!config.read())
     {
+        sysExitMessage();
         return -1;
     }
 
@@ -171,6 +178,7 @@ int main(int argc, char** argv)
         if (args["i"].size() != 2)
         {
             cout << "Wrong usage of image option: -i img1 img2" << endl;
+            sysExitMessage();
             return -1;
         }
         for (int i = 0; i < 2; i++)
@@ -179,6 +187,7 @@ int main(int argc, char** argv)
             if ( !image.data )
             {
                 cout << "Could not read the image:" << args["i"][i] << endl;
+                sysExitMessage();
                 return 0;
             }
             images[i] = image;
@@ -190,12 +199,14 @@ int main(int argc, char** argv)
         if (args["v"].size() != 1)
         {
             cout << "Wrong usage of video option: -v vid" << endl;
+            sysExitMessage();
             return -1;
         }
         cap = new VideoCapture(args["v"][0]);
         if (!cap->isOpened())
         {
             cout << "Can't open video " << args["v"][0] << endl;
+            sysExitMessage();
             return 0;
         }
         videoMode = true;
@@ -208,6 +219,7 @@ int main(int argc, char** argv)
         if (!cap->isOpened()) 
         {
             cout << "Can not read the device" << endl;
+            sysExitMessage();
             return 0;
         }
     }
@@ -226,6 +238,7 @@ int main(int argc, char** argv)
     if (fileExists(RTH_PATH) && !removeFile(RTH_PATH))
     {
         cout << "Cannot remove " << RTH_PATH << " file." << endl;
+        sysExitMessage();
         return -1;
     }
 
@@ -370,12 +383,12 @@ int main(int argc, char** argv)
 
                             if (somethingDetected)
                             {
-                                // TODO: detectionEnabled in rtCam or in automate.py ??
                                 if (detectionEnabled)
                                 {
                                     //cout << "object detected!" << endl;
                                     if (!fileExists(RTH_PATH))
                                     {
+                                        // cout << "RTH file created" << endl;
                                         // create RTH file and close it
                                         ofstream file(RTH_PATH.c_str());
                                         file.close();

@@ -54,6 +54,12 @@ def waitKey(millis: int):
     return cv.waitKeyEx(millis) & 0xFFFF
 
 
+def sys_exit(message: str, exit_code=-1):
+    print(message)
+    input("press entre to close...")
+    sys.exit(exit_code)
+
+
 def main():
 
     global has_to_break
@@ -124,20 +130,20 @@ def main():
         for i in range(2):
             images[i] = cv.imread(args.image[i])
             if images[i] is None:
-                sys.exit(f"Could not read the image {args.image[i]}")
+                sys_exit(f"Could not read the image {args.image[i]}")
 
     elif args.video:
         print(f"Trying to open: {args.video}")
         cap = cv.VideoCapture(args.video)
         if not cap.isOpened():
             cap.release()
-            sys.exit("Can not read the video")
+            sys_exit("Can not read the video")
 
     else:
         print("Trying to open /dev/video0 with CAP_V4L2")
         cap = cv.VideoCapture(0, cv.CAP_V4L2)  # Add cv::CAP_V4L2 to fix: Embedded video playback halted; module v4l2src0 reported: Failed to allocate required memory.
         if not cap.isOpened():
-            sys.exit("Can not read the device")
+            sys_exit("Can not read the device")
     
     if cap is not None:
         fps = cap.get(cv.CAP_PROP_FPS)
@@ -428,4 +434,8 @@ if __name__ == '__main__':
     parser.add_argument("-dd", "--display_duration", action="store_true", help="display duration will be automatically enabled")
     parser.add_argument("-db", "--debug", action="store_true", help="shortcut to -d and -dd")
 
-    main()
+    try:
+        main()
+    except BaseException as e:
+        print(e.args[0])
+        input("press enter to close...")

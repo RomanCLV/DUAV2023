@@ -39,6 +39,8 @@ class Logger:
         print(f"{hour:02d}:{minute:02d}:{second:02d}.{milli:03d} : {o}")
 
 
+global run
+global RTH_PATH
 global request
 global state
 global start_time
@@ -49,7 +51,6 @@ global opened_date
 global closed_tank_position
 global opened_tank_position
 global logger
-global RTH_PATH
 
 
 def get_millis():
@@ -73,6 +74,8 @@ def log(o):
 
 
 def main():
+    global run
+    global RTH_PATH
     global request
     global state
     global start_time
@@ -83,8 +86,8 @@ def main():
     global opened_tank_position
     global opened_date
     global logger
-    global RTH_PATH
 
+    run = True
 
     request = STATE.INIT
     state = STATE.INIT
@@ -103,15 +106,9 @@ def main():
 
     args = parser.parse_args()
 
-    RTH_PATH = args.rth_path
-    print(f"RTH path: {RTH_PATH}")
+    print("current folder:", os.getcwd())
 
-    RTH_FOLDER = os.path.dirname(chemin_fichier)
-    if (not os.path.exists(RTH_FOLDER))
-    {
-        print(f"RTH folder not found: {RTH_FOLDER}")
-        exit(0)
-    }
+    RTH_PATH = "./RTH"
 
     if args.gpio and len(args.gpio) > 0:
         for gpio in args.gpio:
@@ -119,20 +116,24 @@ def main():
             servo.add_log_listener(logger)
             servos.append(servo)
     else:
-        print("Require at least one GPIO")
-        exit(0)
+        raise Exception("Require at least one GPIO")
 
     remove_rth_file()
     
-    while True:
+    while run:
         # read GPS signal
-        time.sleep(0.100)    # delete after
+        if run:
+            time.sleep(0.100)    # delete after
+        else:
+            break
+
         automate_request()
         automate_state()
         
-        if state == STATE.SHUTDOWN:
+        if not run or state == STATE.SHUTDOWN:
             break
-        
+    
+    close_all_servo()
     log("Automate exit")
 
 
@@ -202,9 +203,8 @@ def automate_state():
             try:
                 servo.start(closed_tank_position)
             except RuntimeError as err:
-                log(str(err))
                 close_all_servo()
-                exit(-1)
+                raise err                
 
         log("Automate initialized")
         request = STATE.EXPLORATION
@@ -298,13 +298,22 @@ def close_all_servo():
 
 
 def sigint_handler(signal, frame):
-    close_all_servo()
-    exit(0)
+    global run
+    run = False
 
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
     parser = argparse.ArgumentParser(description="automate.py CLI")
-    parser.add_argument("rth_path", type=str, help="set the RTH path.")
     parser.add_argument("gpio", type=int, nargs="+", help="set the servo GPIO PINs.")
-    main()
+    try:
+        main()
+    except SystemExit:
+        print("\nProcess finished")
+        input("Press a key to close...")
+        pass
+    except BaseException as e:
+        print("\nUnexpected error occured")
+        print(f"type: {type(e).__name__}")
+        print(f"message: {e.args[0]}")
+        input("Press a key to close...")
