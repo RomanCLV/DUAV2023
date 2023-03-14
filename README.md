@@ -174,7 +174,7 @@ sudo apt-get install libyaml-cpp-dev
 
 ---
 
-## Ready to run
+## Ready to run (with sudo)
 
 Now go back to the DUAV2023 folder and use:
 
@@ -182,13 +182,13 @@ Now go back to the DUAV2023 folder and use:
 chmod 755 run.sh
 ```
 
-You can modify `run.sh` to change your GPIO (line 15) to suit your use.
+You can modify `run.sh` to change your GPIO (line 34) to suit your use.
 
 Launch the script with 
 ```
-bash run.sh
+sudo bash run.sh
 ```
 or
 ```
-run.sh
+sudo run.sh
 ```
