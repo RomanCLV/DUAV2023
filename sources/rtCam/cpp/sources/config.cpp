@@ -354,8 +354,8 @@ bool Config::read()
 	    	YAML::Node configNode = getValueFromYamlNode<YAML::Node>(root, "config");
 	    	YAML::Node colorNode = getValueFromYamlNode<YAML::Node>(configNode, "rectangle color");
 
-	    	setDisplayOptionalWindows(getValueFromYamlNode<bool>(configNode, "display duration"));
-	    	setDisplayDuration(getValueFromYamlNode<bool>(configNode, "display optional windows"));
+	    	setDisplayDuration(getValueFromYamlNode<bool>(configNode, "display duration"));
+	    	setDisplayOptionalWindows(getValueFromYamlNode<bool>(configNode, "display optional windows"));
 	    	// read after because debug changes previous parameters
 	    	setDebug(getValueFromYamlNode<bool>(configNode, "debug"));
 

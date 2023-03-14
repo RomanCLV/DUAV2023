@@ -54,6 +54,13 @@ def waitKey(millis: int):
     return cv.waitKeyEx(millis) & 0xFFFF
 
 
+def getTimeDiff(timeStart: float):
+    return 1000 * (time() - timeStart)
+
+
+def round3(value: float):
+    return round(value * 1000) / 1000.0;
+
 def sys_exit(message: str, exit_code=-1):
     print(message)
     input("press entre to close...")
@@ -73,6 +80,8 @@ def main():
     RTH_PATH = "./RTH"
     selected_option = Option.none
     duration = 0.0
+    duration_average = 0.0
+    duration_average_count = 0
 
     fps = 0
     frame_to_take = 0
@@ -254,9 +263,12 @@ def main():
                                 cv.rectangle(result, (x, y), (x+w, y+h), config.get_rectangle_color(), 2)
                                 something_detected = True
 
+                            duration = getTimeDiff(duration)
+                            duration_average = ((duration_average * duration_average_count) + duration) / (duration_average_count + 1)
+                            duration_average_count += 1
+
                             if config.get_display_duration():
-                                duration = 1000 * (time() - duration)
-                                print(f"{round(duration * 1000) / 1000} ms")
+                                print(f"{round3(duration)} ms")
 
                             if display:
                                 cv.imshow(window_prev_frame, previous_frame)
@@ -416,6 +428,8 @@ def main():
 
         if images and read_next_frame:
             break
+
+    print(f"Average duration: {duration_average} ms ({duration_average_count} samples)")
 
     if cap:
         cap.release()

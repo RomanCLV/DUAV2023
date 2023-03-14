@@ -56,9 +56,14 @@ inline double getTime()
     return (double)getTickCount();
 }
 
-inline double getTimeDiff(const double time_ori)
+inline double getTimeDiff(const double timeStart)
 {
-    return std::round((getTime() - time_ori) / getTickFrequency() * 1000000.0) / 1000.0;
+    return (getTime() - timeStart) / getTickFrequency() * 1000.0;
+}
+
+inline double round3(double value)
+{
+    return std::round(value * 1000.0) / 1000.0;
 }
 
 inline unsigned int myWaitKey(unsigned int millis)
@@ -106,6 +111,8 @@ int main(int argc, char** argv)
     const string RTH_PATH = "./RTH";
     Option selectedOption = Option::None;
     double duration = 0.0;
+    double durationAverage = 0.0;
+    unsigned int durationAverageCount = 0;
 
     double fps = 0.0;
     unsigned int frameToTake = 0;
@@ -360,9 +367,13 @@ int main(int argc, char** argv)
                                 somethingDetected = true;
                             }
 
+                            duration = getTimeDiff(duration);
+                            durationAverage = ((durationAverage * durationAverageCount) + duration) / (double)(durationAverageCount + 1);
+                            durationAverageCount++;
+
                             if (config.getDisplayDuration())
                             {
-                                cout << getTimeDiff(duration) << " ms" << endl;
+                                cout << round3(duration) << " ms" << endl;
                             }
 
                             if (display)
@@ -616,6 +627,8 @@ int main(int argc, char** argv)
             break;
         }
     }
+
+    cout << "\nAverage duration: " << round3(durationAverage) << " ms (" << durationAverageCount << " samples)" << endl;
 
     if (cap != nullptr)
     {
