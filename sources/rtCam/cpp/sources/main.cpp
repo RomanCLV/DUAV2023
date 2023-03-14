@@ -120,13 +120,15 @@ int main(int argc, char** argv)
     unsigned int frameWaitDelay = 0;
 
     Mat images[2];
+    
     Mat frame;
     Mat previousFrame;
 
-    Mat grayImage1;
-    Mat grayImage2;
-    Mat gaussianImage1;
-    Mat gaussianImage2;
+    Mat grayImage;
+
+    Mat gaussianImage;
+    Mat previousGaussianImage;
+
     Mat diffImage;
 
     bool debug = false;
@@ -319,19 +321,19 @@ int main(int argc, char** argv)
                             frame.cols == previousFrame.cols && 
                             frame.depth() == previousFrame.depth())
                         {
-                            cvtColor(previousFrame, grayImage1, COLOR_BGR2GRAY);
-                            cvtColor(frame, grayImage2, COLOR_BGR2GRAY);
                             if (config.getGaussianBlur() == 0)
                             {
-                                absdiff(grayImage1, grayImage2, diffImage);
+                                // convert a gray frame direclty into the gaussian frame
+                                cvtColor(frame, gaussianImage, COLOR_BGR2GRAY);
                             }
                             else
                             {
-                                cv::GaussianBlur(grayImage1, gaussianImage1, config.getGaussianKernel(), 0);
-                                cv::GaussianBlur(grayImage2, gaussianImage2, config.getGaussianKernel(), 0);
-                                absdiff(gaussianImage1, gaussianImage2, diffImage);
+                                // convert frame into gray and then apply a gauss filter
+                                cvtColor(frame, grayImage, COLOR_BGR2GRAY);
+                                cv::GaussianBlur(grayImage, gaussianImage, config.getGaussianKernel(), 0);
                             }
-                                
+
+                            absdiff(previousGaussianImage, gaussianImage, diffImage);
                             threshold(diffImage, thresholdImage, config.getThreshold(), 255, THRESH_BINARY);
                             morphologyEx(thresholdImage, mask, MORPH_OPEN, config.getKernel());
 
@@ -411,6 +413,7 @@ int main(int argc, char** argv)
                                 if (!configChanged)
                                 {
                                     frame.copyTo(previousFrame);
+                                    gaussianImage.copyTo(previousGaussianImage);
                                 }
                             }
 
@@ -419,12 +422,14 @@ int main(int argc, char** argv)
                                 clearDetection = false;
                                 cout << "detection cleared" << endl;
                                 frame.copyTo(previousFrame);
+                                gaussianImage.copyTo(previousGaussianImage);
                             }
                         }
                         else
                         {
                             cout << "frames haven't the same dimensions or depth!" << endl;
                             frame.copyTo(previousFrame);
+                            gaussianImage.copyTo(previousGaussianImage);
                         }
 
                         if (imageMode)
@@ -435,6 +440,7 @@ int main(int argc, char** argv)
                     else
                     {
                         frame.copyTo(previousFrame);
+                        cvtColor(frame, previousGaussianImage, COLOR_BGR2GRAY);
                     }
 
                     if (k == 0)

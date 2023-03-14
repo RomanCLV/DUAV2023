@@ -89,12 +89,13 @@ def main():
     frame_wait_delay = 0
 
     images = []
+
     previous_frame = None
 
-    gray_image1 = None
-    gray_image2 = None
-    gaussian_image1 = None
-    gaussian_image2 = None
+    gray_image = None
+    gaussian_image = None
+    previous_gaussian_image = None
+
     diff_image = None
 
     pause = False
@@ -225,14 +226,15 @@ def main():
                         # check dimensions and depth
                         if frame.shape == previous_frame.shape and frame.dtype == previous_frame.dtype:
 
-                            gray_image1 = cv.cvtColor(previous_frame, cv.COLOR_BGR2GRAY)
-                            gray_image2 = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
                             if config.get_gaussian_blur() == 0:
-                                diff_image = cv.absdiff(gray_image1, gray_image2)
+                                # convert a gray frame direclty into the gaussian frame
+                                gaussian_image = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
                             else:
-                                gaussian_image1 = cv.GaussianBlur(gray_image1, config.get_gaussian_kernel(), 0)
-                                gaussian_image2 = cv.GaussianBlur(gray_image2, config.get_gaussian_kernel(), 0)
-                                diff_image = cv.absdiff(gaussian_image1, gaussian_image2)
+                                # convert frame into gray and then apply a gauss filter
+                                gray_image = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+                                gaussian_image = cv.GaussianBlur(gray_image, config.get_gaussian_kernel(), 0)
+
+                            diff_image = cv.absdiff(previous_gaussian_image, gaussian_image)
 
                             _, threshold_image = cv.threshold(diff_image, config.get_threshold(), 255, cv.THRESH_BINARY)
                             mask = cv.morphologyEx(threshold_image, cv.MORPH_OPEN, config.get_kernel())
@@ -291,24 +293,28 @@ def main():
                                             pass
                             else:
                                 if not config_changed:
-                                    previous_frame = frame
+                                    previous_frame = frame.copy()
+                                    previous_gaussian_image = gaussian_image.copy()
 
                             if clear_detection:
                                 clear_detection = False
                                 print("detection cleared")
-                                previous_frame = frame
+                                previous_frame = frame.copy()
+                                previous_gaussian_image = gaussian_image.copy()
 
                         else:
                             print("frames haven't the same dimensions or depth!")
                             # replace last frame with the current
-                            previous_frame = frame
+                            previous_frame = frame.copy()
+                            previous_gaussian_image = gaussian_image.copy()
                         
                         if images:
                             k = waitKey(0)
 
                     else:
                         # replace last frame with the current
-                        previous_frame = frame
+                        previous_frame = frame.copy()
+                        previous_gaussian_image = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
                     if k == 0:
                         k = waitKey(1)
@@ -429,7 +435,7 @@ def main():
         if images and read_next_frame:
             break
 
-    print(f"Average duration: {duration_average} ms ({duration_average_count} samples)")
+    print(f"Average duration: {round3(duration_average)} ms ({duration_average_count} samples)")
 
     if cap:
         cap.release()

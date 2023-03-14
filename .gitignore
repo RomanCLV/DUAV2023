@@ -6,6 +6,7 @@ __pycache__/
 *$py.class
 
 config.yaml
+RTH
 
 # C extensions
 *.so
