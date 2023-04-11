@@ -13,9 +13,8 @@ It's a secure communication protocol that allows a user to connect a remote comp
 
 In both case, both devices must be connected to a network, the easiest way to connect your devices are to be connect on the same network (even you can do without).
 
-Moreover, when your Raspberry will be in the drone, it will can not connect itself to a network.
-
 That's why enable an Access Point is interresting. The Raspberry Pi will generate its own network, and your desktop will connect to this network.
+You can also enable an AccessPoint from your computer and connect the Raspberry to this network.
 
 ---
 
