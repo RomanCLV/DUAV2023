@@ -45,4 +45,8 @@ echo apt-get install libyaml-cpp-dev
 sudo apt-get install libyaml-cpp-dev
 echo " "
 
+echo apt install net-tools
+sudo apt install net-tools
+echo " "
+
 echo done
