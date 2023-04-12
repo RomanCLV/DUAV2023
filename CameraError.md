@@ -12,7 +12,7 @@ sudo raspi-config
 ```
 If `raspi-config` is not a command, install it:
 ```
-sudo apt install raspi-config
+sudo apt-get install raspi-config
 ```
 Then: `raspi-config > Interface Options > Legacy Camera`
 
