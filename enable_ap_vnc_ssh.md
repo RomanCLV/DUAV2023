@@ -20,16 +20,19 @@ You can also enable an AccessPoint from your computer and connect the Raspberry 
 
 ## Configure your Raspberry Pi as an AccessPoint
 
+You can turn on an AccessPoint by turning on the Wi-Fi Hostpot Active. Define a network name and a password.
+Now you will be able to connect a desktop, a phone, ... to this access point.
+Now, your devices are on the same network.
+
+Warning: This method does not activate the Access Point automatically at startup. If you want the access point to be done automatically (highly recommended in our application), you have to do this:
+
 ---
 
-## VNC Viewer
-Install VNC Viewer server side on your Raspberry Pi.
-Install VNC Viewer client side on your desktop.
-Watch a video how to connect your both device.
+## Enable SSH on your Raspberry Pi
 
----
-
-## How to manage SSH on your Raspberry Pi
+```
+sudo apt install net-tools ssh openssh-server
+```
 
 Open the configuration Tool with:
 ```
@@ -40,11 +43,29 @@ Move to > `Interface Options` > `SSH` > `Yes`
 
 SSH is now enabled on your device.
 
+To activate the services:
+```
+sudo service ssh restart
+sudo service sshd restart
+```
 
 To identify your local ip address, type: `ifconfig` and look at the `wlan0` tag. The IP starting with `192.168.X.X` is your local IP.
 
-To use `ifconfig`, install `net-tools` using:
+To check if the SSH is working, you can connect to yourself with:
+```
+ssh <username_rasp>@localhost
+```
+It will ask you the password associate to this user.
 
+If the remote desktop is connected to the same netword, it can access to the Raspberry Pi by using:
 ```
-sudo apt install net-tools
+ssh <username_rasp>@<ip_address_rasp>
 ```
+It will ask you the password associate to this user.
+
+---
+
+## VNC Viewer
+Install VNC Viewer server side on your Raspberry Pi.
+Install VNC Viewer client side on your desktop.
+Watch a video how to connect your both device.
