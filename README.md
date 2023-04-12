@@ -17,14 +17,14 @@ cd ./DUAV2023/
 
 ---
 
-## Quick install
+## Quick install for Ubuntu
 
-It will execute all commands in the following manual installation guide (install opencv on Ubuntu, and required libraries for the python automate.py and rtCam.cpp)
+It will execute all commands in the following manual installation guide (install opencv for Ubuntu, required libraries for the python automate.py and rtCam.cpp, and also required package like git, pip, ssh-server, ...)
 
-Run the `installer.sh`:
+Run the `ubuntu_installer.sh`:
 
 ```
-sudo bash installer.sh
+sudo bash ubuntu_installer.sh
 ```
 
 Please have a look to the section `GPIO configuration`.
