@@ -7,6 +7,7 @@ __pycache__/
 
 config.yaml
 RTH
+**/*/output_videos/
 
 # C extensions
 *.so

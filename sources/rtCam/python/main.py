@@ -4,6 +4,7 @@ import sys
 import os
 import signal
 from time import time
+from datetime import datetime
 import numpy as np
 from config import Config
 from enum import Enum
@@ -61,10 +62,16 @@ def getTimeDiff(timeStart: float):
 def round3(value: float):
     return round(value * 1000) / 1000.0;
 
+
 def sys_exit(message: str, exit_code=-1):
     print(message)
     input("press entre to close...")
     sys.exit(exit_code)
+
+
+def create_folder_if_not_exists(folder_name: str):
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
 
 
 def main():
@@ -76,6 +83,10 @@ def main():
     args = parser.parse_args()
 
     cap = None
+    video_mask = None
+    video_result = None
+    video_detection = None
+
     k = 0
     RTH_PATH = "./RTH"
     selected_option = Option.none
@@ -100,7 +111,6 @@ def main():
 
     pause = False
     read_next_frame = True
-    detection_enabled = True
     something_detected = False
     clear_detection = False
     config_changed = False
@@ -129,11 +139,20 @@ def main():
     if args.display_duration:
         config.set_display_duration(True)
 
-    if args.display:
+    if args.display_opt_windows:
         config.set_display_optional_windows(True)
 
+    if args.save_detection:
+        config.set_save_detection(True)
+
+    if args.save_result:
+        config.set_save_result(True)
+
+    if args.save_mask:
+        config.set_save_mask(True)
+
     debug = config.get_debug()
-    display = config.get_display_optional_windows()
+    display_windows = config.get_display_optional_windows()
 
     if args.image:
         images = [None, None]
@@ -156,28 +175,49 @@ def main():
             sys_exit("Can not read the device")
     
     if cap is not None:
+        frame_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
         fps = cap.get(cv.CAP_PROP_FPS)
         # if fps = 60, so frame_to_take = 15, so we take a frame every 15 => (we take a frame every 0.25 sec)
         frame_to_take = int(fps / 4)
         # not initialized to 1 to take a frame directly
         frame_count = frame_to_take
         frame_wait_delay = int(1000 / fps)  # if fps = 30, delay = 33 ms
+
         print(f"fps: {fps}")
         print(f"frame took every: {frame_to_take}")
         print(f"frame wait delay: {frame_wait_delay} ms")
+
+        date = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        output_videos_folder = "output_videos"
+        if config.get_save_detection():
+            create_folder_if_not_exists(output_videos_folder)
+            video_detection = cv.VideoWriter(f"{output_videos_folder}/{date}_output_detection.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
+
+        if config.get_save_mask():
+            create_folder_if_not_exists(output_videos_folder)
+            video_mask = cv.VideoWriter(f"{output_videos_folder}/{date}_output_mask.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
+
+        if config.get_save_result():
+            create_folder_if_not_exists(output_videos_folder)
+            video_result = cv.VideoWriter(f"{output_videos_folder}/{date}_output_result.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
+
 
     if os.path.exists(RTH_PATH):
         os.remove(RTH_PATH)
 
     print("\nconfig:")
     print(f"debug: {debug}")
-    print(f"display optional windows: {display}")
+    print(f"display optional windows: {display_windows}")
     print(f"display duration: {config.get_display_duration()}")
+    print(f"save detection: {config.get_save_detection()}")
+    print(f"save result: {config.get_save_result()}")
+    print(f"save mask: {config.get_save_mask()}")
     config.display(sep='\n', start='')
 
     print("press [H] to print the help")
 
-    if display:
+    if display_windows:
         cv.namedWindow(window_prev_frame)
         cv.namedWindow(window_curr_frame)
         cv.namedWindow(window_mask)
@@ -264,6 +304,8 @@ def main():
                                 x, y, w, h = cv.boundingRect(contours[max_area_id])
                                 cv.rectangle(result, (x, y), (x+w, y+h), config.get_rectangle_color(), 2)
                                 something_detected = True
+                                if config.get_save_detection():
+                                    video_detection.write(result)
 
                             duration = getTimeDiff(duration)
                             duration_average = ((duration_average * duration_average_count) + duration) / (duration_average_count + 1)
@@ -272,7 +314,7 @@ def main():
                             if config.get_display_duration():
                                 print(f"{round3(duration)} ms")
 
-                            if display:
+                            if display_windows:
                                 cv.imshow(window_prev_frame, previous_frame)
                                 cv.imshow(window_curr_frame, frame)
                                 cv.imshow(window_mask, mask)
@@ -283,14 +325,18 @@ def main():
                             else:
                                 cv.imshow(window_result, result)
 
+                            if config.get_save_result():
+                                video_result.write(result)
+
+                            if config.get_save_mask():
+                                video_mask.write(cv.cvtColor(mask, cv.COLOR_GRAY2BGR))
+
                             if something_detected:
-                                # TODO: detection_enabled in rtCam or in automate.py ??
-                                if detection_enabled:
-                                    # print("object detected!")
-                                    if not os.path.exists(RTH_PATH):
-                                        # create RTH file and close it automatically
-                                        with open(RTH_PATH, 'x') as f:
-                                            pass
+                                # print("object detected!")
+                                if not os.path.exists(RTH_PATH):
+                                    # create RTH file and close it automatically
+                                    with open(RTH_PATH, 'x') as f:
+                                        pass
                             else:
                                 if not config_changed:
                                     previous_frame = frame.copy()
@@ -439,6 +485,16 @@ def main():
 
     if cap:
         cap.release()
+
+    if video_detection:
+        video_detection.release()
+
+    if video_mask:
+        video_mask.release()
+
+    if video_result:
+        video_result.release()
+
     cv.destroyAllWindows()
 
     if os.path.exists(RTH_PATH):
@@ -450,9 +506,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="RealTime Camera main.py CLI")
     parser.add_argument("-i", "--image", type=str, nargs=2, help="process with two given images")
     parser.add_argument("-v", "--video", type=str, help="process with a given video")
-    parser.add_argument("-d", "--display", action="store_true", help="enable views. Takes resources! Not recommanded in production")
+    parser.add_argument("-dw", "--display_opt_windows", action="store_true", help="enable views. Takes resources! Not recommanded in production")
     parser.add_argument("-dd", "--display_duration", action="store_true", help="display duration will be automatically enabled")
     parser.add_argument("-db", "--debug", action="store_true", help="shortcut to -d and -dd")
+    parser.add_argument("-sd", "--save_detection", action="store_true", help="save detected objects into a video file")
+    parser.add_argument("-sr", "--save_result", action="store_true", help="save the resulting frames into a video file")
+    parser.add_argument("-sm", "--save_mask", action="store_true", help="save the mask frames into a video file")
 
     try:
         main()

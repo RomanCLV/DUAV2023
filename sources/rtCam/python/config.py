@@ -9,6 +9,9 @@ class Config(object):
 		self._debug = False
 		self._display_optional_windows = False
 		self._display_duration = False
+		self._save_detection = False
+		self._save_result = False
+		self._save_mask = False
 		self._detection_area = 500
 		self._gaussian_blur = 0
 		self._compute_gaussian_kernel()
@@ -46,6 +49,30 @@ class Config(object):
 
 	def inverse_display_duration(self):
 		self.set_display_duration(not self._display_duration)
+
+	def get_save_detection(self):
+		return self._save_detection
+
+	def set_save_detection(self, value : bool):
+		if not isinstance(value, bool):
+			raise ValueError(f"value must be a boolean. Given: {value}")
+		self._save_detection = value
+
+	def get_save_result(self):
+		return self._save_result
+
+	def set_save_result(self, value : bool):
+		if not isinstance(value, bool):
+			raise ValueError(f"value must be a boolean. Given: {value}")
+		self._save_result = value
+
+	def get_save_mask(self):
+		return self._save_mask
+
+	def set_save_mask(self, value : bool):
+		if not isinstance(value, bool):
+			raise ValueError(f"value must be a boolean. Given: {value}")
+		self._save_mask = value
 
 	def get_detection_area(self):
 		return self._detection_area
@@ -201,20 +228,22 @@ class Config(object):
 
 	def save(self):
 		config = {
-			"config": 
-			{
+			"config": {
 				"debug": self._debug,
 				"display optional windows": self._display_optional_windows,
-			       "display duration": self._display_duration,
-			       "detection area": self._detection_area,
+			    "display duration": self._display_duration,
+			    "save detection": self._save_detection,
+			    "save result": self._save_result,
+			    "save mask": self._save_mask,
+			    "detection area": self._detection_area,
 				"gaussian blur": self._gaussian_blur,
-			       "threshold" : self._threshold,
-			       "kernel size": self._kernel_size,
-			       "rectangle color": {
-			       	"blue": self._rect_color[0],
+			    "threshold" : self._threshold,
+			    "kernel size": self._kernel_size,
+			    "rectangle color": {
+			    	"blue": self._rect_color[0],
 			       	"green": self._rect_color[1],
 			       	"red": self._rect_color[2]
-			       }
+			    }
 			}
 		}
 		with open("config.yaml", 'w') as yamlfile:
@@ -230,8 +259,11 @@ class Config(object):
 					color = config["rectangle color"]
 					self.set_display_optional_windows(config["display optional windows"])
 					self.set_display_duration(config["display duration"])
-					# read after because debug changes previous parameters
+					# read debug after because debug can change previous parameters (display optional windows, display duration)
 					self.set_debug(config["debug"])
+					self.set_save_detection(config["save detection"])
+					self.set_save_result(config["save result"])
+					self.set_save_mask(config["save mask"])
 					self._set_detection_area(config["detection area"])
 					self._set_gaussian_blur(config["gaussian blur"])
 					self._set_threshold(config["threshold"])
@@ -256,6 +288,9 @@ class Config(object):
 		self.set_debug(False)
 		self.set_display_optional_windows(False)
 		self.set_display_duration(False)
+		self._set_save_detection(False)
+		self._set_save_result(False)
+		self._set_save_mask(False)
 		self._set_detection_area(500)
 		self._set_gaussian_blur(0)
 		self._set_threshold(70)

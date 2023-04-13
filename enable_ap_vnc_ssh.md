@@ -24,7 +24,17 @@ You can turn on an AccessPoint by turning on the Wi-Fi Hostpot Active. Define a 
 Now you will be able to connect a desktop, a phone, ... to this access point.
 Now, your devices are on the same network.
 
-Warning: This method does not activate the Access Point automatically at startup. If you want the access point to be done automatically (highly recommended in our application), you have to do this:
+Warning: This method does not activate the Access Point automatically at startup. 
+
+If you want the access point to be done automatically (highly recommended in our application), you have to do this:
+```
+nmcli con show
+```
+If your AccessPoint is called Hostpot (default name on Ubuntu), you should see it in the list.
+To turn on it automatically:
+```
+nmcli con mod <connection-name> connection.autoconnect yes
+```
 
 ---
 
@@ -41,12 +51,9 @@ sudo raspi-config
 
 Move to > `Interface Options` > `SSH` > `Yes`
 
-SSH is now enabled on your device.
-
-To activate the services:
+SSH is now enabled on your device. Reboot the Raspberry Pi:
 ```
-sudo service ssh restart
-sudo service sshd restart
+reboot
 ```
 
 To identify your local ip address, type: `ifconfig` and look at the `wlan0` tag. The IP starting with `192.168.X.X` is your local IP.
@@ -61,7 +68,9 @@ If the remote desktop is connected to the same netword, it can access to the Ras
 ```
 ssh <username_rasp>@<ip_address_rasp>
 ```
+The first time, you will have to say that `yes` you want to connect.
 It will ask you the password associate to this user.
+To exit, type `exit` or `logout`.
 
 ---
 
