@@ -50,6 +50,14 @@ class Config
 		void setDisplayOptionalWindows(const bool value);
 		bool getDisplayDuration() const;
 		void setDisplayDuration(const bool value);
+		bool getSaveDetection() const;
+		void setSaveDetection(const bool value);
+		bool getSaveResultWithoutDetection() const;
+		void setSaveResultWithoutDetection(const bool value);
+		bool getSaveResult() const;
+		void setSaveResult(const bool value);
+		bool getSaveMask() const;
+		void setSaveMask(const bool value);
 		unsigned int getDetectionArea() const;
 		unsigned int getGaussianBlur() const;
 		cv::Size getGaussianKernel() const;
@@ -96,6 +104,10 @@ class Config
     	bool m_debug;
     	bool m_displayDuration;
     	bool m_displayOptionalWindows;
+    	bool m_saveDetection;
+    	bool m_saveResultWithoutDetection;
+    	bool m_saveResult;
+    	bool m_saveMask;
     	unsigned int m_detectionArea;
     	unsigned int m_gaussianBlur;
     	cv::Size m_gaussianKernel;

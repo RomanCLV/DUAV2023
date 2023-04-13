@@ -7,6 +7,10 @@ Config::Config() :
 	m_debug(false),
     m_displayOptionalWindows(false),
     m_displayDuration(false),
+    m_saveDetection(false),
+    m_saveResultWithoutDetection(false),
+    m_saveResult(false),
+    m_saveMask(false),
     m_detectionArea(500),
     m_gaussianBlur(0),
     m_threshold(70),
@@ -55,6 +59,46 @@ bool Config::getDisplayDuration() const
 void Config::setDisplayDuration(const bool value)
 {
 	m_displayDuration = value;
+}
+
+bool Config::getSaveDetection() const
+{
+	return m_saveDetection;
+}
+
+void Config::setSaveDetection(const bool value)
+{
+	m_saveDetection = value;
+}
+
+bool Config::getSaveResultWithoutDetection() const
+{
+	return m_saveResultWithoutDetection;
+}
+
+void Config::setSaveResultWithoutDetection(const bool value)
+{
+	m_saveResultWithoutDetection = value;	
+}
+
+bool Config::getSaveResult() const
+{
+	return m_saveResult;
+}
+
+void Config::setSaveResult(const bool value)
+{
+	m_saveResult = value;
+}
+
+bool Config::getSaveMask() const
+{
+	return m_saveMask;
+}
+
+void Config::setSaveMask(const bool value)
+{
+	m_saveMask = value;
 }
 
 unsigned int Config::getDetectionArea() const
@@ -314,6 +358,10 @@ void Config::save() const
     emitter << YAML::Key << "detection area" << YAML::Value << m_detectionArea;
     emitter << YAML::Key << "display duration" << YAML::Value << m_displayDuration;
     emitter << YAML::Key << "display optional windows" << YAML::Value << m_displayOptionalWindows;
+    emitter << YAML::Key << "save detection" << YAML::Value << m_saveDetection;
+    emitter << YAML::Key << "save result without detection" << YAML::Value << m_saveResultWithoutDetection;
+    emitter << YAML::Key << "save result" << YAML::Value << m_saveResult;
+    emitter << YAML::Key << "save mask" << YAML::Value << m_saveMask;
     emitter << YAML::Key << "gaussian blur" << YAML::Value << m_gaussianBlur;
     emitter << YAML::Key << "kernel size" << YAML::Value << m_kernelSize;
     emitter << YAML::Key << "rectangle color" << YAML::Value;
@@ -356,8 +404,12 @@ bool Config::read()
 
 	    	setDisplayDuration(getValueFromYamlNode<bool>(configNode, "display duration"));
 	    	setDisplayOptionalWindows(getValueFromYamlNode<bool>(configNode, "display optional windows"));
-	    	// read after because debug changes previous parameters
+			// read debug after because debug can change previous parameters (display optional windows, display duration)
 	    	setDebug(getValueFromYamlNode<bool>(configNode, "debug"));
+	    	setSaveDetection(getValueFromYamlNode<bool>(configNode, "save detection"));
+	    	setSaveResultWithoutDetection(getValueFromYamlNode<bool>(configNode, "save result without detection"));
+	    	setSaveResult(getValueFromYamlNode<bool>(configNode, "save result"));
+	    	setSaveMask(getValueFromYamlNode<bool>(configNode, "save mask"));
 
 	    	setDetectionArea(getValueFromYamlNode<unsigned int>(configNode, "detection area"));
 	    	setGaussianBlur(getValueFromYamlNode<unsigned int>(configNode, "gaussian blur"));
@@ -408,6 +460,10 @@ void Config::reset()
 	setDebug(false);
     setDisplayOptionalWindows(false);
     setDisplayDuration(false);
+    setSaveDetection(false);
+    setSaveResultWithoutDetection(false);
+    setSaveResult(false);
+    setSaveMask(false);
     setDetectionArea(500);
     setGaussianBlur(0);
     setThreshold(70);

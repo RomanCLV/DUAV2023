@@ -51,6 +51,15 @@ inline bool removeFile(const string& name)
     return false;
 }
 
+void createDirIfNotExists(const char* folderName)
+{
+    struct stat st = { 0 };
+    if (stat(folderName, &st) == -1) 
+    {
+        mkdir(folderName, 0700);
+    }
+}
+
 inline double getTime()
 {
     return (double)getTickCount();
@@ -69,6 +78,22 @@ inline double round3(double value)
 inline unsigned int myWaitKey(unsigned int millis)
 {
     return cv::waitKeyEx(millis) & 0xFFFF;
+}
+
+std::string concatenateFolderNameWithDate(const char* folderName, const char* endName) 
+{
+    // Obtenir la date et l'heure actuelles
+    auto now = std::chrono::system_clock::now();
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+    // Convertir la date et l'heure actuelles en chaîne de caractères
+    char dateTimeString[20];
+    std::strftime(dateTimeString, sizeof(dateTimeString), "%Y_%m_%d_%H_%M_%S", std::localtime(&currentTime));
+
+    // Concaténer le nom de dossier avec la date et l'heure actuelles et le nom de fichier
+    std::ostringstream oss;
+    oss << folderName << "/" << dateTimeString << endName;
+    return oss.str();
 }
 
 void sysExitMessage()
@@ -106,6 +131,10 @@ int main(int argc, char** argv)
     parseArgs(argc, argv, args);
 
     VideoCapture* cap(nullptr);
+    VideoWriter* videoDetection(nullptr);
+    VideoWriter* videoResultWithoutDetection(nullptr);
+    VideoWriter* videoResult(nullptr);
+    VideoWriter* videoMask(nullptr);
 
     unsigned int k = 0;
     const string RTH_PATH = "./RTH";
@@ -115,6 +144,8 @@ int main(int argc, char** argv)
     unsigned int durationAverageCount = 0;
 
     double fps = 0.0;
+    unsigned int frameWidth = 0;
+    unsigned int frameHeight = 0;
     unsigned int frameToTake = 0;
     unsigned int frameCount = 0;
     unsigned int frameWaitDelay = 0;
@@ -135,7 +166,6 @@ int main(int argc, char** argv)
     bool display = false;
     bool pause = false;
     bool readNextFrame = true;
-    bool detectionEnabled = true;
     bool somethingDetected = false;
     bool clearDetection = false;
     bool configChanged = false;
@@ -153,6 +183,7 @@ int main(int argc, char** argv)
 
     Mat thresholdImage;
     Mat mask;
+    Mat tmpMask;
     Mat result;
 
     string windowPrevFrame = "Previous frame";
@@ -175,10 +206,27 @@ int main(int argc, char** argv)
     {
         config.setDisplayDuration(true);
     }
-    if (args.count("d"))
+    if (args.count("dw"))
     {
         config.setDisplayOptionalWindows(true);
     }
+    if (args.count("sd"))
+    {
+        config.setSaveDetection(true);
+    }
+    if (args.count("srwd"))
+    {
+        config.setSaveResultWithoutDetection(true);
+    }
+    if (args.count("sr"))
+    {
+        config.setSaveResult(true);
+    }
+    if (args.count("sm"))
+    {
+        config.setSaveMask(true);
+    }
+
     debug = config.getDebug();
     display = config.getDisplayOptionalWindows();
 
@@ -236,12 +284,40 @@ int main(int argc, char** argv)
     if (cap != nullptr)
     {
         fps = cap->get(cv::CAP_PROP_FPS);
+        frameWidth = cap->get(cv::CAP_PROP_FRAME_WIDTH);
+        frameHeight = cap->get(cv::CAP_PROP_FRAME_HEIGHT);
         frameToTake = (int)(fps / 4);
         frameCount = frameToTake;
         frameWaitDelay = (int)(1000.0 / fps);
         cout << "fps: " << fps << endl;
         cout << "frame took every: " << frameToTake << endl;
         cout << "frame wait delay: " << frameWaitDelay << " ms" << endl;
+
+        const char* outputVideosFolder = "output_videos";
+        if (config.getSaveDetection())
+        {
+            createDirIfNotExists(outputVideosFolder);
+            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_detection.mp4");
+            videoDetection = new VideoWriter(fileName, cv::VideoWriter::fourcc('M','J','P','G'), frameToTake, Size(frameWidth, frameHeight));
+        }
+        if (config.getSaveResultWithoutDetection())
+        {
+            createDirIfNotExists(outputVideosFolder);
+            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_result_without_detection.mp4");
+            videoResultWithoutDetection = new VideoWriter(fileName, cv::VideoWriter::fourcc('M','J','P','G'), frameToTake, Size(frameWidth, frameHeight));
+        }
+        if (config.getSaveResult())
+        {
+            createDirIfNotExists(outputVideosFolder);
+            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_result.mp4");
+            videoResult = new VideoWriter(fileName, cv::VideoWriter::fourcc('M','J','P','G'), frameToTake, Size(frameWidth, frameHeight));
+        }
+        if (config.getSaveMask())
+        {
+            createDirIfNotExists(outputVideosFolder);
+            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_mask.mp4");
+            videoMask = new VideoWriter(fileName, cv::VideoWriter::fourcc('M','J','P','G'), frameToTake, Size(frameWidth, frameHeight));
+        }
     }
 
     if (fileExists(RTH_PATH) && !removeFile(RTH_PATH))
@@ -255,6 +331,10 @@ int main(int argc, char** argv)
     cout << "debug: " << (config.getDebug() ? "true" : "false") << endl;
     cout << "display optional windows: " << (config.getDisplayOptionalWindows() ? "true" : "false") << endl;
     cout << "display duration: " << (config.getDisplayDuration() ? "true" : "false") << endl;
+    cout << "save detection: " << (config.getSaveDetection() ? "true" : "false") << endl;
+    cout << "save result without detection:" << (config.getSaveResultWithoutDetection() ? "true" : "false") << endl;
+    cout << "save result:" << (config.getSaveResult() ? "true" : "false") << endl;
+    cout << "save mask:" << (config.getSaveMask() ? "true" : "false") << endl;
     config.display('\n', '\0');
 
     cout << "press [H] to print the help" << endl;
@@ -367,6 +447,10 @@ int main(int argc, char** argv)
                                 Rect rect = boundingRect(contours[maxAreaId]);
                                 rectangle(result, rect, config.getRectangleColor(), 2);
                                 somethingDetected = true;
+                                if (config.getSaveDetection())
+                                {
+                                    videoDetection->write(result);
+                                }
                             }
 
                             duration = getTimeDiff(duration);
@@ -394,18 +478,27 @@ int main(int argc, char** argv)
                                 imshow(windowResult, result);
                             }
 
+                            if (config.getSaveMask())
+                            {
+                                cvtColor(mask, tmpMask, COLOR_GRAY2BGR);
+                                videoMask->write(tmpMask);
+                            }
+                            if (config.getSaveResultWithoutDetection())
+                            {
+                                videoResultWithoutDetection->write(frame);
+                            }
+                            if (config.getSaveResult())
+                            {
+                                videoResult->write(result);
+                            }
+
                             if (somethingDetected)
                             {
-                                if (detectionEnabled)
+                                if (!fileExists(RTH_PATH))
                                 {
-                                    //cout << "object detected!" << endl;
-                                    if (!fileExists(RTH_PATH))
-                                    {
-                                        // cout << "RTH file created" << endl;
-                                        // create RTH file and close it
-                                        ofstream file(RTH_PATH.c_str());
-                                        file.close();
-                                    }
+                                    // create RTH file and close it
+                                    ofstream file(RTH_PATH.c_str());
+                                    file.close();
                                 }
                             }
                             else
@@ -641,6 +734,30 @@ int main(int argc, char** argv)
         cap->release();
         delete cap;
         cap = nullptr;
+    }
+    if (videoDetection != nullptr)
+    {
+        videoDetection->release();
+        delete videoDetection;
+        videoDetection = nullptr;
+    }
+    if (videoResultWithoutDetection != nullptr)
+    {
+        videoResultWithoutDetection->release();
+        delete videoResultWithoutDetection;
+        videoResultWithoutDetection = nullptr;
+    }
+    if (videoResult != nullptr)
+    {
+        videoResult->release();
+        delete videoResult;
+        videoResult = nullptr;
+    }
+    if (videoMask != nullptr)
+    {
+        videoMask->release();
+        delete videoMask;
+        videoMask = nullptr;
     }
     cv::destroyAllWindows();
 

@@ -16,7 +16,7 @@ You can configure the `config.yaml` file to not have to write a long command lin
 Assuming you're in the `rtCam\python` folder:
 
 ```
-python3 main.py [-dd] [-d] [-db] [-i img1 img2] [-v vid]
+python3 main.py [-dd] [-dw] [-db] [-i img1 img2] [-v vid] [-sd] [-srwd] [-sr] [-sm]
 ```
 
 --- 
@@ -24,10 +24,14 @@ python3 main.py [-dd] [-d] [-db] [-i img1 img2] [-v vid]
 # Option details
 
 `dd`: display duration - Display the process' duration to compute a frame. 
-`d`:  display - Enable all optional windows: Previous frame, Current frame, Mask, Result. Result is displayed by default.
+`dw`: display windows - Enable all optional windows: Previous frame, Current frame, Mask, Result. Result is displayed by default.
 `db`: debug - Enable display duration option and display option. Also enable some logs (all area detected) and pause while running (between every frame)
 `i`: image - Requires two images.
 `v`: video - Requires one video.
+`sd`: save detection - save detected objects into a video file
+`srwd`: save result without detection - save the resulting frames without the rectangle of detection into a video file
+`sr`: save result - save the resulting frames into a video file
+`sm`: save mask - save the mask frames into a video file
 
 If you select `i` option, the algorithm uses the given images. Same with the `v` option, but with video. If none of them is specified, the Camera (device 0) is used.
 

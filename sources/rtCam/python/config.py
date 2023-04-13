@@ -10,6 +10,7 @@ class Config(object):
 		self._display_optional_windows = False
 		self._display_duration = False
 		self._save_detection = False
+		self._save_result_without_detection = False
 		self._save_result = False
 		self._save_mask = False
 		self._detection_area = 500
@@ -57,6 +58,14 @@ class Config(object):
 		if not isinstance(value, bool):
 			raise ValueError(f"value must be a boolean. Given: {value}")
 		self._save_detection = value
+
+	def get_save_result_without_detection(self):
+		return self._save_result_without_detection
+
+	def set_save_result_without_detection(self, value):
+		if not isinstance(value, bool):
+			raise ValueError(f"value must be a boolean. Given: {value}")
+		self._save_result_without_detection = value
 
 	def get_save_result(self):
 		return self._save_result
@@ -233,6 +242,7 @@ class Config(object):
 				"display optional windows": self._display_optional_windows,
 			    "display duration": self._display_duration,
 			    "save detection": self._save_detection,
+			    "save result without detection": self._save_result_without_detection,
 			    "save result": self._save_result,
 			    "save mask": self._save_mask,
 			    "detection area": self._detection_area,
@@ -262,6 +272,7 @@ class Config(object):
 					# read debug after because debug can change previous parameters (display optional windows, display duration)
 					self.set_debug(config["debug"])
 					self.set_save_detection(config["save detection"])
+					self.set_save_result_without_detection(config["save result without detection"])
 					self.set_save_result(config["save result"])
 					self.set_save_mask(config["save mask"])
 					self._set_detection_area(config["detection area"])
@@ -288,9 +299,10 @@ class Config(object):
 		self.set_debug(False)
 		self.set_display_optional_windows(False)
 		self.set_display_duration(False)
-		self._set_save_detection(False)
-		self._set_save_result(False)
-		self._set_save_mask(False)
+		self.set_save_detection(False)
+		self.set_save_result_without_detection(False)
+		self.set_save_result(False)
+		self.set_save_mask(False)
 		self._set_detection_area(500)
 		self._set_gaussian_blur(0)
 		self._set_threshold(70)

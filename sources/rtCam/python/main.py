@@ -20,6 +20,12 @@ class Option(Enum):
 
 global has_to_break
 
+global cap
+global video_detection
+global video_result_without_detection
+global video_result
+global video_mask
+
 
 def sigint_handler(signal, frame):
     global has_to_break
@@ -74,18 +80,58 @@ def create_folder_if_not_exists(folder_name: str):
         os.makedirs(folder_name)
 
 
+def release_cap_videos():
+    global cap
+    global video_detection
+    global video_result_without_detection
+    global video_result
+    global video_mask
+
+    if cap:
+        cap.release()
+        cap = None
+
+    if video_detection:
+        video_detection.release()
+        video_detection = None
+
+    if video_result_without_detection:
+        video_result_without_detection.release()
+        video_result_without_detection = None
+
+    if video_result:
+        video_result.release()
+        video_result = None
+
+    if video_mask:
+        video_mask.release()
+        video_mask = None
+
+
+def before_exit():
+    release_cap_videos()
+    cv.destroyAllWindows()
+
+
 def main():
 
     global has_to_break
 
+    global cap
+    global video_detection
+    global video_result_without_detection
+    global video_result
+    global video_mask
+
     has_to_break = False
 
-    args = parser.parse_args()
-
     cap = None
-    video_mask = None
-    video_result = None
     video_detection = None
+    video_result_without_detection = None
+    video_result = None
+    video_mask = None
+
+    args = parser.parse_args()
 
     k = 0
     RTH_PATH = "./RTH"
@@ -145,6 +191,9 @@ def main():
     if args.save_detection:
         config.set_save_detection(True)
 
+    if args.save_result_without_detection:
+        config.set_save_result_without_detection(True)
+
     if args.save_result:
         config.set_save_result(True)
 
@@ -194,13 +243,17 @@ def main():
             create_folder_if_not_exists(output_videos_folder)
             video_detection = cv.VideoWriter(f"{output_videos_folder}/{date}_output_detection.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
 
-        if config.get_save_mask():
+        if config.get_save_result_without_detection():
             create_folder_if_not_exists(output_videos_folder)
-            video_mask = cv.VideoWriter(f"{output_videos_folder}/{date}_output_mask.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
+            video_result_without_detection = cv.VideoWriter(f"{output_videos_folder}/{date}_output_result_without_detection.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
 
         if config.get_save_result():
             create_folder_if_not_exists(output_videos_folder)
             video_result = cv.VideoWriter(f"{output_videos_folder}/{date}_output_result.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
+
+        if config.get_save_mask():
+            create_folder_if_not_exists(output_videos_folder)
+            video_mask = cv.VideoWriter(f"{output_videos_folder}/{date}_output_mask.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
 
 
     if os.path.exists(RTH_PATH):
@@ -211,6 +264,7 @@ def main():
     print(f"display optional windows: {display_windows}")
     print(f"display duration: {config.get_display_duration()}")
     print(f"save detection: {config.get_save_detection()}")
+    print(f"save result without detection: {config.get_save_result_without_detection()}")
     print(f"save result: {config.get_save_result()}")
     print(f"save mask: {config.get_save_mask()}")
     config.display(sep='\n', start='')
@@ -324,6 +378,9 @@ def main():
 
                             else:
                                 cv.imshow(window_result, result)
+
+                            if config.get_save_result_without_detection():
+                                video_result_without_detection.write(frame)
 
                             if config.get_save_result():
                                 video_result.write(result)
@@ -483,20 +540,8 @@ def main():
 
     print(f"Average duration: {round3(duration_average)} ms ({duration_average_count} samples)")
 
-    if cap:
-        cap.release()
-
-    if video_detection:
-        video_detection.release()
-
-    if video_mask:
-        video_mask.release()
-
-    if video_result:
-        video_result.release()
-
-    cv.destroyAllWindows()
-
+    before_exit()
+    
     if os.path.exists(RTH_PATH):
         os.remove(RTH_PATH)
 
@@ -510,11 +555,13 @@ if __name__ == '__main__':
     parser.add_argument("-dd", "--display_duration", action="store_true", help="display duration will be automatically enabled")
     parser.add_argument("-db", "--debug", action="store_true", help="shortcut to -d and -dd")
     parser.add_argument("-sd", "--save_detection", action="store_true", help="save detected objects into a video file")
+    parser.add_argument("-srwd", "--save_result_without_detection", action="store_true", help="save the resulting frames without the rectangle of detection into a video file")
     parser.add_argument("-sr", "--save_result", action="store_true", help="save the resulting frames into a video file")
     parser.add_argument("-sm", "--save_mask", action="store_true", help="save the mask frames into a video file")
 
     try:
         main()
     except BaseException as e:
+        before_exit()
         print(e.args[0])
         input("press enter to close...")
