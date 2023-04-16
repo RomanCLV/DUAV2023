@@ -3,9 +3,9 @@
 clear
 
 # Path of files
-path_main="./sources/rtCam/cpp/build/main.out"
-# path_main="./sources/rtCam/python/main.py"
-path_automate="./sources/automate/automate.py"
+path_main="./rtCam/cpp/build/main.out"
+# path_main="./rtCam/python/main.py"
+path_automate="./automate/automate.py"
 
 # Check if the user is sudo
 if [ "$EUID" -ne 0 ]; then

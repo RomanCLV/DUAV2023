@@ -16,6 +16,14 @@ In both case, both devices must be connected to a network, the easiest way to co
 That's why enable an Access Point is interresting. The Raspberry Pi will generate its own network, and your desktop will connect to this network.
 You can also enable an AccessPoint from your computer and connect the Raspberry to this network.
 
+Important point to know:
+
+When you're using your Raspberry Pi with a SSH connection, you will not be able to start the GTK service that allows the display.
+
+That means that OpenCV will throw an `error` if you call `cv.namedWindow()`.
+
+Please, read the `Enable SSH on your Raspberry Pi` paragraph.
+
 ---
 
 ## Configure your Raspberry Pi as an AccessPoint
@@ -41,7 +49,7 @@ nmcli con mod <connection-name> connection.autoconnect yes
 ## Enable SSH on your Raspberry Pi
 
 ```
-sudo apt install net-tools ssh openssh-server
+sudo apt-get install net-tools ssh openssh-server
 ```
 
 Open the configuration Tool with:
@@ -71,6 +79,17 @@ ssh <username_rasp>@<ip_address_rasp>
 The first time, you will have to say that `yes` you want to connect.
 It will ask you the password associate to this user.
 To exit, type `exit` or `logout`.
+
+You can now test (with progamms in folder `sources/test_ssh`) if a programm is launched with a SSH connection or not.
+You will need to install `psutil` for Python and `libprocps-dev` for C++:
+
+```
+sudo pip3 install psutil
+```
+
+```
+sudo apt-get install libprocps-dev
+```
 
 ---
 

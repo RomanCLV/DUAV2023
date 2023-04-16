@@ -37,14 +37,15 @@ echo " "
 sudo apt-get install -y git libyaml-cpp-dev python3-pip
 
 echo " "
-echo ==================== installing net-tools ssh openssh-server =====================
+echo ============= installing net-tools ssh openssh-server libprocps-dev ==============
 echo " "
-sudo apt-get install -y net-tools ssh openssh-server
+sudo apt-get install -y net-tools ssh openssh-server libprocps-dev
+
 
 echo " "
-echo ==================== installing libopencv-dev python3-opencv =====================
+echo ================= installing libopencv-dev python3-opencv psutil =================
 echo " "
-sudo apt-get install -y libopencv-dev python3-opencv
+sudo apt-get install -y libopencv-dev python3-opencv psutil
 
 echo " "
 echo ============================ installing raspi-config =============================
