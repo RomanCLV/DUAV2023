@@ -64,7 +64,7 @@ SSH is now enabled on your device. Reboot the Raspberry Pi:
 reboot
 ```
 
-To identify your local ip address, type: `ifconfig` and look at the `wlan0` tag. The IP starting with `192.168.X.X` is your local IP.
+To identify your local ip address, type: `ifconfig` and look at the `wlan0` tag.
 
 To check if the SSH is working, you can connect to yourself with:
 ```

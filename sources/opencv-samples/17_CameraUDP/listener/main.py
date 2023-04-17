@@ -21,17 +21,18 @@ def recv_frame_whole(sock):
 
 
 def recv_frame_sliced(sock):
-    num_packets, packet_data = 0, bytearray()
+    num_packets = 0
+    packet_data = bytearray()
 
     while True:
         try:
             data, addr = sock.recvfrom(65535)
-            num, chunk = struct.unpack('!II', data[:8]), data[8:]
-            num_packets = max(num_packets, num)
+            num, offset = struct.unpack('!II', data[:8])
+            chunk = data[8:]
 
-            packet_data.extend(chunk)
+            packet_data[offset * (len(data) - 8):] = chunk  # Insérer le morceau de données à l'offset approprié
 
-            if len(packet_data) >= num_packets * (len(data) - 8):
+            if len(packet_data) >= num * (len(data) - 8):  # Utilisez "num" ici au lieu de "num_packets"
                 break
         except socket.timeout:
             return None
@@ -66,6 +67,8 @@ def main(args):
 
     window_name = f"Received from {udp_ip}:{udp_port}"
 
+    print(f"Trying to open a socket to {udp_ip}:{udp_port}")
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((udp_ip, udp_port))
     # Définir un délai d'attente (timeout) pour le socket en secondes
@@ -95,7 +98,7 @@ def main(args):
                 video.write(frame)
 
             if display:
-                cv.imshow(namedWindow, frame)
+                cv.imshow(window_name, frame)
             
             if cv.waitKey(1) & 0xFF == 27:
                 break
@@ -115,12 +118,12 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Receive video frames via UDP.')
-    parser.add_argument('ip', type=str, help='IP address to bind to')
-    parser.add_argument('port', type=int, help='Port to bind to')
+    parser.add_argument('ip', default="0.0.0.0", type=str, help='IP address to listen (default: 0.0.0.0)')
+    parser.add_argument('port', type=int, help='Port to listen')
     parser.add_argument('-o', '--output', type=str, help='Path to save the video file')
     parser.add_argument('-d', '--display', action='store_true', help='Display received frames in a window')
     #parser.add_argument('-s', '--receive_split', action='store_true', help='Receive frames split into smaller packets')
-    parser.add_argument('-fps', '--fps', type=int, default=30, fps_choices=fps_choices, help='Frames per second for the video (default: 30)')
+    parser.add_argument('-fps', '--fps', type=int, default=30, choices=fps_choices, help='Frames per second for the video (default: 30)')
 
     args = parser.parse_args()
 

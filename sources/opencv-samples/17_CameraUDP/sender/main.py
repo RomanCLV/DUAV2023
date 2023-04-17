@@ -8,7 +8,7 @@ import os
 import signal
 
 
-def send_frame_udp(frame, address, sock, max_packet_size=65535):
+def send_frame_udp(frame, address, sock, max_packet_size=65507):
     data = cv.imencode('.jpg', frame)[1].tobytes()
     num_packets = len(data) // max_packet_size + 1
 
@@ -18,7 +18,7 @@ def send_frame_udp(frame, address, sock, max_packet_size=65535):
         sock.sendto(packet, address)
 
 
-def send_frame_udp_split(frame, address, sock, max_packet_size=65535):
+def send_frame_udp_split(frame, address, sock, max_packet_size=65507):
     data = cv.imencode('.jpg', frame)[1].tobytes()
     num_packets = len(data) // max_packet_size + 1
 
@@ -47,6 +47,8 @@ def main(args):
             print("Error : the video file extension must be .avi")
             sys.exit(1)
 
+    print(f"Frames will be send to {udp_ip}:{udp_port}")
+
     print("Trying to open /dev/video0 with CAP_V4L2")
     cap = cv.VideoCapture(0, cv.CAP_V4L2)  # Add cv::CAP_V4L2 to fix: Embedded video playback halted; module v4l2src0 reported: Failed to allocate required memory.
 
@@ -62,10 +64,12 @@ def main(args):
 
     window_name = f"Send to {udp_ip}:{udp_port}"
     if display:
-        cv.namedWindow(window_name, cv.WINDOW_NORMAL)
+        cv.namedWindow(window_name)
         cv.waitKey(500)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    print("press ESC to quit")
 
     try:
         while True:
@@ -109,7 +113,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Stream video frames via UDP.')
     parser.add_argument('ip', type=str, help='Destination IP address')
     parser.add_argument('port', type=int, help='Destination port')
-    parser.add_argument('-o', '--output', type=str, help='Path to save the video file')
+    parser.add_argument('-o', '--output', type=str, help='Path to save the video file (.avi)')
     parser.add_argument('-d', '--display', action='store_true', help='Display video frames in a window')
     # parser.add_argument('-s', '--send_split', action='store_true', help='Send frames split into smaller packets')
 
