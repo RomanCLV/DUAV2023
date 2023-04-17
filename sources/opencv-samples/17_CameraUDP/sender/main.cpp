@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     bool write = false;
     bool display = false;
     string output;
-    string window_name = "Send to " + udp_port + ':' + to_string(udp_ip);
+    string window_name = "Send to " + udp_ip + ':' + to_string(udp_port);
 
     int opt;
     while ((opt = getopt(argc, argv, "o:d")) != -1)
