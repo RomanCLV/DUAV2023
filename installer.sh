@@ -32,6 +32,16 @@ echo " "
 sudo apt-get install -y cmake g++ wget unzip
 
 echo " "
+echo ==================== installing build-essential libgtk2.0-dev ====================
+echo " "
+sudo apt-get install -y build-essential libgtk2.0-dev
+
+echo " "
+echo ============ installing libavcodec-dev libavformat-dev libswscale-dev ============
+echo " "
+sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev
+
+echo " "
 echo =================== installing git libyaml-cpp-dev python3-pip ===================
 echo " "
 sudo apt-get install -y git libyaml-cpp-dev python3-pip
@@ -41,6 +51,10 @@ echo ============= installing net-tools ssh openssh-server libprocps-dev =======
 echo " "
 sudo apt-get install -y net-tools ssh openssh-server libprocps-dev
 
+echo " "
+echo ========================== installing libboost-all-dev ===========================
+echo " "
+sudo apt-get install -y libboost-all-dev
 
 echo " "
 echo ================= installing libopencv-dev python3-opencv psutil =================
@@ -71,4 +85,5 @@ git --version
 echo pip:
 pip3 --version
 
+echo " "
 echo ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ DUAV2023 installer done ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤

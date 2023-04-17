@@ -42,8 +42,12 @@ https://linuxhint.com/install-opencv-ubuntu/
 ```
 sudo apt update
 sudo apt upgrade
-sudo apt install -y cmake g++ wget unzip
-sudo apt install libopencv-dev python3-opencv
+sudo apt-get install -y cmake g++ wget unzip
+sudo apt-get install -y build-essential libgtk2.0-dev
+sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install -y libopencv-dev python3-opencv
+sudo apt-get install -y libboost-all-dev
+
 pkg-config --modversion opencv4
 ```
 

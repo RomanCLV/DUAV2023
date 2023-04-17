@@ -1,94 +1,168 @@
-// https://www.selfmadetechie.com/how-to-create-a-webcam-video-capture-using-opencv-c
-// https://learnopencv.com/read-write-and-display-a-video-using-opencv-cpp-python/
-
-#include <stdio.h>
-#include <csignal>
 #include <iostream>
+#include <boost/asio.hpp>
 #include <opencv2/opencv.hpp>
-using namespace cv;
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
+#include <csignal>
+#include <unistd.h>
+#include <getopt.h>
+#include <algorithm>
+#include <string>
+
 using namespace std;
+using namespace boost::asio;
+using namespace cv;
 
-bool hasToBreak = false;
+volatile sig_atomic_t stop;
 
-void signal_handler(int signal)
+void signal_handler(int signum)
 {
-    hasToBreak = true;
+    stop = 1;
 }
 
-int main(int argc, char** argv)
-{   
-    // Install a signal handler
-    std::signal(SIGINT, signal_handler);
+bool has_avi_extension(const string& filename)
+{
+    string ext = filename.substr(filename.find_last_of(".") + 1);
+    transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    return (ext == "avi");
+}
 
-    if ( argc < 3 || argc > 4 )
+void send_frame_udp(Mat& frame, ip::udp::socket& sock, ip::udp::endpoint& endpoint)
+{
+    vector<uchar> buf;
+    imencode(".jpg", frame, buf);
+    sock.send_to(buffer(buf), endpoint);
+}
+
+void send_frame_udp_split(Mat& frame, ip::udp::socket& sock, ip::udp::endpoint& endpoint, size_t max_packet_size = 65507) 
+{
+    vector<uchar> buf;
+    imencode(".jpg", frame, buf);
+    size_t num_packets = (buf.size() / max_packet_size) + 1;
+
+    for (size_t i = 0; i < num_packets; ++i)
     {
-        printf("Usage: ./main.out udp_address [-d|--display]\n");
-        printf("Read the README.md\n");
-        return -1;
+        size_t start = i * max_packet_size;
+        size_t end = min(start + max_packet_size, buf.size());
+        sock.send_to(buffer(&buf[start], end - start), endpoint);
     }
+}
 
+int main(int argc, char* argv[])
+{
+    signal(SIGINT, signal_handler);
+    string udp_ip;
+    int udp_port;
+    bool write = false;
     bool display = false;
-    if (argc == 4)
+    string output;
+    string window_name = "Send to " + udp_port + ':' + to_string(udp_ip);
+
+    int opt;
+    while ((opt = getopt(argc, argv, "o:d")) != -1)
     {
-        if (!strcmp("-d", argv[3]) || !strcmp("--display", argv[3]))
+        switch (opt) 
         {
-            display = true;
+            case 'o':
+                write = true;
+                output = optarg;
+                if (!has_avi_extension(output))
+                {
+                    cerr << "Error : the video file extension must be .avi" << endl;
+                    return 1;
+                }
+                break;
+            case 'd':
+                display = true;
+                break;
+            default:
+                break;
         }
-        else
-        {
-            printf("Unexpected parameter given\n");
-            printf("Read the README.md\n");
-            return -1;
-        }
     }
 
-    printf("Trying to open /dev/video0 with CAP_V4L2\n");
-    VideoCapture cap(0, cv::CAP_V4L2);  // Add cv::CAP_V4L2 to fix: Embedded video playback halted; module v4l2src0 reported: Failed to allocate required memory.
-
-    if (!cap.isOpened()) 
+    if (optind < argc) 
     {
-        cout << "Can not read the device" << endl;
-        return 0;
+        udp_ip = argv[optind++];
+        udp_port = atoi(argv[optind]);
+    } 
+    else 
+    {
+        cerr << "Usage: " << argv[0] << " IP PORT [-o output] [-d]" << endl;
+        return 1;
     }
 
-    string window_name = "Camera Capture";
-    char k;
-    if (display)
-    {
-        namedWindow(window_name);
-        waitKey(500);
+    io_service io_service;
+    ip::udp::socket sock(io_service, ip::udp::endpoint(ip::udp::v4(), 0));
+    ip::udp::endpoint remote_endpoint(ip::address::from_string(udp_ip), udp_port);
+
+    cout << "Frames will be send to " << udp_ip << ":" << udp_port << endl;
+
+    cout << "Trying to open /dev/video0 with CAP_V4L2" << endl;
+    VideoCapture cap(0, cv::CAP_V4L2);
+
+    if (!cap.isOpened()) {
+        cerr << "Can not read the device" << endl;
+        return 1;
     }
 
-    while (1)
+    VideoWriter video_writer;
+    if (write) 
     {
-        Mat frame;
+        int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
+        double fps = cap.get(CAP_PROP_FPS);
+        Size frame_size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT));
+        video_writer.open(output, codec, fps, frame_size);
+    }
+
+    Mat frame;
+
+    if (display) 
+    {
+        namedWindow(window_name, WINDOW_AUTOSIZE);
+    }
+
+    while (!stop) 
+    {
         cap >> frame;
 
-        if (!frame.empty()) 
+        if (frame.empty()) 
         {
-            if (display)
-            {
-                imshow(window_name, frame);
-            }
-            k = (char)waitKey(1);
+            cerr << "frame is empty" << endl;
+            waitKey(500);
+            continue;
         }
-        else
+
+        if (write)
         {
-            printf("frame is empty\n");
-            k = (char)waitKey(500);
-        }    
-        
-        // break the loop if
-        if (hasToBreak ||                                                                // due to Ctrl+C
-            k == 27 ||                                                                   // ESC key
-            (display && cv::getWindowProperty(window_name, WND_PROP_AUTOSIZE) == -1))    // window is closed
+            video_writer.write(frame);
+        }
+
+        send_frame_udp_split(frame, sock, remote_endpoint);
+
+        if (display) 
         {
+            imshow(window_name, frame);
+        }
+
+        if (waitKey(1) == 27) 
+        { // 27 is the ESC key
             break;
         }
     }
 
-    printf("Capture done\n");
     cap.release();
-    cv::destroyAllWindows();
+
+    if (write) 
+    {
+        video_writer.release();
+    }
+
+    if (display)
+    {
+        destroyAllWindows();
+    }
+
+    sock.close();
+
     return 0;
 }
