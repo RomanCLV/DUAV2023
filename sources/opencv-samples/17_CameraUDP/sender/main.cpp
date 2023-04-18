@@ -12,6 +12,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <regex>
 
 
 using namespace std;
@@ -23,6 +24,19 @@ volatile sig_atomic_t stop;
 void signal_handler(int signum)
 {
     stop = 1;
+}
+
+bool is_valid_ip(const std::string& ip)
+{
+    regex ip_pattern(
+        R"((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))");
+
+    return regex_match(ip, ip_pattern);
+}
+
+bool is_valid_port(int port)
+{
+    return 1024 <= port && port <= 65535;
 }
 
 bool has_avi_extension(const string& filename)
@@ -120,6 +134,18 @@ int main(int argc, char* argv[])
 
     udp_ip = argv[1];
     udp_port = atoi(argv[2]);
+
+    if (!is_valid_ip(udp_ip))
+    {
+        cerr << "The address " << udp_ip << " is invalid! Please give an address like X.X.X.X where X is in [0-255]" << endl;
+        return 1;
+    }
+
+    if (!is_valid_port(udp_port))
+    {
+        cerr << "The port " << udp_port << " is invalid! Please give a port from 1024 to 65535" << endl;
+        return 1;
+    }
 
     if (args.count("o"))
     {

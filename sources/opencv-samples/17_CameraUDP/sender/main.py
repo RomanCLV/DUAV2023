@@ -6,6 +6,19 @@ import struct
 import sys
 import os
 import signal
+import ipaddress
+
+
+def is_valid_ip(ip: str):
+    try:
+        ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
+
+
+def is_valid_port(port: int):
+    return 1024 <= port <= 65535
 
 
 def send_frame_udp(frame, address, sock, max_packet_size=65507):
@@ -36,6 +49,14 @@ def main(args):
     write = False
     display = False
     video = None
+
+    if not is_valid_ip(udp_ip):
+        print(f"The address {udp_ip} is invalid! Please give an address like X.X.X.X where X is in [0-255]")
+        sys.exit(1)
+
+    if not is_valid_port(udp_port):
+        print(f"The port {udp_port} is invalid! Please give a port from 1024 to 65535")
+        sys.exit(1)
 
     if args.display:
         display = True

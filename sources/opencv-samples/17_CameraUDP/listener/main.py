@@ -6,9 +6,22 @@ import struct
 import sys
 import os
 import signal
+import ipaddress
 
 
 fps_choices = [1, 5, 10, 12, 15, 20, 24, 25, 29.97, 30, 48, 50, 59.94, 60, 120, 144, 240, 300]
+
+
+def is_valid_ip(ip: str):
+    try:
+        ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
+
+
+def is_valid_port(port: int):
+    return 1024 <= port <= 65535
 
 
 def recv_frame_whole(sock):
@@ -46,11 +59,19 @@ def main(args):
     udp_ip = args.ip
     udp_port = args.port
 
+    if not is_valid_ip(udp_ip):
+        print(f"The address {udp_ip} is invalid! Please give an address like X.X.X.X where X is in [0-255]")
+        sys.exit(1)
+
+    if not is_valid_port(udp_port):
+        print(f"The port {udp_port} is invalid! Please give a port from 1024 to 65535")
+        sys.exit(1)
+
     display = False
     write = False
     video = None
     frame_fps = 30
-    window_name = "window"
+    window_name = f"Received from {udp_ip}:{udp_port}"
 
     if args.display:
         display = True
@@ -64,8 +85,6 @@ def main(args):
         if file_extension.lower() != ".avi":
             print("Error : the video file extension must be .avi")
             sys.exit(1)
-
-    window_name = f"Received from {udp_ip}:{udp_port}"
 
     print(f"Trying to open a socket to {udp_ip}:{udp_port}")
 
