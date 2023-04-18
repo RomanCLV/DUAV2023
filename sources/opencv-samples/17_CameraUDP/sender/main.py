@@ -83,10 +83,6 @@ def main(args):
             if write:
                 video.write(frame)
 
-            # if args.send_split:
-            #     send_frame_udp_split(frame, (udp_ip, udp_port), sock)
-            # else:
-            #     send_frame_udp(frame, (udp_ip, udp_port), sock)
             send_frame_udp_split(frame, (udp_ip, udp_port), sock)
 
             if display:
@@ -115,7 +111,6 @@ if __name__ == '__main__':
     parser.add_argument('port', type=int, help='Destination port')
     parser.add_argument('-o', '--output', type=str, help='Path to save the video file (.avi)')
     parser.add_argument('-d', '--display', action='store_true', help='Display video frames in a window')
-    # parser.add_argument('-s', '--send_split', action='store_true', help='Send frames split into smaller packets')
 
     args = parser.parse_args()
 
