@@ -1,3 +1,4 @@
+import os
 import psutil
 
 
@@ -6,7 +7,7 @@ def isSshConnected(display_procces_info=True):
 
     # PID du processus dont on veut afficher les parents
     current_process = psutil.Process()
-    pid = current_process.ppid()
+    pid = os.getpid()
 
     print("current PID:", pid, "Name:", current_process.name())
 
