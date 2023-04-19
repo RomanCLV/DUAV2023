@@ -28,7 +28,15 @@ def send_frame_udp(frame, address, sock, max_packet_size=65507):
     for i in range(num_packets):
         packet_data = data[i * max_packet_size: (i + 1) * max_packet_size]
         packet = struct.pack('!I', i) + packet_data
-        sock.sendto(packet, address)
+        try:
+            sock.sendto(packet, address)
+        except socket.error as e:
+            if e.errno == 90:  # MessageTooLong error code
+                # norlally, we shouldn't have this error (thanks to max_packet_size), but to be sure...
+                print("Packet too large, skipping...")
+                continue
+            else:
+                raise e
 
 
 def send_frame_udp_split(frame, address, sock, max_packet_size=65507):
@@ -38,7 +46,15 @@ def send_frame_udp_split(frame, address, sock, max_packet_size=65507):
     for i in range(num_packets):
         packet_data = data[i * max_packet_size: (i + 1) * max_packet_size]
         packet = struct.pack('!II', num_packets, i) + packet_data
-        sock.sendto(packet, address)
+        try:
+            sock.sendto(packet, address)
+        except socket.error as e:
+            if e.errno == 90:  # MessageTooLong error code
+                # norlally, we shouldn't have this error (thanks to max_packet_size), but to be sure...
+                print("Packet too large, skipping...")
+                continue
+            else:
+                raise e
 
 
 def main(args):
