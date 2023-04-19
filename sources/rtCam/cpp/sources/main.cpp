@@ -135,7 +135,7 @@ bool isSshConnected(const bool displayProccesInfo)
     return isSsh;
 }
 
-void sendFrameUdpSplit(const cv::Mat frame, const ip::udp::socket* sock, const ip::udp::endpoint endpoint, int max_packet_size) 
+void sendFrameUdpSplit(const cv::Mat frame, ip::udp::socket* sock, const ip::udp::endpoint endpoint, int max_packet_size) 
 {
     vector<uchar> data;
     imencode(".jpg", frame, data);
@@ -168,7 +168,27 @@ void sendFrameUdpSplit(const cv::Mat frame, const ip::udp::socket* sock, const i
     }
 }
 
-void closeSocket(const ip::udp::socket* sock)
+void releaseVideoCapture(cv::VideoCapture* videoCapture)
+{
+    if (videoCapture != nullptr)
+    {
+        videoCapture->release();
+        delete videoCapture;
+        videoCapture = nullptr;
+    }
+}
+
+void releaseVideoWriter(cv::VideoWriter* videoWriter)
+{
+    if (videoWriter != nullptr)
+    {
+        videoWriter->release();
+        delete videoWriter;
+        videoWriter = nullptr;
+    }
+}
+
+void closeSocket(ip::udp::socket* sock)
 {
     if (sock != nullptr)
     {
@@ -192,8 +212,9 @@ void parseArgs(int argc, char** argv, std::map<std::string, std::vector<std::str
         std::string arg = argv[i];
         if (arg[0] == '-') 
         {
+            int index = arg[1] == '-' ? 2 : 1;
             // New option detected
-            currentOption = arg.substr(1);
+            currentOption = arg.substr(index);
             args[currentOption] = std::vector<std::string>();
         }
         else
@@ -212,6 +233,26 @@ int main(int argc, char** argv)
     std::map<std::string, std::vector<std::string>> args;
     parseArgs(argc, argv, args);
 
+    if (args.count("h") || args.count("help"))
+    {
+        cout << "./main.out [-d] [-do] [-dd] [-db] [-i img1 img2] [-v vid] [-sd] [-srwd] [-sr] [-sm] [-udp] [-ip] [-port]" << endl << endl;
+        cout << "-d    --display                         Display a window of the resulting frame" << endl;
+        cout << "-do   --display_opt                     Enable all optional windows: Previous frame, Current frame, Mask, Result" << endl;
+        cout << "-dd   --display_duration                Display the process duration to compute a frame" << endl;
+        cout << "-db   --debug                           Enable all windows, display durayion, additionnal logs, pause on every frame" << endl;
+        cout << "-i    --image                           Process on the two given images" << endl;
+        cout << "-v    --video                           Process on the given video" << endl;
+        cout << "-sd   --save_detection                  Save detected objects into a video file" << endl;
+        cout << "-srwd --save_result_without_detection   Save the resulting frames without the rectangle of detection into a video file" << endl;
+        cout << "-sr   --save_result                     Save the resulting frames into a video file" << endl;
+        cout << "-sm   --save_mask                       Save the mask frames into a video file" << endl;
+        cout << "-udp  --udp                             Enable the UDP stream (will read the `config.yaml` ip and port)" << endl;
+        cout << "-ip   --ip                              Specify an ip address for UDP stream (udp automatically enabled)" << endl;
+        cout << "-port --port                            Specify a port for UDP stream (udp automatically enabled)" << endl;
+        help();
+        return 0;
+    }
+
     VideoCapture* cap(nullptr);
     VideoWriter* videoDetection(nullptr);
     VideoWriter* videoResultWithoutDetection(nullptr);
@@ -219,6 +260,7 @@ int main(int argc, char** argv)
     VideoWriter* videoMask(nullptr);
 
     ip::udp::socket* sock(nullptr);
+    io_service ioService;
     ip::udp::endpoint remoteEndpoint;
 
     unsigned int k = 0;
@@ -330,7 +372,22 @@ int main(int argc, char** argv)
     if (args.count("port"))
     {
         config.setUdpEnabled(true);
-        config.setUdpPort(args["port"][0]);
+        int port;
+        try 
+        {
+            port = std::stoi(args["port"][0]);
+        }
+        catch (const std::invalid_argument& e) 
+        {
+            std::cerr << "Error: port is not a number. Given: " << args["port"][0] << std::endl;
+            return 1;
+        }
+        catch (const std::out_of_range& e) 
+        {
+            std::cerr << "Error: the given port (" << args["port"][0] << ") is out of range for an integer" << std::endl;
+            return 1;
+        }
+        config.setUdpPort(port);
     }
 
     debug = config.getDebug();
@@ -365,8 +422,7 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        io_service ioService;
-        sock = new ip::udp::socket (ioService, ip::udp::endpoint(ip::udp::v4(), 0));
+        sock = new ip::udp::socket(ioService, ip::udp::endpoint(ip::udp::v4(), 0));
         remoteEndpoint = ip::udp::endpoint(ip::address::from_string(config.getUdpIp()), config.getUdpPort());
     }
 
@@ -375,6 +431,7 @@ int main(int argc, char** argv)
         string keyName = args.count("i") ? "i" : "image";
         if (args[keyName].size() != 2)
         {
+            closeSocket(sock);
             cout << "Wrong usage of image option: -i img1 img2" << endl;
             sysExitMessage();
             return -1;
@@ -384,6 +441,7 @@ int main(int argc, char** argv)
             Mat image = imread(args[keyName][i]);
             if ( !image.data )
             {
+                closeSocket(sock);
                 cout << "Could not read the image:" << args[keyName][i] << endl;
                 sysExitMessage();
                 return 0;
@@ -397,6 +455,7 @@ int main(int argc, char** argv)
         string keyName = args.count("v") ? "v" : "video";
         if (args[keyName].size() != 1)
         {
+            closeSocket(sock);
             cout << "Wrong usage of video option: -v vid" << endl;
             sysExitMessage();
             return -1;
@@ -404,10 +463,10 @@ int main(int argc, char** argv)
         cap = new VideoCapture(args[keyName][0]);
         if (!cap->isOpened())
         {
-
+            closeSocket(sock);
             cout << "Can't open video " << args[keyName][0] << endl;
             sysExitMessage();
-            return 0;
+            return -1;
         }
         videoMode = true;
     }
@@ -418,13 +477,14 @@ int main(int argc, char** argv)
 
         if (!cap->isOpened()) 
         {
+            closeSocket(sock);
             cout << "Can not read the device" << endl;
             if (isSshConnected(false))
             {
                 cout << "With a SSH connection, please use sudo" << endl;   
             }
             sysExitMessage();
-            return 0;
+            return -1;
         }
     }
 
@@ -472,6 +532,12 @@ int main(int argc, char** argv)
     if (fileExists(RTH_PATH) && !removeFile(RTH_PATH))
     {
         cout << "Cannot remove " << RTH_PATH << " file." << endl;
+        releaseVideoCapture(cap);
+        releaseVideoWriter(videoDetection);
+        releaseVideoWriter(videoResultWithoutDetection);
+        releaseVideoWriter(videoResult);
+        releaseVideoWriter(videoMask);
+        closeSocket(sock);
         sysExitMessage();
         return -1;
     }
@@ -482,10 +548,10 @@ int main(int argc, char** argv)
     cout << "display optional windows: " << (config.getDisplayOptionalWindows() ? "true" : "false") << endl;
     cout << "display duration: " << (config.getDisplayDuration() ? "true" : "false") << endl;
     cout << "save detection: " << (config.getSaveDetection() ? "true" : "false") << endl;
-    cout << "save result without detection:" << (config.getSaveResultWithoutDetection() ? "true" : "false") << endl;
-    cout << "save result:" << (config.getSaveResult() ? "true" : "false") << endl;
-    cout << "save mask:" << (config.getSaveMask() ? "true" : "false") << endl;
-    cout << "udp:" << (config.getUdpEnabled() ? "true" : "false") << endl;
+    cout << "save result without detection: " << (config.getSaveResultWithoutDetection() ? "true" : "false") << endl;
+    cout << "save result: " << (config.getSaveResult() ? "true" : "false") << endl;
+    cout << "save mask: " << (config.getSaveMask() ? "true" : "false") << endl;
+    cout << "udp: " << (config.getUdpEnabled() ? "true" : "false") << endl;
     if (config.getUdpEnabled())
     {
         cout << "  to:" << config.getUdpIp() << ":" << to_string(config.getUdpPort()) << endl;
@@ -630,7 +696,7 @@ int main(int argc, char** argv)
                                 }
                                 else if (display)
                                 {
-                                    imshow(windowResult);
+                                    imshow(windowResult, result);
                                 }
                             }
 
@@ -732,7 +798,7 @@ int main(int argc, char** argv)
 
         if (hasToBreak ||                                                  // due to Ctrl+C
             k == 27 ||                                                      // ESC key
-            cv::getWindowProperty(windowResult, WND_PROP_AUTOSIZE) == -1)  // window is closed
+            ((display || displayWindows) && cv::getWindowProperty(windowResult, WND_PROP_AUTOSIZE) == -1))  // window is closed
         {
             break;
         }
@@ -899,44 +965,19 @@ int main(int argc, char** argv)
 
     cout << "\nAverage duration: " << round3(durationAverage) << " ms (" << durationAverageCount << " samples)" << endl;
 
-    if (cap != nullptr)
+    releaseVideoCapture(cap);
+    releaseVideoWriter(videoDetection);
+    releaseVideoWriter(videoResultWithoutDetection);
+    releaseVideoWriter(videoResult);
+    releaseVideoWriter(videoMask);
+    closeSocket(sock);
+
+    if (display || displayWindows)
     {
-        cap->release();
-        delete cap;
-        cap = nullptr;
+        cv::destroyAllWindows();
     }
-    if (videoDetection != nullptr)
-    {
-        videoDetection->release();
-        delete videoDetection;
-        videoDetection = nullptr;
-    }
-    if (videoResultWithoutDetection != nullptr)
-    {
-        videoResultWithoutDetection->release();
-        delete videoResultWithoutDetection;
-        videoResultWithoutDetection = nullptr;
-    }
-    if (videoResult != nullptr)
-    {
-        videoResult->release();
-        delete videoResult;
-        videoResult = nullptr;
-    }
-    if (videoMask != nullptr)
-    {
-        videoMask->release();
-        delete videoMask;
-        videoMask = nullptr;
-    }
-    if (sock != nullptr)
-    {
-        sock->close();
-        delete sock;
-        sock = nullptr;
-    }
-    cv::destroyAllWindows();
 
     removeFile(RTH_PATH);
+
     return 0;
 }

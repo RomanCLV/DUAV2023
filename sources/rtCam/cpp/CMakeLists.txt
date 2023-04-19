@@ -22,7 +22,10 @@ set(HEADERS
 project(rtCam)
 
 # Trouver la bibliothèque OpenCV
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 4 REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PROCPS REQUIRED IMPORTED_TARGET libprocps)
 
 # MAIN PROJECT
 
@@ -31,6 +34,8 @@ add_executable(${MAIN_PROJECT} ${SOURCES} ${HEADERS})
 
 # Inclure les répertoires de header
 include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${PROCPS_INCLUDE_DIRS})
 
 target_include_directories(${MAIN_PROJECT} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/headers)
 target_include_directories(${MAIN_PROJECT} PRIVATE /usr/include/yaml-cpp)
@@ -38,6 +43,8 @@ target_include_directories(${MAIN_PROJECT} PRIVATE /usr/include/yaml-cpp)
 # Lier les bibliothèques nécessaires
 target_link_libraries(${MAIN_PROJECT} PRIVATE ${OpenCV_LIBS})
 target_link_libraries(${MAIN_PROJECT} PRIVATE yaml-cpp)
+target_link_libraries(${MAIN_PROJECT} PRIVATE ${Boost_LIBRARIES})
+target_link_libraries(${MAIN_PROJECT} PRIVATE PkgConfig::PROCPS)
 
 
 # WAITKEY PROJECT

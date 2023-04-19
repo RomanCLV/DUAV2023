@@ -351,22 +351,22 @@ bool Config::increaseKernelSize(const unsigned int increment)
 	return false;
 }
 
-bool getUdpEnabled() const
+bool Config::getUdpEnabled() const
 {
 	return m_udpEnabled;
 }
 
-void setUdpEnabled(const bool value)
+void Config::setUdpEnabled(const bool value)
 {
 	m_udpEnabled = value;
 }
 
-std::string getUdpIp() const
+std::string  Config::getUdpIp() const
 {
 	return m_udpIp;
 }
 
-void setUdpIp(const std::string& value)
+void Config::setUdpIp(const std::string& value)
 {
 	if (!isValidIp(value))
 	{
@@ -375,12 +375,12 @@ void setUdpIp(const std::string& value)
 	m_udpIp = value;
 }
 
-unsigned int getUdpPort() const
+unsigned int Config::getUdpPort() const
 {
 	return m_udpPort;
 }
 
-void setUdpPort(const unsigned int value)
+void Config::setUdpPort(const unsigned int value)
 {
 	if (!isValidPort(value))
 	{

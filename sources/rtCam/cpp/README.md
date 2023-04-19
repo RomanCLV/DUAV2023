@@ -27,11 +27,11 @@ Assuming you're in the `rtCam\cpp` folder:
 # Option details
 
 `-d`    `--display`    						Display a window of the resulting frame
-`-do`   `--display_opt`			 			Enable all optional windows: Previous frame, Current frame, Mask, Result.
-`-dd`   `--display_duration`				Display the process duration to compute a frame. 
+`-do`   `--display_opt`			 			Enable all optional windows: Previous frame, Current frame, Mask, Result
+`-dd`   `--display_duration`				Display the process duration to compute a frame
 `-db`   `--debug`     					 	Enable all windows, display durayion, additionnal logs, pause on every frame
 `-i`    `--image`  						   	Process on the two given images
-`-v`    `--video`							Process on the given video 
+`-v`    `--video`							Process on the given video
 `-sd`   `--save_detection`                  Save detected objects into a video file
 `-srwd` `--save_result_without_detection`   Save the resulting frames without the rectangle of detection into a video file
 `-sr`   `--save_result` 					Save the resulting frames into a video file

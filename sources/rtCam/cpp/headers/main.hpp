@@ -45,10 +45,12 @@ std::string concatenateFolderNameWithDate(const char* folderName, const char* en
 bool isSshConnected(const bool displayProccesInfo = true);
 void sendFrameUdpSplit(
 	const cv::Mat frame,
-	const boost::asio::ip::udp::socket* sock, 
+	boost::asio::ip::udp::socket* sock, 
 	const boost::asio::ip::udp::endpoint endpoint, 
 	int max_packet_size = 65507);
-void closeSocket(const boost::asio::ip::udp::socket* sock)
+void releaseVideoCapture(cv::VideoCapture* videoCapture);
+void releaseVideoWriter(cv::VideoWriter* videoWriter);
+void closeSocket(boost::asio::ip::udp::socket* sock);
 void sysExitMessage();
 void parseArgs(int argc, char** argv, std::map<std::string, std::vector<std::string>>& args);
 int main(int argc, char** argv);
