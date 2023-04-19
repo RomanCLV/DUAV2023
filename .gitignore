@@ -8,6 +8,8 @@ __pycache__/
 config.yaml
 RTH
 **/*/output_videos/
+sources/rtCam/**/*.avi
+**/17_CameraUDP/**/*.avi
 
 # C extensions
 *.so

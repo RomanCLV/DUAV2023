@@ -1,13 +1,17 @@
 import cv2 as cv
+import numpy as np
 import argparse
 import sys
 import os
 import signal
+import socket
+import struct
+import ipaddress
+import psutil
 from time import time
 from datetime import datetime
-import numpy as np
-from config import Config
 from enum import Enum
+import config as cnf
 
 
 class Option(Enum):
@@ -25,6 +29,7 @@ global video_detection
 global video_result_without_detection
 global video_result
 global video_mask
+global sock
 
 
 def sigint_handler(signal, frame):
@@ -80,6 +85,43 @@ def create_folder_if_not_exists(folder_name: str):
         os.makedirs(folder_name)
 
 
+def isSshConnected(display_procces_info=True):
+    is_ssh = False
+
+    # PID du processus dont on veut afficher les parents
+    current_process = psutil.Process()
+    pid = os.getpid()
+
+    if display_procces_info:
+        print("current PID:", pid, "Name:", current_process.name())
+
+    # Tant que le PID du processus parent n'est pas égal à 0 (le PID du processus init)
+    while pid != 0:
+        try:
+            parent = psutil.Process(pid)
+            pid = parent.ppid()
+
+            if display_procces_info:
+                print("Parent PID:", pid, "Name:", parent.name())
+            
+            if not is_ssh and parent.name() in ["ssh", "sshd"]:
+                is_ssh = True
+                    
+        except psutil.NoSuchProcess:
+            break
+    return is_ssh
+
+
+def send_frame_udp_split(frame, address, sock, max_packet_size=65507):
+    data = cv.imencode('.jpg', frame)[1].tobytes()
+    num_packets = len(data) // max_packet_size + 1
+
+    for i in range(num_packets):
+        packet_data = data[i * max_packet_size: (i + 1) * max_packet_size]
+        packet = struct.pack('!II', num_packets, i) + packet_data
+        sock.sendto(packet, address)
+
+
 def release_cap_videos():
     global cap
     global video_detection
@@ -109,8 +151,14 @@ def release_cap_videos():
 
 
 def before_exit():
+    global sock
+
     release_cap_videos()
     cv.destroyAllWindows()
+
+    if sock:
+        sock.close()
+        sock = None
 
 
 def main():
@@ -122,6 +170,7 @@ def main():
     global video_result_without_detection
     global video_result
     global video_mask
+    global sock
 
     has_to_break = False
 
@@ -130,6 +179,7 @@ def main():
     video_result_without_detection = None
     video_result = None
     video_mask = None
+    sock = None
 
     args = parser.parse_args()
 
@@ -139,6 +189,8 @@ def main():
     duration = 0.0
     duration_average = 0.0
     duration_average_count = 0
+
+    udp_address = None
 
     fps = 0
     frame_to_take = 0
@@ -176,7 +228,7 @@ def main():
     window_mask = "Mask"
     window_result = "Result"
 
-    config = Config()
+    config = cnf.Config()
     config.read()
 
     if args.debug:
@@ -185,7 +237,10 @@ def main():
     if args.display_duration:
         config.set_display_duration(True)
 
-    if args.display_opt_windows:
+    if args.display:
+        config.set_display(True)
+
+    if args.display_opt:
         config.set_display_optional_windows(True)
 
     if args.save_detection:
@@ -200,8 +255,36 @@ def main():
     if args.save_mask:
         config.set_save_mask(True)
 
+    if args.udp:
+        config.set_udp_enabled(True)
+
+    if args.ip:
+        config.set_udp_enabled(True)
+        config.set_udp_ip(args.ip)
+
+    if args.port:
+        config.set_udp_enabled(True)
+        config.set_udp_port(args.port)
+
     debug = config.get_debug()
+    display = config.get_display()
     display_windows = config.get_display_optional_windows()
+
+    if isSshConnected(False):
+        debug = False
+        display = False
+        display_windows = False
+        print("Script launched via SSH. debug, display and display optional windows automatically disabled")
+
+    if config.get_udp_enabled():
+        if not cnf.is_valid_ip(config.get_udp_ip()):
+            sys_exit(f"The address {config.get_udp_ip()} is invalid! Please give an address like X.X.X.X where X is in [0-255]")
+
+        if not cnf.is_valid_port(config.get_udp_port()):
+            sys_exit(f"The port {config.get_udp_port()} is invalid! Please give a port from 1024 to 65535")
+
+        udp_address = (config.get_udp_ip(), config.get_udp_port())
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     if args.image:
         images = [None, None]
@@ -239,44 +322,53 @@ def main():
 
         date = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         output_videos_folder = "output_videos"
+        fourcc = cv.VideoWriter_fourcc(*'XVID')
+        
         if config.get_save_detection():
             create_folder_if_not_exists(output_videos_folder)
-            video_detection = cv.VideoWriter(f"{output_videos_folder}/{date}_output_detection.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
+            video_detection = cv.VideoWriter(f"{output_videos_folder}/{date}_output_detection.avi", fourcc, frame_to_take, (frame_width, frame_height))
 
         if config.get_save_result_without_detection():
             create_folder_if_not_exists(output_videos_folder)
-            video_result_without_detection = cv.VideoWriter(f"{output_videos_folder}/{date}_output_result_without_detection.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
+            video_result_without_detection = cv.VideoWriter(f"{output_videos_folder}/{date}_output_result_without_detection.avi", fourcc, frame_to_take, (frame_width, frame_height))
 
         if config.get_save_result():
             create_folder_if_not_exists(output_videos_folder)
-            video_result = cv.VideoWriter(f"{output_videos_folder}/{date}_output_result.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
+            video_result = cv.VideoWriter(f"{output_videos_folder}/{date}_output_result.avi", fourcc, frame_to_take, (frame_width, frame_height))
 
         if config.get_save_mask():
             create_folder_if_not_exists(output_videos_folder)
-            video_mask = cv.VideoWriter(f"{output_videos_folder}/{date}_output_mask.mp4", cv.VideoWriter_fourcc('M','J','P','G'), frame_to_take, (frame_width, frame_height))
-
+            video_mask = cv.VideoWriter(f"{output_videos_folder}/{date}_output_mask.avi", fourcc, frame_to_take, (frame_width, frame_height))
 
     if os.path.exists(RTH_PATH):
         os.remove(RTH_PATH)
 
     print("\nconfig:")
     print(f"debug: {debug}")
+    print(f"display: {display}")
     print(f"display optional windows: {display_windows}")
     print(f"display duration: {config.get_display_duration()}")
     print(f"save detection: {config.get_save_detection()}")
     print(f"save result without detection: {config.get_save_result_without_detection()}")
     print(f"save result: {config.get_save_result()}")
     print(f"save mask: {config.get_save_mask()}")
+    print(f"udp: {config.get_udp_enabled()}")
+    if config.get_udp_enabled():
+        print(f"  to: {config.get_udp_ip()}:{config.get_udp_port()}")
     config.display(sep='\n', start='')
 
     print("press [H] to print the help")
 
-    if display_windows:
-        cv.namedWindow(window_prev_frame)
-        cv.namedWindow(window_curr_frame)
-        cv.namedWindow(window_mask)
-    cv.namedWindow(window_result)
-    cv.waitKey(500)
+    if display or display_windows:
+        if display_windows:
+            cv.namedWindow(window_result)
+            cv.namedWindow(window_prev_frame)
+            cv.namedWindow(window_curr_frame)
+            cv.namedWindow(window_mask)
+
+        elif display:
+            cv.namedWindow(window_result)
+        cv.waitKey(500)
 
     while True:
 
@@ -346,6 +438,7 @@ def main():
 
                                 if debug:
                                     print(f"area {i}: {current_area}")
+
                                 if current_area > max_area:
                                     max_area = current_area
                                     max_area_id = i
@@ -368,16 +461,18 @@ def main():
                             if config.get_display_duration():
                                 print(f"{round3(duration)} ms")
 
-                            if display_windows:
-                                cv.imshow(window_prev_frame, previous_frame)
-                                cv.imshow(window_curr_frame, frame)
-                                cv.imshow(window_mask, mask)
-                                cv.imshow(window_result, result)
-                                if debug:
-                                    k = waitKey(0)
+                            if display or display_windows:
+                                if display_windows:
+                                    cv.imshow(window_prev_frame, previous_frame)
+                                    cv.imshow(window_curr_frame, frame)
+                                    cv.imshow(window_mask, mask)
+                                    cv.imshow(window_result, result)
 
-                            else:
-                                cv.imshow(window_result, result)
+                                    if debug:
+                                        k = waitKey(0)
+                                    
+                                elif display:
+                                    cv.imshow(window_result, result)
 
                             if config.get_save_result_without_detection():
                                 video_result_without_detection.write(frame)
@@ -387,6 +482,9 @@ def main():
 
                             if config.get_save_mask():
                                 video_mask.write(cv.cvtColor(mask, cv.COLOR_GRAY2BGR))
+
+                            if config.get_udp_enabled():
+                                send_frame_udp_split(result, udp_address, sock)
 
                             if something_detected:
                                 # print("object detected!")
@@ -551,13 +649,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="RealTime Camera main.py CLI")
     parser.add_argument("-i", "--image", type=str, nargs=2, help="process with two given images")
     parser.add_argument("-v", "--video", type=str, help="process with a given video")
-    parser.add_argument("-dw", "--display_opt_windows", action="store_true", help="enable views. Takes resources! Not recommanded in production")
+    parser.add_argument("-d", "--display", action="store_true", help="display a window with the resulting frame")
+    parser.add_argument("-do", "--display_opt", action="store_true", help="display all optionnal windows (current frame, previous frame, mask, result)")
     parser.add_argument("-dd", "--display_duration", action="store_true", help="display duration will be automatically enabled")
     parser.add_argument("-db", "--debug", action="store_true", help="shortcut to -d and -dd")
     parser.add_argument("-sd", "--save_detection", action="store_true", help="save detected objects into a video file")
     parser.add_argument("-srwd", "--save_result_without_detection", action="store_true", help="save the resulting frames without the rectangle of detection into a video file")
     parser.add_argument("-sr", "--save_result", action="store_true", help="save the resulting frames into a video file")
     parser.add_argument("-sm", "--save_mask", action="store_true", help="save the mask frames into a video file")
+    parser.add_argument("-udp", "--udp", action="store_true", help="enable the UDP stream")
+    parser.add_argument("-ip", "--ip", type=str, help="destination IP address for UDP stream")
+    parser.add_argument("-port", "--port", type=int, help="destination port for UDP stream")
 
     try:
         main()

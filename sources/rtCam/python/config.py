@@ -1,12 +1,28 @@
 import numpy as np
 import yaml
 import os
+import ipaddress
+
+
+def is_valid_ip(ip: str):
+    try:
+        ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
+
+
+def is_valid_port(port: int):
+	if not isinstance(port, int):
+		raise ValueError(f"port must be an integer. Given: {port}")
+	return 1024 <= port <= 65535
 
 
 class Config(object):
 	def __init__(self):
 		super(Config, self).__init__()
 		self._debug = False
+		self._display = True
 		self._display_optional_windows = False
 		self._display_duration = False
 		self._save_detection = False
@@ -20,6 +36,9 @@ class Config(object):
 		self._kernel_size = 6
 		self._compute_kernel()
 		self._rect_color = (0, 255, 0)  # BGR
+		self._udp_enabled = False
+		self._udp_ip = "0.0.0.0"
+		self._udp_port = 5005
 
 	def get_debug(self):
 		return self._debug
@@ -29,8 +48,17 @@ class Config(object):
 			raise ValueError(f"debug must be a boolean. Given: {value}")
 		self._debug = value
 		if self._debug:
+			self.set_display(True)
 			self.set_display_optional_windows(True)
 			self.set_display_duration(True)
+
+	def get_display(self):
+		return self._display
+
+	def set_display(self, value: bool):
+		if not isinstance(value, bool):
+			raise ValueError(f"display optional windows must be a boolean. Given: {value}")
+		self._display = value
 
 	def get_display_optional_windows(self):
 		return self._display_optional_windows
@@ -227,6 +255,30 @@ class Config(object):
 			raise ValueError(f"red color must be an integer in [0;255]. Given: {r}")
 		self._rect_color = (b, g, r)
 
+	def get_udp_enabled(self):
+		return self._udp_enabled
+
+	def set_udp_enabled(self, value: bool):
+		if not isinstance(value, bool):
+			raise ValueError(f"value must be a boolean. Given: {value}")
+		self._udp_enabled = value
+
+	def get_udp_ip(self):
+		return self._udp_ip
+
+	def set_udp_ip(self, ip: str):
+		if not isinstance(ip, str) or not is_valid_ip(ip):
+			raise ValueError(f"ip invalid. Please give: X.X.X.X where X is from 0 to 255. Given: {ip}")
+		self._udp_ip = ip
+
+	def get_udp_port(self):
+		return self._udp_port
+
+	def set_udp_port(self, port: int):
+		if not isinstance(port, int) or not is_valid_port(port):
+			raise ValueError(f"port must be an integer from 1024 to 65535. Given: {port}")
+		self._udp_port = port
+
 	def display(self, sep='\t', start='\n', end='\n'):
 		print(start, end="")
 		print(f"gaussian blur: {self._gaussian_blur}{sep}", end="")
@@ -239,6 +291,7 @@ class Config(object):
 		config = {
 			"config": {
 				"debug": self._debug,
+				"display": self._display,
 				"display optional windows": self._display_optional_windows,
 			    "display duration": self._display_duration,
 			    "save detection": self._save_detection,
@@ -253,7 +306,10 @@ class Config(object):
 			    	"blue": self._rect_color[0],
 			       	"green": self._rect_color[1],
 			       	"red": self._rect_color[2]
-			    }
+			    },
+			    "udp enabled": self._udp_enabled,
+			    "udp ip": self._udp_ip,
+			    "udp port": self._udp_port,
 			}
 		}
 		with open("config.yaml", 'w') as yamlfile:
@@ -267,6 +323,7 @@ class Config(object):
 				try:
 					config = data["config"]
 					color = config["rectangle color"]
+					self.set_display(config["display"])
 					self.set_display_optional_windows(config["display optional windows"])
 					self.set_display_duration(config["display duration"])
 					# read debug after because debug can change previous parameters (display optional windows, display duration)
@@ -279,7 +336,10 @@ class Config(object):
 					self._set_gaussian_blur(config["gaussian blur"])
 					self._set_threshold(config["threshold"])
 					self._set_kernel_size(config["kernel size"])
-					self._set_rect_color(color["blue"], color["green"], color["red"])
+					self._set_rect_color(color["blue"], color["green"], color["red"]),
+					self.set_udp_enabled(config["udp enabled"])
+					self.set_udp_ip(config["udp ip"])
+					self.set_udp_port(config["udp port"])
 
 				except ValueError as valueError:
 					print("Error in config.yaml file!")
@@ -297,6 +357,7 @@ class Config(object):
 
 	def reset(self):
 		self.set_debug(False)
+		self.set_display(True)
 		self.set_display_optional_windows(False)
 		self.set_display_duration(False)
 		self.set_save_detection(False)
@@ -308,3 +369,6 @@ class Config(object):
 		self._set_threshold(70)
 		self._set_kernel_size(6)
 		self._set_rect_color(0, 255, 0)  # BGR
+		self.set_udp_enabled(False)
+		self.set_udp_ip("0.0.0.0")
+		self.set_udp_port(5005)

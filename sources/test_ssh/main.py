@@ -9,7 +9,8 @@ def isSshConnected(display_procces_info=True):
     current_process = psutil.Process()
     pid = os.getpid()
 
-    print("current PID:", pid, "Name:", current_process.name())
+    if display_procces_info:
+        print("current PID:", pid, "Name:", current_process.name())
 
     # Tant que le PID du processus parent n'est pas égal à 0 (le PID du processus init)
     while pid != 0:
