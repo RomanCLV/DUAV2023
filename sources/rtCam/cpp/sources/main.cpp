@@ -2,8 +2,10 @@
 
 using namespace cv;
 using namespace std;
+using namespace boost::asio;
 
-bool hasToBreak = false;
+
+volatile bool hasToBreak = false;
 
 void signalHandler(int signal)
 {
@@ -70,7 +72,7 @@ inline double getTimeDiff(const double timeStart)
     return (getTime() - timeStart) / getTickFrequency() * 1000.0;
 }
 
-inline double round3(double value)
+inline double round3(const double value)
 {
     return std::round(value * 1000.0) / 1000.0;
 }
@@ -94,6 +96,86 @@ std::string concatenateFolderNameWithDate(const char* folderName, const char* en
     std::ostringstream oss;
     oss << folderName << "/" << dateTimeString << endName;
     return oss.str();
+}
+
+bool isSshConnected(const bool displayProccesInfo)
+{
+    bool isSsh = false;
+    pid_t pid = getpid();
+
+    while (pid != 0)
+    {
+        PROCTAB* proc_tab = openproc(PROC_FILLSTAT | PROC_FILLSTATUS | PROC_FILLMEM | PROC_PID, &pid);
+        proc_t* proc_ptr;
+
+        if (proc_ptr = readproc(proc_tab, NULL))
+        {
+            if (displayProccesInfo)
+            {
+                std::cout << "Parent PID: " << proc_ptr->tid << ", Name: " << proc_ptr->cmd << std::endl;
+            }
+            if (!isSsh)
+            {
+                if (!strcmp(proc_ptr->cmd, "ssh") || !strcmp(proc_ptr->cmd, "sshd"))
+                {
+                    isSsh = true;
+                }
+            }
+            pid = proc_ptr->ppid;
+        } 
+        else 
+        {
+            std::cerr << "Impossible de lire les informations du processus avec le PID : " << pid << std::endl;
+            break;
+        }
+
+        freeproc(proc_ptr);
+        closeproc(proc_tab);
+    }
+    return isSsh;
+}
+
+void sendFrameUdpSplit(const cv::Mat frame, const ip::udp::socket* sock, const ip::udp::endpoint endpoint, int max_packet_size) 
+{
+    vector<uchar> data;
+    imencode(".jpg", frame, data);
+    int num_packets = (data.size() + max_packet_size - 1) / max_packet_size;
+
+    for (int i = 0; i < num_packets; i++) 
+    {
+        vector<uchar> packet_data;
+        int start = i * max_packet_size;
+        int end = min((i + 1) * max_packet_size, (int)data.size());
+        packet_data.assign(data.begin() + start, data.begin() + end);
+
+        vector<uchar> header(8, 0);
+        header[4] = (uchar)num_packets;
+        header[5] = (uchar)(num_packets >> 8);
+        header[6] = (uchar)i;
+        header[7] = (uchar)(i >> 8);
+
+        vector<uchar> packet(header.size() + packet_data.size());
+        copy(header.begin(), header.end(), packet.begin());
+        copy(packet_data.begin(), packet_data.end(), packet.begin() + header.size());
+
+        boost::system::error_code error;
+        sock->send_to(buffer(packet), endpoint, 0, error);
+        if (error) 
+        {
+            std::cerr << "Error sending UDP packet: " << error.message() << std::endl;
+            break;
+        }
+    }
+}
+
+void closeSocket(const ip::udp::socket* sock)
+{
+    if (sock != nullptr)
+    {
+        sock->close();
+        delete sock;
+        sock = nullptr;
+    }
 }
 
 void sysExitMessage()
@@ -136,6 +218,9 @@ int main(int argc, char** argv)
     VideoWriter* videoResult(nullptr);
     VideoWriter* videoMask(nullptr);
 
+    ip::udp::socket* sock(nullptr);
+    ip::udp::endpoint remoteEndpoint;
+
     unsigned int k = 0;
     const string RTH_PATH = "./RTH";
     Option selectedOption = Option::None;
@@ -163,7 +248,8 @@ int main(int argc, char** argv)
     Mat diffImage;
 
     bool debug = false;
-    bool display = false;
+    bool display = true;
+    bool displayWindows = false;
     bool pause = false;
     bool readNextFrame = true;
     bool somethingDetected = false;
@@ -198,41 +284,96 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    if (args.count("db"))
-    {
-        config.setDebug(true);
-    }
-    if (args.count("dd"))
-    {
-        config.setDisplayDuration(true);
-    }
-    if (args.count("dw"))
+    if (args.count("d") || args.count("display"))
     {
         config.setDisplayOptionalWindows(true);
     }
-    if (args.count("sd"))
+    if (args.count("do") || args.count("display_opt"))
+    {
+        config.setDisplayOptionalWindows(true);
+    }
+    if (args.count("dd") || args.count("display_duration"))
+    {
+        config.setDisplayDuration(true);
+    }
+    if (args.count("db") || args.count("debug"))
+    {
+        config.setDebug(true);
+    }
+    if (args.count("sd") || args.count("save_detection"))
     {
         config.setSaveDetection(true);
     }
-    if (args.count("srwd"))
+    if (args.count("srwd") || args.count("save_result_without_detection"))
     {
         config.setSaveResultWithoutDetection(true);
     }
-    if (args.count("sr"))
+    if (args.count("sr") || args.count("save_result"))
     {
         config.setSaveResult(true);
     }
-    if (args.count("sm"))
+    if (args.count("sm") || args.count("save_mask"))
     {
         config.setSaveMask(true);
     }
+    if (args.count("udp"))
+    {
+        config.setUdpEnabled(true);
+    }
+
+    if (args.count("ip"))
+    {
+        config.setUdpEnabled(true);
+        config.setUdpIp(args["ip"][0]);
+    }
+
+    if (args.count("port"))
+    {
+        config.setUdpEnabled(true);
+        config.setUdpPort(args["port"][0]);
+    }
 
     debug = config.getDebug();
-    display = config.getDisplayOptionalWindows();
+    display = config.getDisplay();
+    displayWindows = config.getDisplayOptionalWindows();
 
-    if (args.count("i"))
+    if (debug)
     {
-        if (args["i"].size() != 2)
+        display = true;
+        displayWindows = true;
+    }
+
+    if (isSshConnected(false))
+    {
+        debug = false;
+        display = false;
+        displayWindows = false;
+        printf("Script launched via SSH. debug, display and display optional windows automatically disabled\n");
+    }
+    
+    if (config.getUdpEnabled())
+    {
+        if (!isValidIp(config.getUdpIp()))
+        {
+            cerr << "The address " << config.getUdpIp() << " is invalid! Please give an address like X.X.X.X where X is in [0-255]" << endl;
+            return 1;
+        }
+
+        if (!isValidPort(config.getUdpPort()))
+        {
+            cerr << "The port " << config.getUdpPort() << " is invalid! Please give a port from 1024 to 65535" << endl;
+            return 1;
+        }
+
+        io_service ioService;
+        sock = new ip::udp::socket (ioService, ip::udp::endpoint(ip::udp::v4(), 0));
+        remoteEndpoint = ip::udp::endpoint(ip::address::from_string(config.getUdpIp()), config.getUdpPort());
+    }
+
+    if (args.count("i") || args.count("image"))
+    {
+        string keyName = args.count("i") ? "i" : "image";
+        if (args[keyName].size() != 2)
         {
             cout << "Wrong usage of image option: -i img1 img2" << endl;
             sysExitMessage();
@@ -240,10 +381,10 @@ int main(int argc, char** argv)
         }
         for (int i = 0; i < 2; i++)
         {
-            Mat image = imread(args["i"][i]);
+            Mat image = imread(args[keyName][i]);
             if ( !image.data )
             {
-                cout << "Could not read the image:" << args["i"][i] << endl;
+                cout << "Could not read the image:" << args[keyName][i] << endl;
                 sysExitMessage();
                 return 0;
             }
@@ -251,18 +392,20 @@ int main(int argc, char** argv)
         }
         imageMode = true;
     }
-    else if (args.count("v"))
+    else if (args.count("v") || args.count("video"))
     {
-        if (args["v"].size() != 1)
+        string keyName = args.count("v") ? "v" : "video";
+        if (args[keyName].size() != 1)
         {
             cout << "Wrong usage of video option: -v vid" << endl;
             sysExitMessage();
             return -1;
         }
-        cap = new VideoCapture(args["v"][0]);
+        cap = new VideoCapture(args[keyName][0]);
         if (!cap->isOpened())
         {
-            cout << "Can't open video " << args["v"][0] << endl;
+
+            cout << "Can't open video " << args[keyName][0] << endl;
             sysExitMessage();
             return 0;
         }
@@ -276,6 +419,10 @@ int main(int argc, char** argv)
         if (!cap->isOpened()) 
         {
             cout << "Can not read the device" << endl;
+            if (isSshConnected(false))
+            {
+                cout << "With a SSH connection, please use sudo" << endl;   
+            }
             sysExitMessage();
             return 0;
         }
@@ -294,29 +441,31 @@ int main(int argc, char** argv)
         cout << "frame wait delay: " << frameWaitDelay << " ms" << endl;
 
         const char* outputVideosFolder = "output_videos";
+        int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
+
         if (config.getSaveDetection())
         {
             createDirIfNotExists(outputVideosFolder);
-            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_detection.mp4");
-            videoDetection = new VideoWriter(fileName, cv::VideoWriter::fourcc('M','J','P','G'), frameToTake, Size(frameWidth, frameHeight));
+            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_detection.avi");
+            videoDetection = new VideoWriter(fileName, codec, frameToTake, Size(frameWidth, frameHeight));
         }
         if (config.getSaveResultWithoutDetection())
         {
             createDirIfNotExists(outputVideosFolder);
-            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_result_without_detection.mp4");
-            videoResultWithoutDetection = new VideoWriter(fileName, cv::VideoWriter::fourcc('M','J','P','G'), frameToTake, Size(frameWidth, frameHeight));
+            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_result_without_detection.avi");
+            videoResultWithoutDetection = new VideoWriter(fileName, codec, frameToTake, Size(frameWidth, frameHeight));
         }
         if (config.getSaveResult())
         {
             createDirIfNotExists(outputVideosFolder);
-            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_result.mp4");
-            videoResult = new VideoWriter(fileName, cv::VideoWriter::fourcc('M','J','P','G'), frameToTake, Size(frameWidth, frameHeight));
+            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_result.avi");
+            videoResult = new VideoWriter(fileName, codec, frameToTake, Size(frameWidth, frameHeight));
         }
         if (config.getSaveMask())
         {
             createDirIfNotExists(outputVideosFolder);
-            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_mask.mp4");
-            videoMask = new VideoWriter(fileName, cv::VideoWriter::fourcc('M','J','P','G'), frameToTake, Size(frameWidth, frameHeight));
+            const string fileName = concatenateFolderNameWithDate(outputVideosFolder, "_output_mask.avi");
+            videoMask = new VideoWriter(fileName, codec, frameToTake, Size(frameWidth, frameHeight));
         }
     }
 
@@ -329,24 +478,37 @@ int main(int argc, char** argv)
 
     cout << endl << "config:" << endl;
     cout << "debug: " << (config.getDebug() ? "true" : "false") << endl;
+    cout << "display: " << (config.getDisplay() ? "true" : "false") << endl;
     cout << "display optional windows: " << (config.getDisplayOptionalWindows() ? "true" : "false") << endl;
     cout << "display duration: " << (config.getDisplayDuration() ? "true" : "false") << endl;
     cout << "save detection: " << (config.getSaveDetection() ? "true" : "false") << endl;
     cout << "save result without detection:" << (config.getSaveResultWithoutDetection() ? "true" : "false") << endl;
     cout << "save result:" << (config.getSaveResult() ? "true" : "false") << endl;
     cout << "save mask:" << (config.getSaveMask() ? "true" : "false") << endl;
+    cout << "udp:" << (config.getUdpEnabled() ? "true" : "false") << endl;
+    if (config.getUdpEnabled())
+    {
+        cout << "  to:" << config.getUdpIp() << ":" << to_string(config.getUdpPort()) << endl;
+    }
     config.display('\n', '\0');
 
-    cout << "press [H] to print the help" << endl;
+    cout << "press [H] to print the help" << endl << endl;
 
-    if (display)
+    if (display || displayWindows)
     {
-        namedWindow(windowPrevFrame);
-        namedWindow(windowCurrFrame);
-        namedWindow(windowMask);
+        if (displayWindows)
+        {
+            namedWindow(windowPrevFrame);
+            namedWindow(windowCurrFrame);
+            namedWindow(windowMask);
+            namedWindow(windowResult);
+        }
+        else if (display)
+        {
+            namedWindow(windowResult);
+        }
+        waitKey(500);
     }
-    namedWindow(windowResult);
-    waitKey(500);
 
     while (true)
     {
@@ -453,29 +615,28 @@ int main(int argc, char** argv)
                                 }
                             }
 
-                            duration = getTimeDiff(duration);
-                            durationAverage = ((durationAverage * durationAverageCount) + duration) / (double)(durationAverageCount + 1);
-                            durationAverageCount++;
-
-                            if (config.getDisplayDuration())
+                            if (display || displayWindows)
                             {
-                                cout << round3(duration) << " ms" << endl;
-                            }
-
-                            if (display)
-                            {
-                                imshow(windowPrevFrame, previousFrame);
-                                imshow(windowCurrFrame, frame);
-                                imshow(windowMask, mask);
-                                imshow(windowResult, result);
-                                if (debug)
+                                if (displayWindows)
                                 {
-                                    k = myWaitKey(0);
+                                    imshow(windowPrevFrame, previousFrame);
+                                    imshow(windowCurrFrame, frame);
+                                    imshow(windowMask, mask);
+                                    imshow(windowResult, result);
+                                    if (debug)
+                                    {
+                                        k = myWaitKey(0);
+                                    }
+                                }
+                                else if (display)
+                                {
+                                    imshow(windowResult);
                                 }
                             }
-                            else
+
+                            if (config.getUdpEnabled())
                             {
-                                imshow(windowResult, result);
+                                sendFrameUdpSplit(result, sock, remoteEndpoint);
                             }
 
                             if (config.getSaveMask())
@@ -516,6 +677,15 @@ int main(int argc, char** argv)
                                 cout << "detection cleared" << endl;
                                 frame.copyTo(previousFrame);
                                 gaussianImage.copyTo(previousGaussianImage);
+                            }
+
+                            duration = getTimeDiff(duration);
+                            durationAverage = ((durationAverage * durationAverageCount) + duration) / (double)(durationAverageCount + 1);
+                            durationAverageCount++;
+
+                            if (config.getDisplayDuration())
+                            {
+                                cout << round3(duration) << " ms" << endl;
                             }
                         }
                         else
@@ -758,6 +928,12 @@ int main(int argc, char** argv)
         videoMask->release();
         delete videoMask;
         videoMask = nullptr;
+    }
+    if (sock != nullptr)
+    {
+        sock->close();
+        delete sock;
+        sock = nullptr;
     }
     cv::destroyAllWindows();
 

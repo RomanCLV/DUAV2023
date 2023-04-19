@@ -47,10 +47,6 @@ class Config(object):
 		if not isinstance(value, bool):
 			raise ValueError(f"debug must be a boolean. Given: {value}")
 		self._debug = value
-		if self._debug:
-			self.set_display(True)
-			self.set_display_optional_windows(True)
-			self.set_display_duration(True)
 
 	def get_display(self):
 		return self._display

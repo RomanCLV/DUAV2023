@@ -7,6 +7,12 @@
 #include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
 #include <sys/stat.h>
+#include <string>
+#include <regex>
+
+
+bool isValidIp(const std::string& ip);
+bool isValidPort(const unsigned int port);
 
 
 class KeyNotFoundException : public std::exception
@@ -46,6 +52,8 @@ class Config
 
 		bool getDebug() const;
 		void setDebug(const bool value);
+		void setDisplay(const bool value);
+		bool getDisplay() const;
 		bool getDisplayOptionalWindows() const;
 		void setDisplayOptionalWindows(const bool value);
 		bool getDisplayDuration() const;
@@ -66,6 +74,12 @@ class Config
 		cv::Mat getKernel() const;
 		cv::Scalar getRectangleColor() const;
 		void setRectangleColor(const unsigned int red, const unsigned int green, const unsigned int blue);
+		bool getUdpEnabled() const;
+		void setUdpEnabled(const bool value);
+		std::string getUdpIp() const;
+		void setUdpIp(const std::string& value);
+		unsigned int getUdpPort() const;
+		void setUdpPort(const unsigned int value);
 
 		// methods
 
@@ -103,6 +117,7 @@ class Config
 	private:
     	bool m_debug;
     	bool m_displayDuration;
+    	bool m_display;
     	bool m_displayOptionalWindows;
     	bool m_saveDetection;
     	bool m_saveResultWithoutDetection;
@@ -115,6 +130,9 @@ class Config
     	unsigned int m_kernelSize;
     	cv::Mat m_kernel;
     	cv::Scalar m_rectangleColor;
+    	bool m_udpEnabled;
+    	std::string m_udpIp;
+    	unsigned int m_udpPort;
 };
 
 #endif

@@ -85,7 +85,7 @@ def create_folder_if_not_exists(folder_name: str):
         os.makedirs(folder_name)
 
 
-def isSshConnected(display_procces_info=True):
+def is_ssh_connected(display_procces_info=True):
     is_ssh = False
 
     # PID du processus dont on veut afficher les parents
@@ -278,7 +278,11 @@ def main():
     display = config.get_display()
     display_windows = config.get_display_optional_windows()
 
-    if isSshConnected(False):
+    if debug:
+        display = True;
+        display_windows = True;
+
+    if is_ssh_connected(False):
         debug = False
         display = False
         display_windows = False
@@ -312,7 +316,10 @@ def main():
         print("Trying to open /dev/video0 with CAP_V4L2")
         cap = cv.VideoCapture(0, cv.CAP_V4L2)  # Add cv::CAP_V4L2 to fix: Embedded video playback halted; module v4l2src0 reported: Failed to allocate required memory.
         if not cap.isOpened():
-            sys_exit("Can not read the device")
+            msg = "Can not read the device"
+            if is_ssh_connected(False):
+                msg += "\nWith a SSH connection, please use sudo"
+            sys_exit(msg)
     
     if cap is not None:
         frame_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
@@ -462,13 +469,6 @@ def main():
                                 if config.get_save_detection():
                                     video_detection.write(result)
 
-                            duration = getTimeDiff(duration)
-                            duration_average = ((duration_average * duration_average_count) + duration) / (duration_average_count + 1)
-                            duration_average_count += 1
-
-                            if config.get_display_duration():
-                                print(f"{round3(duration)} ms")
-
                             if display or display_windows:
                                 if display_windows:
                                     cv.imshow(window_prev_frame, previous_frame)
@@ -482,6 +482,9 @@ def main():
                                 elif display:
                                     cv.imshow(window_result, result)
 
+                            if config.get_udp_enabled():
+                                send_frame_udp_split(result, udp_address, sock)
+
                             if config.get_save_result_without_detection():
                                 video_result_without_detection.write(frame)
 
@@ -490,9 +493,6 @@ def main():
 
                             if config.get_save_mask():
                                 video_mask.write(cv.cvtColor(mask, cv.COLOR_GRAY2BGR))
-
-                            if config.get_udp_enabled():
-                                send_frame_udp_split(result, udp_address, sock)
 
                             if something_detected:
                                 # print("object detected!")
@@ -510,6 +510,13 @@ def main():
                                 print("detection cleared")
                                 previous_frame = frame.copy()
                                 previous_gaussian_image = gaussian_image.copy()
+
+                            duration = getTimeDiff(duration)
+                            duration_average = ((duration_average * duration_average_count) + duration) / (duration_average_count + 1)
+                            duration_average_count += 1
+
+                            if config.get_display_duration():
+                                print(f"{round3(duration)} ms")
 
                         else:
                             print("frames haven't the same dimensions or depth!")

@@ -7,7 +7,6 @@
 #include <opencv2/imgcodecs/imgcodecs.hpp>
 #include <csignal>
 #include <unistd.h>
-#include <getopt.h>
 #include <algorithm>
 #include <string>
 #include <map>
@@ -76,7 +75,14 @@ void send_frame_udp_split(cv::Mat frame, ip::udp::socket& sock, const ip::udp::e
         copy(header.begin(), header.end(), packet.begin());
         copy(packet_data.begin(), packet_data.end(), packet.begin() + header.size());
 
-        sock.send_to(buffer(packet), endpoint);
+        boost::system::error_code error;
+        sock.send_to(buffer(packet), endpoint, 0, error);
+
+        if (error) 
+        {
+            std::cerr << "Error sending UDP packet: " << error.message() << std::endl;
+            break;
+        }
     }
 }
 

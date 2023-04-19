@@ -3,8 +3,23 @@
 using namespace cv;
 using namespace std;
 
+
+bool isValidIp(const std::string& ip)
+{
+    regex ip_pattern(
+        R"((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))");
+
+    return regex_match(ip, ip_pattern);
+}
+
+bool isValidPort(const unsigned int port)
+{
+    return 1024 <= port && port <= 65535;
+}
+
 Config::Config() :
 	m_debug(false),
+    m_display(true),
     m_displayOptionalWindows(false),
     m_displayDuration(false),
     m_saveDetection(false),
@@ -15,7 +30,10 @@ Config::Config() :
     m_gaussianBlur(0),
     m_threshold(70),
     m_kernelSize(6),
-    m_rectangleColor(0, 255, 0) // BGR
+    m_rectangleColor(0, 255, 0), // BGR
+    m_udpEnabled(false),
+    m_udpIp("0.0.0.0"),
+    m_udpPort(5005)
 {
 	computeGaussianKernel();
 	computeKernel();
@@ -34,11 +52,16 @@ bool Config::getDebug() const
 void Config::setDebug(const bool value)
 {
 	m_debug = value;
-	if (m_debug)
-	{
-		setDisplayOptionalWindows(true);
-		setDisplayDuration(true);
-	}
+}
+
+bool Config::getDisplay() const
+{
+	return m_display;
+}
+
+void Config::setDisplay(const bool value)
+{
+	m_display = value;
 }
 
 bool Config::getDisplayOptionalWindows() const
@@ -328,6 +351,44 @@ bool Config::increaseKernelSize(const unsigned int increment)
 	return false;
 }
 
+bool getUdpEnabled() const
+{
+	return m_udpEnabled;
+}
+
+void setUdpEnabled(const bool value)
+{
+	m_udpEnabled = value;
+}
+
+std::string getUdpIp() const
+{
+	return m_udpIp;
+}
+
+void setUdpIp(const std::string& value)
+{
+	if (!isValidIp(value))
+	{
+		throw invalid_argument("The address " + value + " is invalid! Please give an address like X.X.X.X where X is in [0-255]");
+	}
+	m_udpIp = value;
+}
+
+unsigned int getUdpPort() const
+{
+	return m_udpPort;
+}
+
+void setUdpPort(const unsigned int value)
+{
+	if (!isValidPort(value))
+	{
+		throw invalid_argument("The port " + to_string(value) + " is invalid! Please give a port from 1024 to 65535");
+	}
+	m_udpPort = value;
+}
+
 void Config::computeGaussianKernel()
 {
 	m_gaussianKernel = Size(m_gaussianBlur, m_gaussianBlur);
@@ -357,6 +418,7 @@ void Config::save() const
     emitter << YAML::Key << "debug" << YAML::Value << m_debug;
     emitter << YAML::Key << "detection area" << YAML::Value << m_detectionArea;
     emitter << YAML::Key << "display duration" << YAML::Value << m_displayDuration;
+    emitter << YAML::Key << "display" << YAML::Value << m_display;
     emitter << YAML::Key << "display optional windows" << YAML::Value << m_displayOptionalWindows;
     emitter << YAML::Key << "save detection" << YAML::Value << m_saveDetection;
     emitter << YAML::Key << "save result without detection" << YAML::Value << m_saveResultWithoutDetection;
@@ -371,6 +433,9 @@ void Config::save() const
     emitter << YAML::Key << "red" << YAML::Value << m_rectangleColor.val[2];
     emitter << YAML::EndMap;
     emitter << YAML::Key << "threshold" << YAML::Value << m_threshold;
+    emitter << YAML::Key << "udp enabled" << YAML::Value << m_udpEnabled;
+    emitter << YAML::Key << "udp ip" << YAML::Value << m_udpIp;
+    emitter << YAML::Key << "udp port" << YAML::Value << m_udpPort;
     emitter << YAML::EndMap;
     emitter << YAML::EndMap;
 
@@ -402,15 +467,14 @@ bool Config::read()
 	    	YAML::Node configNode = getValueFromYamlNode<YAML::Node>(root, "config");
 	    	YAML::Node colorNode = getValueFromYamlNode<YAML::Node>(configNode, "rectangle color");
 
-	    	setDisplayDuration(getValueFromYamlNode<bool>(configNode, "display duration"));
-	    	setDisplayOptionalWindows(getValueFromYamlNode<bool>(configNode, "display optional windows"));
-			// read debug after because debug can change previous parameters (display optional windows, display duration)
 	    	setDebug(getValueFromYamlNode<bool>(configNode, "debug"));
+	    	setDisplayDuration(getValueFromYamlNode<bool>(configNode, "display duration"));
+	    	setDisplay(getValueFromYamlNode<bool>(configNode, "display"));
+	    	setDisplayOptionalWindows(getValueFromYamlNode<bool>(configNode, "display optional windows"));
 	    	setSaveDetection(getValueFromYamlNode<bool>(configNode, "save detection"));
 	    	setSaveResultWithoutDetection(getValueFromYamlNode<bool>(configNode, "save result without detection"));
 	    	setSaveResult(getValueFromYamlNode<bool>(configNode, "save result"));
 	    	setSaveMask(getValueFromYamlNode<bool>(configNode, "save mask"));
-
 	    	setDetectionArea(getValueFromYamlNode<unsigned int>(configNode, "detection area"));
 	    	setGaussianBlur(getValueFromYamlNode<unsigned int>(configNode, "gaussian blur"));
 	    	setThreshold(getValueFromYamlNode<unsigned int>(configNode, "threshold"));
@@ -419,6 +483,9 @@ bool Config::read()
 	    		getValueFromYamlNode<unsigned int>(colorNode, "blue"),
 	    		getValueFromYamlNode<unsigned int>(colorNode, "green"),
 	    		getValueFromYamlNode<unsigned int>(colorNode, "red"));
+	    	setUdpEnabled(getValueFromYamlNode<bool>(configNode, "udp enabled"));
+	    	setUdpIp(getValueFromYamlNode<std::string>(configNode, "udp ip"));
+	    	setUdpPort(getValueFromYamlNode<unsigned int>(configNode, "udp port"));
 	    }
 	    catch(const KeyNotFoundException& e) 
 	    {
@@ -458,6 +525,7 @@ bool Config::read()
 void Config::reset()
 {
 	setDebug(false);
+    setDisplay(true);
     setDisplayOptionalWindows(false);
     setDisplayDuration(false);
     setSaveDetection(false);
@@ -469,4 +537,7 @@ void Config::reset()
     setThreshold(70);
     setKernelSize(6);
     setRectangleColor(0, 255, 0);
+    setUdpEnabled(false);
+    setUdpIp("0.0.0.0");
+    setUdpPort(5005);
 }
