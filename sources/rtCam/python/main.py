@@ -8,6 +8,7 @@ import socket
 import struct
 import ipaddress
 import psutil
+import traceback
 from time import time
 from datetime import datetime
 from enum import Enum
@@ -133,10 +134,16 @@ def send_frame_udp_split(frame, address, sock, max_packet_size=65507):
 
 
 def listen_key_udp(sock, buffer_size=1024):
-    data, addr = sock.recvfrom(buffer_size)
     value = 0
     try:
+        data, addr = sock.recvfrom(buffer_size)
         value = struct.unpack("!i", data)[0]
+
+        if value == 2424832:     # Left arraow
+            value = 65361
+
+        elif value == 2555904:   # Right arrow
+            value = 65363
     
     except socket.timeout:
         pass
@@ -303,16 +310,22 @@ def main(args):
         config.set_udp_enabled(True)
         config.set_udp_port2(args.port2)
 
+    if args.auto_change_ip:
+        config.set_udp_auto_change_ip(True)
+
     debug = config.get_debug()
     display = config.get_display()
     display_windows = config.get_display_optional_windows()
+    display_duration = config.get_display_duration()
 
     if debug:
-        display = True;
-        display_windows = True;
+        display_windows = True
+        display_duration = True
+
+    if display_windows:
+        display = True
 
     if is_ssh:
-        # debug = False
         display = False
         display_windows = False
         print("Script launched via SSH. display and display optional windows automatically disabled")
@@ -334,13 +347,19 @@ def main(args):
         udp_address2 = (config.get_udp_ip(), config.get_udp_port2())
         sock  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock2.timeout(0.005) # 5 ms
+        sock2.settimeout(0.005) # 5 ms
 
         try:
             sock2.bind(udp_address2)
 
         except socket.error as e:
-            sys_exit(f"Socket error: {e}")
+            if e.errno == 99 and config.get_udp_auto_change_ip():
+                print(f"Socket error: {e}")
+                print(f"Changing ip to listen to: 0.0.0.0")
+                udp_address2  = ("0.0.0.0", config.get_udp_port2())
+                sock2.bind(udp_address2)
+            else:
+                raise e
 
     if args.image:
         images = [None, None]
@@ -413,20 +432,20 @@ def main(args):
     print(f"save mask: {config.get_save_mask()}")
     print(f"udp: {config.get_udp_enabled()}")
     if config.get_udp_enabled():
-        print(f"  to  : {config.get_udp_ip()}:{config.get_udp_port()}")
-        print(f"  from: {config.get_udp_ip()}:{config.get_udp_port2()}")
+        print(f"  to  : {udp_address[0]}:{udp_address[1]}")
+        print(f"  from: {udp_address2[0]}:{udp_address2[1]}")
     config.display(sep='\n', start='')
 
     print("press [H] to print the help")
 
-    if display or display_windows:
+    if display:
         if display_windows:
             cv.namedWindow(window_result)
             cv.namedWindow(window_prev_frame)
             cv.namedWindow(window_curr_frame)
             cv.namedWindow(window_mask)
 
-        elif display:
+        else:
             cv.namedWindow(window_result)
         cv.waitKey(500)
 
@@ -514,18 +533,23 @@ def main(args):
                                 if config.get_save_detection():
                                     video_detection.write(result)
 
-                            if display or display_windows:
+                            if display:
                                 if display_windows:
                                     cv.imshow(window_prev_frame, previous_frame)
                                     cv.imshow(window_curr_frame, frame)
                                     cv.imshow(window_mask, mask)
                                     cv.imshow(window_result, result)
-
-                                    if debug:
-                                        k = waitKey(0)
                                     
-                                elif display:
+                                else:
                                     cv.imshow(window_result, result)
+
+                            if debug:
+                                if display:
+                                    k = waitKey(0)                                            
+                                else:
+                                    if config.get_udp_enabled():
+                                        while k == 0:
+                                            k = listen_key_udp(sock2)
 
                             if config.get_udp_enabled():
                                 send_frame_udp_split(result, udp_address, sock)
@@ -560,7 +584,7 @@ def main(args):
                             duration_average = ((duration_average * duration_average_count) + duration) / (duration_average_count + 1)
                             duration_average_count += 1
 
-                            if config.get_display_duration():
+                            if display_duration:
                                 print(f"{round3(duration)} ms")
 
                         else:
@@ -590,14 +614,10 @@ def main(args):
                 print("frame is empty")
                 k = waitKey(500)
 
-        if is_ssh:
-            k = listen_key_udp(sock2)
-            if k == -1:     # Left arraow
-                k = 65361
-
-            elif k == -2:   # Right arrow
-                k = 65363
-
+        if config.get_udp_enabled():
+            k1 = listen_key_udp(sock2)
+            if k1 != 0:
+                k = k1
 
         config_changed = False
 
@@ -730,13 +750,14 @@ if __name__ == '__main__':
     parser.add_argument("-ip", "--ip", type=str, help="destination IP address for UDP stream")
     parser.add_argument("-port", "--port", type=int, help="destination port for UDP stream")
     parser.add_argument("-port2", "--port2", type=int, help="listened port for UDP stream to listen")
+    parser.add_argument('-aci', '--auto_change_ip', action='store_true', help="Auto change ip to 0.0.0.0 if socket can't bind to the given ip")
     args = parser.parse_args()
 
     try:
         main(args)
     except BaseException as e:
         before_exit()
-        print("Error:")
-        for arg in e.args:
-            print(arg)
+        print(f"Error: {e}")
+        traceback.print_exc()
+        print("\n")
         input("press enter to close...")

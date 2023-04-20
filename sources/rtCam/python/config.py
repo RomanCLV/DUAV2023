@@ -40,6 +40,7 @@ class Config(object):
 		self._udp_ip = "0.0.0.0"
 		self._udp_port = 5005
 		self._udp_port2 = 5006
+		self._udp_auto_change_ip = False
 
 	def get_debug(self):
 		return self._debug
@@ -284,6 +285,14 @@ class Config(object):
 			raise ValueError(f"port must be an integer from 1024 to 65535. Given: {port}")
 		self._udp_port2 = port
 
+	def get_udp_auto_change_ip(self):
+		return self._udp_auto_change_ip
+
+	def set_udp_auto_change_ip(self, value: bool):
+		if not isinstance(value, bool):
+			raise ValueError(f"udp auto change ip must be a boolean. Given: {value}")
+		self._udp_auto_change_ip = value
+
 	def display(self, sep='\t', start='\n', end='\n'):
 		print(start, end="")
 		print(f"gaussian blur: {self._gaussian_blur}{sep}", end="")
@@ -316,6 +325,7 @@ class Config(object):
 			    "udp ip": self._udp_ip,
 			    "udp port": self._udp_port,
 			    "udp port 2": self._udp_port2,
+			    "udp auto change ip": self._udp_auto_change_ip
 			}
 		}
 		with open("config.yaml", 'w') as yamlfile:
@@ -347,6 +357,7 @@ class Config(object):
 					self.set_udp_ip(config["udp ip"])
 					self.set_udp_port(config["udp port"])
 					self.set_udp_port2(config["udp port 2"])
+					self.set_udp_auto_change_ip(config["udp auto change ip"])
 
 				except ValueError as valueError:
 					print("Error in config.yaml file!")
@@ -380,3 +391,4 @@ class Config(object):
 		self.set_udp_ip("0.0.0.0")
 		self.set_udp_port(5005)
 		self.set_udp_port2(5006)
+		self.set_udp_auto_change_ip(False)

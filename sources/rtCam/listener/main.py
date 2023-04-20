@@ -106,10 +106,7 @@ def main(args):
     udp_address = (udp_ip, udp_port)
     udp_address2 = (udp_ip, udp_port2)
 
-    print(f"Opening a socket to {udp_ip}:{udp_port}")
-
-    window_name = f"Received from {udp_ip}:{udp_port}"
-
+    print(f"Opening a socket to {udp_address[0]}:{udp_address[1]}")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(1.0) # 1 sec
 
@@ -119,27 +116,25 @@ def main(args):
     except socket.error as e:
         print(f"Socket error: {e}")
 
-        if auto_change_ip:
-            print(f"Changing ip to listen 0.0.0.0")
-            udp_ip = "0.0.0.0"
-            udp_address = (udp_ip, udp_port)
-            window_name = f"nListening: {udp_ip}:{udp_port}"
+        if e.errno == 99 and auto_change_ip:
+            print(f"Changing ip to listen to: 0.0.0.0")
+            udp_address = ("0.0.0.0", udp_port)
             sock.bind(udp_address)
         else:
             sys.exit(1)
 
-    print(f"Opening a socket to {udp_ip}:{udp_port2}")
+    print(f"Opening a socket to {udp_address2[0]}:{udp_address2[1]}")
     sock2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    window_name += f" | Send: {udp_ip}:{udp_port2}"
+    window_name = f"Listening: {udp_address[0]}:{udp_address[1]} | Send: {udp_address2[0]}:{udp_address2[1]}"
 
     if display:
         cv.namedWindow(window_name)
         cv.waitKey(500)
 
     k = 0
-    print(f"\nListening: {udp_ip}:{udp_port}")
-    print(f"Send to:   {udp_ip}:{udp_port2}")
+    print(f"Listening: {udp_address[0]}:{udp_address[1]}")
+    print(f"Send to:   {udp_address2[0]}:{udp_address2[1]}")
     print("press ESC to quit\n")
 
     try:
@@ -188,7 +183,7 @@ if __name__ == '__main__':
     parser.add_argument('ip', type=str, help='IP address to listen')
     parser.add_argument('port', type=int, help='Port to listen')
     parser.add_argument('port2', type=int, help='Port to send the pressed key')
-    parser.add_argument('-aci', '--auto_change_ip', action='store_true', help="Auto change ip to 0.0.0.0 if sock can't bind to the given ip")
+    parser.add_argument('-aci', '--auto_change_ip', action='store_true', help="Auto change ip to 0.0.0.0 if socket can't bind to the given ip")
     parser.add_argument('-o', '--output', type=str, help='Path to save the video file')
     parser.add_argument('-d', '--display', action='store_true', help='Display received frames in a window')
     parser.add_argument('-fps', '--fps', type=int, default=30, choices=fps_choices, help='Frames per second for the video (default: 30)')
