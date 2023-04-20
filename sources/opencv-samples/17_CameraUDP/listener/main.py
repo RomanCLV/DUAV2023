@@ -97,8 +97,14 @@ def main(args):
         cv.namedWindow(window_name, cv.WINDOW_NORMAL)
         cv.waitKey(500)
 
+    k = 0
+    print("press ESC to quit")
+
     try:
+
         while True:
+            k = 0
+
             #if args.receive_split:
             #    frame = recv_frame_sliced(sock)
             #else:
@@ -107,19 +113,21 @@ def main(args):
 
             if frame is None:
                 print("No frame received")
-                cv.waitKey(500)
-                continue
+                k = cv.waitKey(500) & 0xFF
 
-            if write:
-                if video is None:
-                    fourcc = cv.VideoWriter_fourcc(*'XVID')
-                    video = cv.VideoWriter(args.output, fourcc, frame_fps, (frame.shape[1], frame.shape[0]))
-                video.write(frame)
+            else:
+                if write:
+                    if video is None:
+                        fourcc = cv.VideoWriter_fourcc(*'XVID')
+                        video = cv.VideoWriter(args.output, fourcc, frame_fps, (frame.shape[1], frame.shape[0]))
+                    video.write(frame)
 
-            if display:
-                cv.imshow(window_name, frame)
+                if display:
+                    cv.imshow(window_name, frame)
+
+                k = cv.waitKey(1) & 0xFF;
             
-            if cv.waitKey(1) & 0xFF == 27:
+            if k == 27:
                 break
                 
     except KeyboardInterrupt:

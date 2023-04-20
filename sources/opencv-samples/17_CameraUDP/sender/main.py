@@ -106,26 +106,30 @@ def main(args):
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+    k = 0
     print("press ESC to quit")
 
     try:
         while True:
+            k = 0
+
             ret, frame = cap.read()
 
             if not ret:
                 print("frame is empty")
-                cv.waitKey(500)
-                continue
-                
-            if write:
-                video.write(frame)
-
-            send_frame_udp_split(frame, (udp_ip, udp_port), sock)
-
-            if display:
-                cv.imshow(window_name, frame)
+                k = cv.waitKey(500) & 0xFF
             
-            if cv.waitKey(1) & 0xFF == 27:  # 27 is the ESC key
+            else:
+                if write:
+                    video.write(frame)
+
+                send_frame_udp_split(frame, (udp_ip, udp_port), sock)
+
+                if display:
+                    cv.imshow(window_name, frame)
+                k = cv.waitKey(1) & 0xFF
+
+            if k == 27:  # 27 is the ESC key
                 break
 
     except KeyboardInterrupt:

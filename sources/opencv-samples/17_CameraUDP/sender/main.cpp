@@ -200,30 +200,34 @@ int main(int argc, char* argv[])
         namedWindow(window_name, WINDOW_AUTOSIZE);
     }
 
+    int k = 0;
+    cout << "press ESC to quit" << endl << endl;
+
     while (!stop) 
     {
         cap >> frame;
 
         if (frame.empty()) 
         {
-            cerr << "frame is empty" << endl;
-            waitKey(500);
-            continue;
+            cout << "frame is empty" << endl;
+            k = waitKey(500) & 0xFF;
         }
-
-        if (write)
+        else
         {
-            video_writer.write(frame);
+            if (write)
+            {
+                video_writer.write(frame);
+            }
+
+            send_frame_udp_split(frame, sock, remote_endpoint);
+
+            if (display) 
+            {
+                imshow(window_name, frame);
+            }
+            k = waitKey(1) & 0xFF;
         }
-
-        send_frame_udp_split(frame, sock, remote_endpoint);
-
-        if (display) 
-        {
-            imshow(window_name, frame);
-        }
-
-        if (waitKey(1) == 27) 
+        if (k == 27) 
         {
             break;
         }
