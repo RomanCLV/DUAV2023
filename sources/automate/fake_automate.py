@@ -40,7 +40,7 @@ class Logger:
         if display:
             print(msg)
 
-        log_file = "automate.log"
+        log_file = "fake_automate.log"
     
         if not os.path.exists(log_file):
             with open(log_file, "x") as file:
@@ -58,7 +58,6 @@ global state
 global start_time
 global last_time_state_changed
 global servos
-global can_open
 global is_opened
 global opened_date
 global closed_tank_position
@@ -94,7 +93,6 @@ def main():
     global start_time
     global last_time_state_changed
     global servos
-    global can_open
     global is_opened
     global closed_tank_position
     global opened_tank_position
@@ -106,9 +104,8 @@ def main():
     request = STATE.INIT
     state = STATE.INIT
 
-    take_photo_event_count = 0
-    can_open = False
     is_opened = False
+    opened_date = 0
     closed_tank_position = 0
     opened_tank_position = 90
 
@@ -136,28 +133,7 @@ def main():
     remove_rth_file()
     
     while run:
-        
-        # lecture des canaux
-        if False: # start video event
-            can_open = True
-            log("can open")
-
-        if False: # stop video event
-            can_open = False
-            log("can't open")
-
-        if False: # take photo event
-            take_photo_event_count += 1
-
-            if take_photo_event_count == 1:
-                request = STATE.EXPLORATION
-
-            elif take_photo_event_count == 2:
-                request = STATE.MISSION
-
-            else:
-                request = STATE.SHUTDOWN
-
+        # read GPS signal
         if run:
             time.sleep(0.100)    # delete after
         else:
@@ -181,9 +157,8 @@ def set_state(new_state):
 
 
 def automate_request():
-    global run
-    global state
     global request
+    global state
 
     if request == state and request != STATE.INIT:
         return
@@ -193,12 +168,12 @@ def automate_request():
     
     elif request == STATE.EXPLORATION:
         close_tanks()
-        log("Exploration engaged")
+        log("Ready to exploration")
         set_state(STATE.EXPLORATION)
 
     elif request == STATE.MISSION:
         close_tanks()
-        log("Mission engaged")
+        log("Ready to mission")
         set_state(STATE.MISSION)
 
     elif request == STATE.DO_NOTHING:
@@ -217,21 +192,20 @@ def automate_request():
 
     else:
         close_all_servo()
-        log(f"Unexpected request value: {request}")
-        run = False
+        raise ValueError(f"Unexpected request value: {request}")
 
 
 def automate_state():
-    global run
     global state
     global request
     global start_time
     global last_time_state_changed
     global servos
-    global can_open
     global is_opened
     global closed_tank_position
     global opened_date
+
+    delay = get_millis() - last_time_state_changed
 
     if state == STATE.INIT:
         start_time = get_millis()
@@ -245,39 +219,47 @@ def automate_state():
                 raise err                
 
         log("Automate initialized")
-        request = STATE.DO_NOTHING
+        request = STATE.EXPLORATION
     
     elif state == STATE.EXPLORATION:
-        if can_open:
-            if rth_file_exists():
-                log("RTH file detected!")
-                request = STATE.RETURN_TO_HOME
-                return
+        if rth_file_exists():
+            log("RTH file detected!")
+            request = STATE.RETURN_TO_HOME
+            return
+        if is_opened:
+            close_tanks()
+
+        if delay > 5000:
+            log("Exploration done")
+            request = STATE.MISSION
     
     elif state == STATE.MISSION:
-        if can_open:
-            if rth_file_exists():
-                log("RTH file detected!")
-                request = STATE.RETURN_TO_HOME
-                if is_opened:
-                    close_tanks()
-                return
+        if rth_file_exists():
+            log("RTH file detected!")
+            request = STATE.RETURN_TO_HOME
+            return
 
-            if not is_opened:
-                open_tanks()
-        else:
-            if is_opened:
+        if is_opened:
+            if get_millis() - opened_date > 3000:
                 close_tanks()
+        else:
 
-            remove_rth_file()
+            if get_millis() - opened_date > 6000 and is_near_to():
+                open_tanks()
+
+        if delay > 15000:
+            log("Mission done")
+            request = STATE.DO_NOTHING
 
     elif state == STATE.RETURN_TO_HOME:
-        # vehicule.mode = VehiculeMode("RTL");
-        request = STATE.DO_NOTHING
+
+        if delay > 5000:
+            log("Return to home done")
+            request = STATE.DO_NOTHING
 
     elif state == STATE.DO_NOTHING:
-        if (get_millis() - last_time_state_changed) > 120000:
-            # adter 2 minutes
+
+        if delay > 3000:
             request = STATE.SHUTDOWN
 
     elif state == STATE.SHUTDOWN:
@@ -287,8 +269,11 @@ def automate_state():
 
     else:
         close_all_servo()
-        log(f"Unexpected state value: {state}")
-        run = False
+        raise ValueError(f"Unexpected state value: {state}")
+
+
+def is_near_to():
+    return random.random() > 0.95
 
 
 def close_tanks():
