@@ -116,7 +116,7 @@ def main(args):
     except socket.error as e:
         print(f"Socket error: {e}")
 
-        if e.errno == 99 and auto_change_ip:
+        if (e.errno == 10049 or e.errno == 99) and auto_change_ip:
             print(f"Changing ip to listen to: 0.0.0.0")
             udp_address = ("0.0.0.0", udp_port)
             sock.bind(udp_address)
