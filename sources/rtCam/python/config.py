@@ -301,6 +301,32 @@ class Config(object):
 		print(f"detection area: {self._detection_area}{sep}", end="")
 		print(end, end="")
 
+	def set_from(self, config):
+		self.set_debug(config.get_debug())
+		self.set_display(config.get_display())
+		self.set_display_optional_windows(config.get_display_optional_windows())
+		self.set_display_duration(config.get_display_duration())
+		self.set_save_detection(config.get_save_detection())
+		self.set_save_result_without_detection(config.get_save_result_without_detection())
+		self.set_save_result(config.get_save_result())
+		self.set_save_mask(config.get_save_mask())
+		self._set_detection_area(config.get_detection_area())
+		self._set_gaussian_blur(config.get_gaussian_blur())
+		self._set_threshold(config.get_threshold())
+		self._set_kernel_size(config.get_kernel_size())
+		rect_color = config.get_rectangle_color()
+		self._set_rect_color(rect_color[0], rect_color[1], rect_color[2])
+		self.set_udp_enabled(config.get_udp_enabled())
+		self.set_udp_ip(config.get_udp_ip())
+		self.set_udp_port(config.get_udp_port())
+		self.set_udp_port2(config.get_udp_port2())
+		self.set_udp_auto_change_ip(config.get_udp_auto_change_ip())
+
+	def copy(self):
+		cnf = Config()
+		cnf.set_from(self)
+		return cnf
+
 	def save(self):
 		config = {
 			"config": {

@@ -51,6 +51,7 @@ def help():
     print("    Pause                  SPACE BAR")
     print("    Quit                   ESC")
     print("    Display config         I")
+    print("    New config             N")
     print("    Reset config           R")
     print("    Save config            S")
     print("")
@@ -62,6 +63,23 @@ def help():
     print("    Detection area         A")
     print("")
     print("----------------------------------")
+
+
+def display_full_config(config, debug, display, display_windows, display_duration, udp_address, udp_address2):
+    print("\nconfig:")
+    print(f"debug: {debug}")
+    print(f"display: {display}")
+    print(f"display optional windows: {display_windows}")
+    print(f"display duration: {display_duration}")
+    print(f"save detection: {config.get_save_detection()}")
+    print(f"save result without detection: {config.get_save_result_without_detection()}")
+    print(f"save result: {config.get_save_result()}")
+    print(f"save mask: {config.get_save_mask()}")
+    print(f"udp: {config.get_udp_enabled()}")
+    if config.get_udp_enabled():
+        print(f"  to  : {udp_address[0]}:{udp_address[1]}")
+        print(f"  from: {udp_address2[0]}:{udp_address2[1]}")
+    config.display(sep='\n', start='')
 
 
 def waitKey(millis: int):
@@ -124,7 +142,6 @@ def send_frame_udp_split(frame, address, sock, max_packet_size=65507):
         try:
             sock.sendto(packet, address)
         except socket.error as e:
-            print(f"socket error: {e}")
             if e.errno == 90:  # MessageTooLong error code
                 # norlally, we shouldn't have this error (thanks to max_packet_size), but to be sure...
                 print("Packet too large, skipping...")
@@ -147,10 +164,6 @@ def listen_key_udp(sock, buffer_size=1024):
     
     except socket.timeout:
         pass
-
-    except socket.error as e:
-        print(f"socket error: {e}")
-        raise e
 
     return value
 
@@ -345,7 +358,9 @@ def main(args):
 
         udp_address  = (config.get_udp_ip(), config.get_udp_port())
         udp_address2 = (config.get_udp_ip(), config.get_udp_port2())
+        print(f"Opening a socket to {udp_address[0]}:{udp_address[1]}")
         sock  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        print(f"Opening a socket to {udp_address2[0]}:{udp_address2[1]}")
         sock2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock2.settimeout(0.005) # 5 ms
 
@@ -356,6 +371,8 @@ def main(args):
             if e.errno == 99 and config.get_udp_auto_change_ip():
                 print(f"Socket error: {e}")
                 print(f"Changing ip to listen to: 0.0.0.0")
+                udp_address2 = ("0.0.0.0", config.get_udp_port2())
+                print(f"Opening a socket to {udp_address2[0]}:{udp_address2[1]}")
                 udp_address2  = ("0.0.0.0", config.get_udp_port2())
                 sock2.bind(udp_address2)
             else:
@@ -421,20 +438,9 @@ def main(args):
     if os.path.exists(RTH_PATH):
         os.remove(RTH_PATH)
 
-    print("\nconfig:")
-    print(f"debug: {debug}")
-    print(f"display: {display}")
-    print(f"display optional windows: {display_windows}")
-    print(f"display duration: {config.get_display_duration()}")
-    print(f"save detection: {config.get_save_detection()}")
-    print(f"save result without detection: {config.get_save_result_without_detection()}")
-    print(f"save result: {config.get_save_result()}")
-    print(f"save mask: {config.get_save_mask()}")
-    print(f"udp: {config.get_udp_enabled()}")
-    if config.get_udp_enabled():
-        print(f"  to  : {udp_address[0]}:{udp_address[1]}")
-        print(f"  from: {udp_address2[0]}:{udp_address2[1]}")
-    config.display(sep='\n', start='')
+    config_copy = config.copy()
+
+    display_full_config(config, debug, display, display_windows, display_duration, udp_address, udp_address2)
 
     print("press [H] to print the help")
 
@@ -644,8 +650,17 @@ def main(args):
             read_next_frame = not (debug or images)
 
         elif k == 82 or k == 114:       # R | r
-            config.reset()
+            print("config reset\n")
+            config.set_from(config_copy)
             config.display()
+            config_changed = True
+            read_next_frame = not (debug or images)
+
+        elif k == 78 or k == 110:       # N | n
+            print("new config")
+            config.reset()
+            display_full_config(config, debug, display, display_windows, display_duration, udp_address, udp_address2)
+
             config_changed = True
             read_next_frame = not (debug or images)
 
