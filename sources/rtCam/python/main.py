@@ -30,6 +30,7 @@ global video_result_without_detection
 global video_result
 global video_mask
 global sock
+global sock2
 
 
 def sigint_handler(signal, frame):
@@ -122,12 +123,29 @@ def send_frame_udp_split(frame, address, sock, max_packet_size=65507):
         try:
             sock.sendto(packet, address)
         except socket.error as e:
+            print(f"socket error: {e}")
             if e.errno == 90:  # MessageTooLong error code
                 # norlally, we shouldn't have this error (thanks to max_packet_size), but to be sure...
                 print("Packet too large, skipping...")
                 continue
             else:
                 raise e
+
+
+def listen_key_udp(sock, buffer_size=1024):
+    data, addr = sock.recvfrom(buffer_size)
+    value = 0
+    try:
+        value = struct.unpack("!i", data)[0]
+    
+    except socket.timeout:
+        pass
+
+    except socket.error as e:
+        print(f"socket error: {e}")
+        raise e
+
+    return value
 
 
 def release_cap_videos():
@@ -160,6 +178,7 @@ def release_cap_videos():
 
 def before_exit():
     global sock
+    global sock2
 
     release_cap_videos()
     cv.destroyAllWindows()
@@ -168,8 +187,12 @@ def before_exit():
         sock.close()
         sock = None
 
+    if sock2:
+        sock2.close()
+        sock2 = None
 
-def main():
+
+def main(args):
 
     global has_to_break
 
@@ -179,6 +202,7 @@ def main():
     global video_result
     global video_mask
     global sock
+    global sock2
 
     has_to_break = False
 
@@ -188,8 +212,8 @@ def main():
     video_result = None
     video_mask = None
     sock = None
-
-    args = parser.parse_args()
+    sock2 = None
+    is_ssh = is_ssh_connected(False)
 
     k = 0
     RTH_PATH = "./RTH"
@@ -199,6 +223,7 @@ def main():
     duration_average_count = 0
 
     udp_address = None
+    udp_address2 = None
 
     fps = 0
     frame_to_take = 0
@@ -274,6 +299,10 @@ def main():
         config.set_udp_enabled(True)
         config.set_udp_port(args.port)
 
+    if args.port2:
+        config.set_udp_enabled(True)
+        config.set_udp_port2(args.port2)
+
     debug = config.get_debug()
     display = config.get_display()
     display_windows = config.get_display_optional_windows()
@@ -282,11 +311,11 @@ def main():
         display = True;
         display_windows = True;
 
-    if is_ssh_connected(False):
-        debug = False
+    if is_ssh:
+        # debug = False
         display = False
         display_windows = False
-        print("Script launched via SSH. debug, display and display optional windows automatically disabled")
+        print("Script launched via SSH. display and display optional windows automatically disabled")
 
     if config.get_udp_enabled():
         if not cnf.is_valid_ip(config.get_udp_ip()):
@@ -295,8 +324,23 @@ def main():
         if not cnf.is_valid_port(config.get_udp_port()):
             sys_exit(f"The port {config.get_udp_port()} is invalid! Please give a port from 1024 to 65535")
 
-        udp_address = (config.get_udp_ip(), config.get_udp_port())
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        if not cnf.is_valid_port(config.get_udp_port2()):
+            sys_exit(f"The port {config.get_udp_port2()} is invalid! Please give a port from 1024 to 65535")
+
+        if config.get_udp_port() == config.get_udp_port2():
+            sys_exit(f"The listened port ({config.get_udp_port()}) and the writed port ({config.get_udp_port2()}) must be different")
+
+        udp_address  = (config.get_udp_ip(), config.get_udp_port())
+        udp_address2 = (config.get_udp_ip(), config.get_udp_port2())
+        sock  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock2.timeout(0.005) # 5 ms
+
+        try:
+            sock2.bind(udp_address2)
+
+        except socket.error as e:
+            sys_exit(f"Socket error: {e}")
 
     if args.image:
         images = [None, None]
@@ -317,7 +361,7 @@ def main():
         cap = cv.VideoCapture(0, cv.CAP_V4L2)  # Add cv::CAP_V4L2 to fix: Embedded video playback halted; module v4l2src0 reported: Failed to allocate required memory.
         if not cap.isOpened():
             msg = "Can not read the device"
-            if is_ssh_connected(False):
+            if is_ssh:
                 msg += "\nWith a SSH connection, please use sudo"
             sys_exit(msg)
     
@@ -369,7 +413,8 @@ def main():
     print(f"save mask: {config.get_save_mask()}")
     print(f"udp: {config.get_udp_enabled()}")
     if config.get_udp_enabled():
-        print(f"  to: {config.get_udp_ip()}:{config.get_udp_port()}")
+        print(f"  to  : {config.get_udp_ip()}:{config.get_udp_port()}")
+        print(f"  from: {config.get_udp_ip()}:{config.get_udp_port2()}")
     config.display(sep='\n', start='')
 
     print("press [H] to print the help")
@@ -545,6 +590,15 @@ def main():
                 print("frame is empty")
                 k = waitKey(500)
 
+        if is_ssh:
+            k = listen_key_udp(sock2)
+            if k == -1:     # Left arraow
+                k = 65361
+
+            elif k == -2:   # Right arrow
+                k = 65363
+
+
         config_changed = False
 
         if has_to_break or k == 27:     # ESC
@@ -675,9 +729,11 @@ if __name__ == '__main__':
     parser.add_argument("-udp", "--udp", action="store_true", help="enable the UDP stream")
     parser.add_argument("-ip", "--ip", type=str, help="destination IP address for UDP stream")
     parser.add_argument("-port", "--port", type=int, help="destination port for UDP stream")
+    parser.add_argument("-port2", "--port2", type=int, help="listened port for UDP stream to listen")
+    args = parser.parse_args()
 
     try:
-        main()
+        main(args)
     except BaseException as e:
         before_exit()
         print("Error:")

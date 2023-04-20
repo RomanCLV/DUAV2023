@@ -67,9 +67,7 @@ def main(args):
 
     udp_ip = args.ip
     udp_port = args.port
-
-    udp_address = None
-    udp_key_address = None
+    udp_port2 = args.port2
 
     if not is_valid_ip(udp_ip):
         print(f"The address {udp_ip} is invalid! Please give an address like X.X.X.X where X is in [0-255]")
@@ -79,24 +77,18 @@ def main(args):
         print(f"The port {udp_port} is invalid! Please give a port from 1024 to 65535")
         sys.exit(1)
 
-    udp_address = (udp_ip, udp_port)
+    if not is_valid_port(args.port2):
+        print(f"The port {args.port2} is invalid! Please give a port from 1024 to 65535")
+        sys.exit(1)
 
-    if args.port2: 
-        if not is_valid_port(args.port2):
-            print(f"The port {args.port2} is invalid! Please give a port from 1024 to 65535")
-            sys.exit(1)
-
-        if udp_port == args.port2:
-            print(f"The listened port ({udp_port}) and the writed port ({args.port2}) must be different")
-            sys.exit(1)
-
-        udp_key_address = (udp_ip, args.port2)
-
+    if udp_port == udp_port2:
+        print(f"The listened port ({udp_port}) and the writed port ({args.port2}) must be different")
+        sys.exit(1)
+        
     display = False
     write = False
     video = None
     frame_fps = 30
-    window_name = f"Received from {udp_ip}:{udp_port}"
 
     if args.display:
         display = True
@@ -111,14 +103,18 @@ def main(args):
             print("Error : the video file extension must be .avi")
             sys.exit(1)
 
-    print(f"Trying to open a socket to {udp_ip}:{udp_port}")
+    udp_address = (udp_ip, udp_port)
+    udp_address2 = (udp_ip, udp_port2)
+
+    print(f"Opening a socket to {udp_ip}:{udp_port}")
+
+    window_name = f"Received from {udp_ip}:{udp_port}"
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # Définir un délai d'attente (timeout) pour le socket en secondes
-    sock.settimeout(1.0)
+    sock.settimeout(1.0) # 1 sec
 
     try:
-        sock.bind((udp_ip, udp_port))
+        sock.bind(udp_address)
 
     except socket.error as e:
         print(f"Socket error: {e}")
@@ -126,23 +122,24 @@ def main(args):
         if auto_change_ip:
             print(f"Changing ip to listen 0.0.0.0")
             udp_ip = "0.0.0.0"
-            window_name = f"Received from {udp_ip}:{udp_port}"
-            sock.bind((udp_ip, udp_port))
+            udp_address = (udp_ip, udp_port)
+            window_name = f"nListening: {udp_ip}:{udp_port}"
+            sock.bind(udp_address)
         else:
             sys.exit(1)
-    print(f"\nListening: {udp_ip}:{udp_port}")
 
-    sock2 = None
-    if udp_key_address:
-        sock2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        window_name += f" | Send to: {udp_key_address[0]}:{udp_key_address[1]}"
-        print(f"\nSend to: {udp_key_address[0]}:{udp_key_address[1]}")
+    print(f"Opening a socket to {udp_ip}:{udp_port2}")
+    sock2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    window_name += f" | Send: {udp_ip}:{udp_port2}"
 
     if display:
         cv.namedWindow(window_name)
         cv.waitKey(500)
 
     k = 0
+    print(f"\nListening: {udp_ip}:{udp_port}")
+    print(f"Send to:   {udp_ip}:{udp_port2}")
     print("press ESC to quit\n")
 
     try:
@@ -168,7 +165,7 @@ def main(args):
                 k = cv.waitKeyEx(1)
 
             if k != -1 and k != 27 and sock2:
-                send_udp_key(k, sock2, udp_key_address)
+                send_udp_key(k, sock2, udp_address2)
 
             if k == 27:
                 break
@@ -190,7 +187,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='rtCam listener CLI')
     parser.add_argument('ip', type=str, help='IP address to listen')
     parser.add_argument('port', type=int, help='Port to listen')
-    parser.add_argument('-p2', '--port2', type=int, help='Port to send the pressed key')
+    parser.add_argument('port2', type=int, help='Port to send the pressed key')
     parser.add_argument('-aci', '--auto_change_ip', action='store_true', help="Auto change ip to 0.0.0.0 if sock can't bind to the given ip")
     parser.add_argument('-o', '--output', type=str, help='Path to save the video file')
     parser.add_argument('-d', '--display', action='store_true', help='Display received frames in a window')

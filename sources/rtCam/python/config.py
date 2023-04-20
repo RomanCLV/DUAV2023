@@ -39,6 +39,7 @@ class Config(object):
 		self._udp_enabled = False
 		self._udp_ip = "0.0.0.0"
 		self._udp_port = 5005
+		self._udp_port2 = 5006
 
 	def get_debug(self):
 		return self._debug
@@ -275,6 +276,14 @@ class Config(object):
 			raise ValueError(f"port must be an integer from 1024 to 65535. Given: {port}")
 		self._udp_port = port
 
+	def get_udp_port2(self):
+		return self._udp_port2
+
+	def set_udp_port2(self, port: int):
+		if not isinstance(port, int) or not is_valid_port(port):
+			raise ValueError(f"port must be an integer from 1024 to 65535. Given: {port}")
+		self._udp_port2 = port
+
 	def display(self, sep='\t', start='\n', end='\n'):
 		print(start, end="")
 		print(f"gaussian blur: {self._gaussian_blur}{sep}", end="")
@@ -306,6 +315,7 @@ class Config(object):
 			    "udp enabled": self._udp_enabled,
 			    "udp ip": self._udp_ip,
 			    "udp port": self._udp_port,
+			    "udp port 2": self._udp_port2,
 			}
 		}
 		with open("config.yaml", 'w') as yamlfile:
@@ -336,6 +346,7 @@ class Config(object):
 					self.set_udp_enabled(config["udp enabled"])
 					self.set_udp_ip(config["udp ip"])
 					self.set_udp_port(config["udp port"])
+					self.set_udp_port2(config["udp port 2"])
 
 				except ValueError as valueError:
 					print("Error in config.yaml file!")
@@ -368,3 +379,4 @@ class Config(object):
 		self.set_udp_enabled(False)
 		self.set_udp_ip("0.0.0.0")
 		self.set_udp_port(5005)
+		self.set_udp_port2(5006)
