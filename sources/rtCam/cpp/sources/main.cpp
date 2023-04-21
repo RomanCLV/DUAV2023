@@ -199,7 +199,7 @@ void sendFrameUdpSplit(const cv::Mat frame, ip::udp::socket* sock, const ip::udp
 
 unsigned int listenKeyUdp(boost::asio::ip::udp::socket* sock, int timeout_ms)
 {
-    unsigned int value = 0;
+    unsigned int value;
     
     uint32_t received_number;
     ip::udp::endpoint remote_endpoint;
@@ -218,20 +218,28 @@ unsigned int listenKeyUdp(boost::asio::ip::udp::socket* sock, int timeout_ms)
         if (!error) 
         {
             timer.cancel();
-            //uint32_t host_number = ntohl(received_number);
-            //cout << "Received number: " << host_number << " from: " << remote_endpoint << endl;
-            if (received_number == 2424832)       // Left arrow
+            uint32_t host_number = ntohl(received_number);
+            if (host_number == 2424832)       // Left arrow
             {
                 value = 65361;
             }
-            else if (received_number == 2555904)  // Rigth arrow
+            else if (host_number == 2555904)  // Rigth arrow
             {
                 value = 65363;
             }
             else
             {
-                value = (unsigned int)received_number;
+                value = (unsigned int)host_number;
             }
+        }
+        else if (error == boost::asio::error::operation_aborted)
+        {
+            value = 0;
+        }
+        else
+        {
+            cout << "socket error: " << error << endl;
+            value = 0;
         }
     });    
 
@@ -957,7 +965,7 @@ int main(int argc, char** argv)
 
         if (config.getUdpEnabled())
         {
-            int k1 = listenKeyUdp(sock2, 5);
+            unsigned int k1 = listenKeyUdp(sock2, 5);
             if (k1 != 0)
             {
                 k = k1;
