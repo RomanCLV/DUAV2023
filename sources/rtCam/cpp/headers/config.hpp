@@ -43,9 +43,10 @@ class Config
 {
 	public:
 
-		// constructor, desctructor
+		// constructor, copy constructor, desctructor
 
 		Config();
+		Config(const Config& config);
 		~Config();
 
 		// accessors
@@ -74,12 +75,17 @@ class Config
 		cv::Mat getKernel() const;
 		cv::Scalar getRectangleColor() const;
 		void setRectangleColor(const unsigned int red, const unsigned int green, const unsigned int blue);
+		void setRectangleColor(const cv::Scalar& colorBGR);
 		bool getUdpEnabled() const;
 		void setUdpEnabled(const bool value);
 		std::string getUdpIp() const;
 		void setUdpIp(const std::string& value);
 		unsigned int getUdpPort() const;
 		void setUdpPort(const unsigned int value);
+		unsigned int getUdpPort2() const;
+		void setUdpPort2(const unsigned int value);
+		bool getUdpAutoChangeIp() const;
+		void setUdpAutoChangeIp(const bool value);
 
 		// methods
 
@@ -93,6 +99,8 @@ class Config
 		bool decreaseKernelSize(const unsigned int decrement=1);
 		bool increaseKernelSize(const unsigned int increment=1);
 		void display(const char sep='\t', const char start='\n', const char end='\n') const;
+		Config copy() const;
+		void setFrom(const Config& config);
 		void save() const;
 		bool read();
 		void reset();
@@ -133,6 +141,8 @@ class Config
     	bool m_udpEnabled;
     	std::string m_udpIp;
     	unsigned int m_udpPort;
+    	unsigned int m_udpPort2;
+    	bool m_udpAutoChangeIp;
 };
 
 #endif

@@ -34,6 +34,14 @@ enum Option
 
 void signalHandler(int signal);
 inline void help();
+void displayFullConfig(
+    const Config& config,
+    const bool debug,
+    const bool display,
+    const bool displayWindows, 
+    const bool displayDuration, 
+    const boost::asio::ip::udp::endpoint& remoteEndpoint, 
+    const boost::asio::ip::udp::endpoint& remoteEndpoint2);
 inline bool fileExists(const std::string& name);
 inline bool removeFile(const std::string& name);
 void createDirIfNotExists(const char* folderName);
@@ -48,6 +56,7 @@ void sendFrameUdpSplit(
 	boost::asio::ip::udp::socket* sock, 
 	const boost::asio::ip::udp::endpoint endpoint, 
 	int max_packet_size = 65507);
+unsigned int listenKeyUdp(boost::asio::ip::udp::socket* sock);
 void releaseVideoCapture(cv::VideoCapture* videoCapture);
 void releaseVideoWriter(cv::VideoWriter* videoWriter);
 void closeSocket(boost::asio::ip::udp::socket* sock);

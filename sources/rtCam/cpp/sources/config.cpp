@@ -33,7 +33,33 @@ Config::Config() :
     m_rectangleColor(0, 255, 0), // BGR
     m_udpEnabled(false),
     m_udpIp("0.0.0.0"),
-    m_udpPort(5005)
+    m_udpPort(5005),
+    m_udpPort2(5006),
+    m_udpAutoChangeIp(false)
+{
+	computeGaussianKernel();
+	computeKernel();
+}
+
+Config::Config(const Config& config) :
+	m_debug(config.m_debug),
+    m_display(config.m_display),
+    m_displayOptionalWindows(config.m_displayOptionalWindows),
+    m_displayDuration(config.m_displayDuration),
+    m_saveDetection(config.m_saveDetection),
+    m_saveResultWithoutDetection(config.m_saveResultWithoutDetection),
+    m_saveResult(config.m_saveResult),
+    m_saveMask(config.m_saveMask),
+    m_detectionArea(config.m_detectionArea),
+    m_gaussianBlur(config.m_gaussianBlur),
+    m_threshold(config.m_threshold),
+    m_kernelSize(config.m_kernelSize),
+    m_rectangleColor(config.m_rectangleColor),
+    m_udpEnabled(config.m_udpEnabled),
+    m_udpIp(config.m_udpIp),
+    m_udpPort(config.m_udpPort),
+    m_udpPort2(config.m_udpPort2),
+    m_udpAutoChangeIp(config.m_udpAutoChangeIp)
 {
 	computeGaussianKernel();
 	computeKernel();
@@ -211,9 +237,76 @@ void Config::setRectangleColor(const unsigned int red, const unsigned int green,
 	m_rectangleColor.val[2] = red;
 }
 
+void Config::setRectangleColor(const Scalar& colorBGR)
+{
+	setRectangleColor(colorBGR.val[0], colorBGR.val[1], colorBGR.val[2]);
+}
+
 Scalar Config::getRectangleColor() const
 {
 	return m_rectangleColor;
+}
+
+bool Config::getUdpEnabled() const
+{
+	return m_udpEnabled;
+}
+
+void Config::setUdpEnabled(const bool value)
+{
+	m_udpEnabled = value;
+}
+
+std::string  Config::getUdpIp() const
+{
+	return m_udpIp;
+}
+
+void Config::setUdpIp(const std::string& value)
+{
+	if (!isValidIp(value))
+	{
+		throw invalid_argument("The address " + value + " is invalid! Please give an address like X.X.X.X where X is in [0-255]");
+	}
+	m_udpIp = value;
+}
+
+unsigned int Config::getUdpPort() const
+{
+	return m_udpPort;
+}
+
+void Config::setUdpPort(const unsigned int value)
+{
+	if (!isValidPort(value))
+	{
+		throw invalid_argument("The port " + to_string(value) + " is invalid! Please give a port from 1024 to 65535");
+	}
+	m_udpPort = value;
+}
+
+unsigned int Config::getUdpPort2() const
+{
+	return m_udpPort2;
+}
+
+void Config::setUdpPort2(const unsigned int value)
+{
+	if (!isValidPort(value))
+	{
+		throw invalid_argument("The port " + to_string(value) + " is invalid! Please give a port from 1024 to 65535");
+	}
+	m_udpPort2 = value;
+}
+
+bool Config::getUdpAutoChangeIp() const
+{
+	return m_udpAutoChangeIp;
+}
+
+void Config::setUdpAutoChangeIp(const bool value)
+{
+	m_udpAutoChangeIp = value;
 }
 
 // methods
@@ -351,44 +444,6 @@ bool Config::increaseKernelSize(const unsigned int increment)
 	return false;
 }
 
-bool Config::getUdpEnabled() const
-{
-	return m_udpEnabled;
-}
-
-void Config::setUdpEnabled(const bool value)
-{
-	m_udpEnabled = value;
-}
-
-std::string  Config::getUdpIp() const
-{
-	return m_udpIp;
-}
-
-void Config::setUdpIp(const std::string& value)
-{
-	if (!isValidIp(value))
-	{
-		throw invalid_argument("The address " + value + " is invalid! Please give an address like X.X.X.X where X is in [0-255]");
-	}
-	m_udpIp = value;
-}
-
-unsigned int Config::getUdpPort() const
-{
-	return m_udpPort;
-}
-
-void Config::setUdpPort(const unsigned int value)
-{
-	if (!isValidPort(value))
-	{
-		throw invalid_argument("The port " + to_string(value) + " is invalid! Please give a port from 1024 to 65535");
-	}
-	m_udpPort = value;
-}
-
 void Config::computeGaussianKernel()
 {
 	m_gaussianKernel = Size(m_gaussianBlur, m_gaussianBlur);
@@ -407,6 +462,33 @@ void Config::display(const char sep, const char start, const char end) const
 	cout << "kernel size: " << m_kernelSize << sep;
 	cout << "detection area: " << m_detectionArea << endl;
 	cout << end;
+}
+
+Config Config::copy() const
+{
+	return Config(*this);
+}
+
+void Config::setFrom(const Config& config)
+{
+	setDebug(config.m_debug);
+    setDisplay(config.m_display);
+    setDisplayOptionalWindows(config.m_displayOptionalWindows);
+    setDisplayDuration(config.m_displayDuration);
+    setSaveDetection(config.m_saveDetection);
+    setSaveResultWithoutDetection(config.m_saveResultWithoutDetection);
+    setSaveResult(config.m_saveResult);
+    setSaveMask(config.m_saveMask);
+    setDetectionArea(config.m_detectionArea);
+    setGaussianBlur(config.m_gaussianBlur);
+    setThreshold(config.m_threshold);
+    setKernelSize(config.m_kernelSize);
+    setRectangleColor(config.m_rectangleColor);
+    setUdpEnabled(config.m_udpEnabled);
+    setUdpIp(config.m_udpIp);
+    setUdpPort(config.m_udpPort);
+    setUdpPort2(config.m_udpPort2);
+    setUdpAutoChangeIp(config.m_udpAutoChangeIp);
 }
 
 void Config::save() const
@@ -436,6 +518,8 @@ void Config::save() const
     emitter << YAML::Key << "udp enabled" << YAML::Value << m_udpEnabled;
     emitter << YAML::Key << "udp ip" << YAML::Value << m_udpIp;
     emitter << YAML::Key << "udp port" << YAML::Value << m_udpPort;
+    emitter << YAML::Key << "udp port 2" << YAML::Value << m_udpPort2;
+    emitter << YAML::Key << "udp auto change ip" << YAML::Value << m_udpAutoChangeIp;
     emitter << YAML::EndMap;
     emitter << YAML::EndMap;
 
@@ -486,6 +570,8 @@ bool Config::read()
 	    	setUdpEnabled(getValueFromYamlNode<bool>(configNode, "udp enabled"));
 	    	setUdpIp(getValueFromYamlNode<std::string>(configNode, "udp ip"));
 	    	setUdpPort(getValueFromYamlNode<unsigned int>(configNode, "udp port"));
+	    	setUdpPort2(getValueFromYamlNode<unsigned int>(configNode, "udp port 2"));
+	    	setUdpAutoChangeIp(getValueFromYamlNode<bool>(configNode, "udp auto change ip"));
 	    }
 	    catch(const KeyNotFoundException& e) 
 	    {
@@ -540,4 +626,6 @@ void Config::reset()
     setUdpEnabled(false);
     setUdpIp("0.0.0.0");
     setUdpPort(5005);
+    setUdpPort2(5006);
+    setUdpAutoChangeIp(false);
 }

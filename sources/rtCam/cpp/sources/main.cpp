@@ -25,6 +25,7 @@ inline void help()
     cout << "    Pause                  SPACE BAR" << endl;
     cout << "    Quit                   ESC" << endl;
     cout << "    Display config         I" << endl;
+    cout << "    New config             N" << endl;
     cout << "    Reset config           R" << endl;
     cout << "    Save config            S" << endl;
     cout << "" << endl;
@@ -36,6 +37,34 @@ inline void help()
     cout << "    Detection area         A" << endl;
     cout << "" << endl;
     cout << "----------------------------------" << endl;
+}
+
+void displayFullConfig(
+    const Config& config,
+    const bool debug,
+    const bool display,
+    const bool displayWindows, 
+    const bool displayDuration, 
+    const ip::udp::endpoint& remoteEndpoint, 
+    const ip::udp::endpoint& remoteEndpoint2)
+{
+    cout << endl << "config:" << endl;
+    cout << "debug: " << (debug ? "true" : "false") << endl;
+    cout << "display: " << (display ? "true" : "false") << endl;
+    cout << "display optional windows: " << (displayWindows ? "true" : "false") << endl;
+    cout << "display duration: " << (displayDuration ? "true" : "false") << endl;
+    cout << "save detection: " << (config.getSaveDetection() ? "true" : "false") << endl;
+    cout << "save result without detection: " << (config.getSaveResultWithoutDetection() ? "true" : "false") << endl;
+    cout << "save result: " << (config.getSaveResult() ? "true" : "false") << endl;
+    cout << "save mask: " << (config.getSaveMask() ? "true" : "false") << endl;
+    cout << "udp: " << (config.getUdpEnabled() ? "true" : "false") << endl;
+    if (config.getUdpEnabled())
+    {
+        cout << "  to  :" << remoteEndpoint.address().to_string() << ":" << to_string(remoteEndpoint.port()) << endl;
+        cout << "  from:" << remoteEndpoint2.address().to_string() << ":" << to_string(remoteEndpoint2.port()) << endl;
+        cout << "  auto change ip: " << (config.getUdpAutoChangeIp() ? "true" : "false") << endl;
+    }
+    config.display('\n', '\0');
 }
 
 inline bool fileExists(const string& name)
@@ -168,6 +197,56 @@ void sendFrameUdpSplit(const cv::Mat frame, ip::udp::socket* sock, const ip::udp
     }
 }
 
+unsigned int listenKeyUdp(boost::asio::ip::udp::socket* sock, int timeout_ms)
+{
+    unsigned int value = 0;
+    
+    uint32_t received_number;
+    ip::udp::endpoint remote_endpoint;
+
+    io_context& io_service = static_cast<io_context&>((sock->get_executor()).context());
+
+    deadline_timer timer(io_service, boost::posix_time::milliseconds(timeout_ms));
+    timer.async_wait([&](const boost::system::error_code& error) {
+        if (!error) 
+        {
+            sock->cancel();
+        }
+    });
+
+    sock->async_receive_from(buffer(reinterpret_cast<char*>(&received_number), sizeof(received_number)), remote_endpoint, [&](const boost::system::error_code& error, size_t) {
+        if (!error) 
+        {
+            timer.cancel();
+            //uint32_t host_number = ntohl(received_number);
+            //cout << "Received number: " << host_number << " from: " << remote_endpoint << endl;
+            if (received_number == 2424832)       // Left arrow
+            {
+                value = 65361;
+            }
+            else if (received_number == 2555904)  // Rigth arrow
+            {
+                value = 65363;
+            }
+            else
+            {
+                value = (unsigned int)received_number;
+            }
+        }
+    });    
+
+    try 
+    {
+        io_service.run();
+        io_service.restart(); // reset ou restart ?
+    }
+    catch (exception& e)
+    {
+        cerr << "socket error: " << e.what() << endl;
+    }
+    return value;
+}
+
 void releaseVideoCapture(cv::VideoCapture* videoCapture)
 {
     if (videoCapture != nullptr)
@@ -235,20 +314,22 @@ int main(int argc, char** argv)
 
     if (args.count("h") || args.count("help"))
     {
-        cout << "./main.out [-d] [-do] [-dd] [-db] [-i img1 img2] [-v vid] [-sd] [-srwd] [-sr] [-sm] [-udp] [-ip] [-port]" << endl << endl;
-        cout << "-d    --display                         Display a window of the resulting frame" << endl;
-        cout << "-do   --display_opt                     Enable all optional windows: Previous frame, Current frame, Mask, Result" << endl;
-        cout << "-dd   --display_duration                Display the process duration to compute a frame" << endl;
-        cout << "-db   --debug                           Enable all windows, display durayion, additionnal logs, pause on every frame" << endl;
-        cout << "-i    --image                           Process on the two given images" << endl;
-        cout << "-v    --video                           Process on the given video" << endl;
-        cout << "-sd   --save_detection                  Save detected objects into a video file" << endl;
-        cout << "-srwd --save_result_without_detection   Save the resulting frames without the rectangle of detection into a video file" << endl;
-        cout << "-sr   --save_result                     Save the resulting frames into a video file" << endl;
-        cout << "-sm   --save_mask                       Save the mask frames into a video file" << endl;
-        cout << "-udp  --udp                             Enable the UDP stream (will read the `config.yaml` ip and port)" << endl;
-        cout << "-ip   --ip                              Specify an ip address for UDP stream (udp automatically enabled)" << endl;
-        cout << "-port --port                            Specify a port for UDP stream (udp automatically enabled)" << endl;
+        cout << "./main.out [-d] [-do] [-dd] [-db] [-i img1 img2] [-v vid] [-sd] [-srwd] [-sr] [-sm] [-udp] [-ip] [-port] [-port2] [-aci]" << endl << endl;
+        cout << "-d     --display                         Display a window of the resulting frame" << endl;
+        cout << "-do    --display_opt                     Enable all optional windows: Previous frame, Current frame, Mask, Result" << endl;
+        cout << "-dd    --display_duration                Display the process duration to compute a frame" << endl;
+        cout << "-db    --debug                           Enable all windows, display durayion, additionnal logs, pause on every frame" << endl;
+        cout << "-i     --image                           Process on the two given images" << endl;
+        cout << "-v     --video                           Process on the given video" << endl;
+        cout << "-sd    --save_detection                  Save detected objects into a video file" << endl;
+        cout << "-srwd  --save_result_without_detection   Save the resulting frames without the rectangle of detection into a video file" << endl;
+        cout << "-sr    --save_result                     Save the resulting frames into a video file" << endl;
+        cout << "-sm    --save_mask                       Save the mask frames into a video file" << endl;
+        cout << "-udp   --udp                             Enable the UDP stream (will read the `config.yaml` ip and port)" << endl;
+        cout << "-ip    --ip                              Specify an ip address for UDP stream (udp automatically enabled)" << endl;
+        cout << "-port  --port                            Specify a port for UDP stream (udp automatically enabled)" << endl;
+        cout << "-port2 --port2                           Specify a port to listen the pressed key by UDP (udp automatically enabled)" << endl;
+        cout << "-aci   --auto_change_ip                  Allow to set the ip address to 0.0.0.0 if the reader socket can't be bind to the given ip" << endl;
         help();
         return 0;
     }
@@ -259,9 +340,14 @@ int main(int argc, char** argv)
     VideoWriter* videoResult(nullptr);
     VideoWriter* videoMask(nullptr);
 
-    ip::udp::socket* sock(nullptr);
     io_service ioService;
+    io_service ioService2;
     ip::udp::endpoint remoteEndpoint;
+    ip::udp::endpoint remoteEndpoint2;
+    ip::udp::socket* sock(nullptr);
+    ip::udp::socket* sock2(nullptr);
+
+    bool isSsh = isSshConnected(false);
 
     unsigned int k = 0;
     const string RTH_PATH = "./RTH";
@@ -292,6 +378,7 @@ int main(int argc, char** argv)
     bool debug = false;
     bool display = true;
     bool displayWindows = false;
+    bool displayDuration = false;
     bool pause = false;
     bool readNextFrame = true;
     bool somethingDetected = false;
@@ -390,19 +477,45 @@ int main(int argc, char** argv)
         config.setUdpPort(port);
     }
 
+    if (args.count("port2"))
+    {
+        config.setUdpEnabled(true);
+        int port;
+        try 
+        {
+            port = std::stoi(args["port2"][0]);
+        }
+        catch (const std::invalid_argument& e) 
+        {
+            std::cerr << "Error: port2 is not a number. Given: " << args["port2"][0] << std::endl;
+            return 1;
+        }
+        catch (const std::out_of_range& e) 
+        {
+            std::cerr << "Error: the given port2 (" << args["port2"][0] << ") is out of range for an integer" << std::endl;
+            return 1;
+        }
+        config.setUdpPort2(port);
+    }
+
     debug = config.getDebug();
     display = config.getDisplay();
     displayWindows = config.getDisplayOptionalWindows();
+    displayDuration = config.getDisplayDuration();
 
     if (debug)
     {
-        display = true;
         displayWindows = true;
+        displayDuration = true;
+    }
+    
+    if (displayWindows)
+    {
+        display = true;
     }
 
-    if (isSshConnected(false))
+    if (isSsh)
     {
-        debug = false;
         display = false;
         displayWindows = false;
         printf("Script launched via SSH. debug, display and display optional windows automatically disabled\n");
@@ -422,8 +535,47 @@ int main(int argc, char** argv)
             return 1;
         }
 
+        if (!isValidPort(config.getUdpPort2()))
+        {
+            cerr << "The port2 " << config.getUdpPort2() << " is invalid! Please give a port from 1024 to 65535" << endl;
+            return 1;
+        }
+
+        if (config.getUdpPort() == config.getUdpPort2())
+        {
+            cerr << "The listened port (" << config.getUdpPort() << ") and the writed port (" << config.getUdpPort2() << ") must be different" << endl;
+            return 1;
+        }
+
+        cout << "Opening a socket to " << config.getUdpIp() << ":" << config.getUdpPort() << endl;
         sock = new ip::udp::socket(ioService, ip::udp::endpoint(ip::udp::v4(), 0));
         remoteEndpoint = ip::udp::endpoint(ip::address::from_string(config.getUdpIp()), config.getUdpPort());
+
+        cout << "Opening a socket to " << config.getUdpIp() << ":" << config.getUdpPort2() << endl;
+        try
+        {
+            remoteEndpoint2 = ip::udp::endpoint(ip::address_v4::from_string(config.getUdpIp()), config.getUdpPort2());
+            sock2 = new ip::udp::socket(ioService2, remoteEndpoint2);
+        }
+        catch (const boost::system::system_error& e)
+        {
+            if (e.code() == boost::asio::error::address_in_use ||
+                typeid(e) == typeid(boost::wrapexcept<boost::system::system_error>)) 
+            {
+                cout << "socket error: " << e.what() << endl;
+                if (config.getUdpAutoChangeIp())
+                {
+                    cout << "Opening a socket to 0.0.0.0:" << config.getUdpPort2() << endl;
+                    remoteEndpoint2 = ip::udp::endpoint(ip::address_v4::from_string("0.0.0.0"), config.getUdpPort2());
+                    sock2 = new ip::udp::socket(ioService2, remoteEndpoint2);
+                }
+            } 
+            else 
+            {
+                closeSocket(sock);
+                throw;
+            }
+        }
     }
 
     if (args.count("i") || args.count("image"))
@@ -432,6 +584,7 @@ int main(int argc, char** argv)
         if (args[keyName].size() != 2)
         {
             closeSocket(sock);
+            closeSocket(sock2);
             cout << "Wrong usage of image option: -i img1 img2" << endl;
             sysExitMessage();
             return -1;
@@ -442,6 +595,7 @@ int main(int argc, char** argv)
             if ( !image.data )
             {
                 closeSocket(sock);
+                closeSocket(sock2);
                 cout << "Could not read the image:" << args[keyName][i] << endl;
                 sysExitMessage();
                 return 0;
@@ -456,6 +610,7 @@ int main(int argc, char** argv)
         if (args[keyName].size() != 1)
         {
             closeSocket(sock);
+            closeSocket(sock2);
             cout << "Wrong usage of video option: -v vid" << endl;
             sysExitMessage();
             return -1;
@@ -464,6 +619,7 @@ int main(int argc, char** argv)
         if (!cap->isOpened())
         {
             closeSocket(sock);
+            closeSocket(sock2);
             cout << "Can't open video " << args[keyName][0] << endl;
             sysExitMessage();
             return -1;
@@ -478,8 +634,9 @@ int main(int argc, char** argv)
         if (!cap->isOpened()) 
         {
             closeSocket(sock);
+            closeSocket(sock2);
             cout << "Can not read the device" << endl;
-            if (isSshConnected(false))
+            if (isSsh)
             {
                 cout << "With a SSH connection, please use sudo" << endl;   
             }
@@ -538,29 +695,18 @@ int main(int argc, char** argv)
         releaseVideoWriter(videoResult);
         releaseVideoWriter(videoMask);
         closeSocket(sock);
+        closeSocket(sock2);
         sysExitMessage();
         return -1;
     }
 
-    cout << endl << "config:" << endl;
-    cout << "debug: " << (config.getDebug() ? "true" : "false") << endl;
-    cout << "display: " << (config.getDisplay() ? "true" : "false") << endl;
-    cout << "display optional windows: " << (config.getDisplayOptionalWindows() ? "true" : "false") << endl;
-    cout << "display duration: " << (config.getDisplayDuration() ? "true" : "false") << endl;
-    cout << "save detection: " << (config.getSaveDetection() ? "true" : "false") << endl;
-    cout << "save result without detection: " << (config.getSaveResultWithoutDetection() ? "true" : "false") << endl;
-    cout << "save result: " << (config.getSaveResult() ? "true" : "false") << endl;
-    cout << "save mask: " << (config.getSaveMask() ? "true" : "false") << endl;
-    cout << "udp: " << (config.getUdpEnabled() ? "true" : "false") << endl;
-    if (config.getUdpEnabled())
-    {
-        cout << "  to:" << config.getUdpIp() << ":" << to_string(config.getUdpPort()) << endl;
-    }
-    config.display('\n', '\0');
+    Config configCopy = Config(config);
+
+    displayFullConfig(config, debug, display, displayWindows,  displayDuration, remoteEndpoint, remoteEndpoint2);
 
     cout << "press [H] to print the help" << endl << endl;
 
-    if (display || displayWindows)
+    if (display)
     {
         if (displayWindows)
         {
@@ -569,7 +715,7 @@ int main(int argc, char** argv)
             namedWindow(windowMask);
             namedWindow(windowResult);
         }
-        else if (display)
+        else
         {
             namedWindow(windowResult);
         }
@@ -681,7 +827,7 @@ int main(int argc, char** argv)
                                 }
                             }
 
-                            if (display || displayWindows)
+                            if (display)
                             {
                                 if (displayWindows)
                                 {
@@ -689,14 +835,27 @@ int main(int argc, char** argv)
                                     imshow(windowCurrFrame, frame);
                                     imshow(windowMask, mask);
                                     imshow(windowResult, result);
-                                    if (debug)
-                                    {
-                                        k = myWaitKey(0);
-                                    }
                                 }
-                                else if (display)
+                                else
                                 {
                                     imshow(windowResult, result);
+                                }
+                            }
+                            if (debug)
+                            {
+                                if (display)
+                                {
+                                    k = myWaitKey(0);
+                                }
+                                else
+                                {
+                                    if (config.getUdpEnabled())
+                                    {
+                                        while (k == 0)
+                                        {
+                                            k = listenKeyUdp(sock2, 5);
+                                        }
+                                    }
                                 }
                             }
 
@@ -796,7 +955,16 @@ int main(int argc, char** argv)
 
         configChanged = false;
 
-        if (hasToBreak ||                                                  // due to Ctrl+C
+        if (isSsh)
+        {
+            int k1 = listenKeyUdp(sock2, 5);
+            if (k1 != 0)
+            {
+                k = k1;
+            }
+        }
+
+        if (hasToBreak ||                                                   // due to Ctrl+C
             k == 27 ||                                                      // ESC key
             ((display || displayWindows) && cv::getWindowProperty(windowResult, WND_PROP_AUTOSIZE) == -1))  // window is closed
         {
@@ -827,8 +995,18 @@ int main(int argc, char** argv)
         
         else if (k == 82 || k == 114)   // R | r
         {
-            config.reset();
+            cout << "reset config" << endl;
+            config.setFrom(configCopy);
             config.display();
+            configChanged = true;
+            readNextFrame = !(debug || imageMode);
+        }
+
+        else if (k == 78 || k == 110)   // N | n
+        {
+            cout << "new config" << endl;
+            config.reset();
+            displayFullConfig(config, debug, display, displayWindows,  displayDuration, remoteEndpoint, remoteEndpoint2);
             configChanged = true;
             readNextFrame = !(debug || imageMode);
         }
@@ -971,8 +1149,9 @@ int main(int argc, char** argv)
     releaseVideoWriter(videoResult);
     releaseVideoWriter(videoMask);
     closeSocket(sock);
+    closeSocket(sock2);
 
-    if (display || displayWindows)
+    if (display)
     {
         cv::destroyAllWindows();
     }
