@@ -79,6 +79,8 @@ def display_full_config(config, debug, display, display_windows, display_duratio
     if config.get_udp_enabled():
         print(f"  to  : {udp_address[0]}:{udp_address[1]}")
         print(f"  from: {udp_address2[0]}:{udp_address2[1]}")
+        print(f"  auto change ip: {config.get_udp_auto_change_ip()}")
+
     config.display(sep='\n', start='')
 
 
@@ -370,7 +372,6 @@ def main(args):
         except socket.error as e:
             if e.errno == 99 and config.get_udp_auto_change_ip():
                 print(f"Socket error: {e}")
-                print(f"Changing ip to listen to: 0.0.0.0")
                 udp_address2 = ("0.0.0.0", config.get_udp_port2())
                 print(f"Opening a socket to {udp_address2[0]}:{udp_address2[1]}")
                 udp_address2  = ("0.0.0.0", config.get_udp_port2())
@@ -660,7 +661,6 @@ def main(args):
             print("new config")
             config.reset()
             display_full_config(config, debug, display, display_windows, display_duration, udp_address, udp_address2)
-
             config_changed = True
             read_next_frame = not (debug or images)
 
