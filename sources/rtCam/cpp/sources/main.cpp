@@ -955,7 +955,7 @@ int main(int argc, char** argv)
 
         configChanged = false;
 
-        if (isSsh)
+        if (config.getUdpEnabled())
         {
             int k1 = listenKeyUdp(sock2, 5);
             if (k1 != 0)
