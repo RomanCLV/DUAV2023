@@ -14,7 +14,7 @@ void signalHandler(int signal)
 
 inline void help()
 {
-    cout << "" << endl;
+    cout << endl;
     cout << "--- Function -------   --- KEY -----" << endl;
     cout << "" << endl;
     cout << "    Clear detection        C" << endl;
@@ -28,30 +28,32 @@ inline void help()
     cout << "    New config             N" << endl;
     cout << "    Reset config           R" << endl;
     cout << "    Save config            S" << endl;
-    cout << "" << endl;
+    cout << endl;
     cout << " Select an option:" << endl;
-    cout << "" << endl;
+    cout << endl;
     cout << "    Gaussian blur          G" << endl;
     cout << "    Threshold              T" << endl;
     cout << "    Kernel size            K" << endl;
     cout << "    Detection area         A" << endl;
-    cout << "" << endl;
+    cout << endl;
     cout << "----------------------------------" << endl;
 }
 
 void displayFullConfig(
     const Config& config,
     const bool debug,
-    const bool display,
-    const bool displayWindows, 
+    const bool displayResult,
+    const bool displayMask,
+    const bool displayCurrentPrevious,
     const bool displayDuration, 
     const ip::udp::endpoint& remoteEndpoint, 
     const ip::udp::endpoint& remoteEndpoint2)
 {
     cout << endl << "config:" << endl;
     cout << "debug: " << (debug ? "true" : "false") << endl;
-    cout << "display: " << (display ? "true" : "false") << endl;
-    cout << "display optional windows: " << (displayWindows ? "true" : "false") << endl;
+    cout << "display result: " << (displayResult ? "true" : "false") << endl;
+    cout << "display mask: " << (displayMask ? "true" : "false") << endl;
+    cout << "display current previous: " << (displayCurrentPrevious ? "true" : "false") << endl;
     cout << "display duration: " << (displayDuration ? "true" : "false") << endl;
     cout << "save detection: " << (config.getSaveDetection() ? "true" : "false") << endl;
     cout << "save result without detection: " << (config.getSaveResultWithoutDetection() ? "true" : "false") << endl;
@@ -162,6 +164,55 @@ bool isSshConnected(const bool displayProccesInfo)
         closeproc(proc_tab);
     }
     return isSsh;
+}
+
+Mat combine2Images(const Mat& img1, const Mat& img2) 
+{
+    if (img1.empty() || img2.empty()) 
+    {
+        cerr << "Error : one or both images are empty" << endl;
+        return Mat();
+    }
+
+    if (img1.size() != img2.size())
+    {
+        cerr << "Error: the dimensions of the images do not match" << endl;
+        return Mat();
+    }
+
+    Mat combined;
+    hconcat(img1, img2, combined);
+    resize(combined, combined, img1.size());
+    return combined;
+}
+
+void combine2Images2(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& dst)
+{
+    if (img1.empty() || img2.empty()) 
+    {
+        cerr << "Error : one or both images are empty" << endl;
+        return Mat();
+    }
+
+    if (img1.size() != img2.size())
+    {
+        cerr << "Error: the dimensions of the images do not match" << endl;
+        return Mat();
+    }
+
+    if (
+        dst.empty() ||
+        dst.size() != img1.size() ||
+        dst.type() != img1.type())
+    {
+        dst.create(img1.size(), img1.type());
+    }
+
+    for (int col = 0; col < dst.cols; col += 2) 
+    {
+        img1.col(col).copyTo(dst.col(col / 2)); 
+        img2.col(col).copyTo(dst.col(dst.cols + col / 2)); 
+    }
 }
 
 void sendFrameUdpSplit(const cv::Mat frame, ip::udp::socket* sock, const ip::udp::endpoint endpoint, int max_packet_size) 
@@ -312,6 +363,24 @@ void parseArgs(int argc, char** argv, std::map<std::string, std::vector<std::str
     }
 }
 
+bool validArg(std::map<std::string, std::vector<std::string>>& args, std::string keyName, std::string keyFullName, int requiredValues)
+{
+    string key;
+    if (args.count(keyName))
+    {
+        key = keyName;
+    }
+    else if (args.count(keyFullName))
+    {
+        key = keyFullName;
+    }
+    else
+    {
+        throw invalid_argument("args doesn't contain key neither " + keyName + " nor " + keyFullName);
+    }
+    return args[key].size() == requiredValues;
+}
+
 int main(int argc, char** argv)
 {   
     // Install a signal handler
@@ -322,13 +391,15 @@ int main(int argc, char** argv)
 
     if (args.count("h") || args.count("help"))
     {
-        cout << "./main.out [-d] [-do] [-dd] [-db] [-i img1 img2] [-v vid] [-sd] [-srwd] [-sr] [-sm] [-udp] [-ip] [-port] [-port2] [-aci]" << endl << endl;
-        cout << "-d     --display                         Display a window of the resulting frame" << endl;
-        cout << "-do    --display_opt                     Enable all optional windows: Previous frame, Current frame, Mask, Result" << endl;
-        cout << "-dd    --display_duration                Display the process duration to compute a frame" << endl;
-        cout << "-db    --debug                           Enable all windows, display durayion, additionnal logs, pause on every frame" << endl;
+        cout << "./main.out [-i img1 img2] [-v vid] [-dr] [-dm] [-dcp] [-da] [-dd] [-dbg] [-sd] [-srwd] [-sr] [-sm] [-udp] [-ip] [-port] [-port2] [-aci]" << endl << endl;
         cout << "-i     --image                           Process on the two given images" << endl;
         cout << "-v     --video                           Process on the given video" << endl;
+        cout << "-dr    --display_result                  Display a window of the resulting frame" << endl;
+        cout << "-dm    --display_mask                    Display a window of the mask frame" << endl;
+        cout << "-dcp   --display_current_previous        Display two windows of the current and the previous compared frames" << endl;
+        cout << "-da    --display_all                     Enable all windows: Previous frame, Current frame, Mask, Result" << endl;
+        cout << "-dd    --display_duration                Display the process duration to compute a frame" << endl;
+        cout << "-dbg   --debug                           Enable all windows, display durayion, additionnal logs, pause on every frame" << endl;
         cout << "-sd    --save_detection                  Save detected objects into a video file" << endl;
         cout << "-srwd  --save_result_without_detection   Save the resulting frames without the rectangle of detection into a video file" << endl;
         cout << "-sr    --save_result                     Save the resulting frames into a video file" << endl;
@@ -384,8 +455,11 @@ int main(int argc, char** argv)
     Mat diffImage;
 
     bool debug = false;
-    bool display = true;
-    bool displayWindows = false;
+    bool displayResult = false;
+    bool displayMask = false;
+    bool displayCurrentPrevious = false;
+    bool displayAll = false;
+    unsigned char displayedWindowsCount = 0;
     bool displayDuration = false;
     bool pause = false;
     bool readNextFrame = true;
@@ -406,8 +480,8 @@ int main(int argc, char** argv)
 
     Mat thresholdImage;
     Mat mask;
-    Mat tmpMask;
     Mat result;
+    Mat combinedImage;
 
     string windowPrevFrame = "Previous frame";
     string windowCurrFrame = "Current frame";
@@ -421,112 +495,273 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    if (args.count("d") || args.count("display"))
+    if (args.count("dr") || args.count("display_result"))
     {
-        config.setDisplayOptionalWindows(true);
+        if (validArg(args, "dr", "display_result", 0))
+        {
+            config.setDisplayResult(true);
+        }
+        else
+        {
+            cout << "Wrong usage of display result option: -dr | --display_result" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
-    if (args.count("do") || args.count("display_opt"))
+    if (args.count("dm") || args.count("display_mask"))
     {
-        config.setDisplayOptionalWindows(true);
+        if (validArg(args, "dm", "display_mask", 0))
+        {
+            config.setDisplayMask(true);
+        }
+        else
+        {
+            cout << "Wrong usage of display mask option: -dm | --display_mask" << endl;
+            sysExitMessage();
+            return 1;
+        }
+    }
+    if (args.count("dcp") || args.count("display_current_previous"))
+    {
+        if (validArg(args, "dcp", "display_current_previous", 0))
+        {
+            config.setDisplayCurrentPrevious(true);
+        }
+        else
+        {
+            cout << "Wrong usage of display current previous option: -dcp | --display_current_previous" << endl;
+            sysExitMessage();
+            return 1;
+        }
+    }
+    if (args.count("da") || args.count("display_all"))
+    {
+        if (validArg(args, "da", "display_all", 0))
+        {
+            config.setDisplayAll(true);
+        }
+        else
+        {
+            cout << "Wrong usage of display all option: -da | --display_all" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
     if (args.count("dd") || args.count("display_duration"))
     {
-        config.setDisplayDuration(true);
+        if (validArg(args, "dd", "display_duration", 0))
+        {
+            config.setDisplayDuration(true);
+        }
+        else
+        {
+            cout << "Wrong usage of display duration option: -dd | --display_duration" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
-    if (args.count("db") || args.count("debug"))
+    if (args.count("dbg") || args.count("debug"))
     {
-        config.setDebug(true);
+        if (validArg(args, "dbg", "debug", 0))
+        {
+            config.setDebug(true);
+        }
+        else
+        {
+            cout << "Wrong usage of debug option: -dbg | --debug" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
     if (args.count("sd") || args.count("save_detection"))
     {
-        config.setSaveDetection(true);
+        if (validArg(args, "sd", "save_detection", 0))
+        {
+            config.setSaveDetection(true);
+        }
+        else
+        {
+            cout << "Wrong usage of save detection option: -sd | --save_detection" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
     if (args.count("srwd") || args.count("save_result_without_detection"))
     {
-        config.setSaveResultWithoutDetection(true);
+        if (validArg(args, "srwd", "save_result_without_detection", 0))
+        {
+            config.setSaveResultWithoutDetection(true);
+        }
+        else
+        {
+            cout << "Wrong usage of save result without detection option: -srwd | --save_result_without_detection" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
     if (args.count("sr") || args.count("save_result"))
     {
-        config.setSaveResult(true);
+        if (validArg(args, "sr", "save_result", 0))
+        {
+            config.setSaveResult(true);
+        }
+        else
+        {
+            cout << "Wrong usage of save result option: -sr | --save_result" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
     if (args.count("sm") || args.count("save_mask"))
     {
-        config.setSaveMask(true);
+        if (validArg(args, "sm", "save_mask", 0))
+        {
+            config.setSaveMask(true);
+        }
+        else
+        {
+            cout << "Wrong usage of save mask option: -sm | --save_mask" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
     if (args.count("udp"))
     {
-        config.setUdpEnabled(true);
+        if (validArg(args, "udp", "udp", 0))
+        {
+            config.setUdpEnabled(true);
+        }
+        else
+        {
+            cout << "Wrong usage of udp option: -udp" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
-
     if (args.count("ip"))
     {
-        config.setUdpEnabled(true);
-        config.setUdpIp(args["ip"][0]);
+        if (validArg(args, "ip", "ip", 1))
+        {
+            config.setUdpEnabled(true);
+            config.setUdpIp(args["ip"][0]);
+        }
+        else
+        {
+            cout << "Wrong usage of ip option: -ip X.X.X.X" << endl;
+            sysExitMessage();
+            return 1;
+        }
     }
-
     if (args.count("port"))
     {
-        config.setUdpEnabled(true);
-        int port;
-        try 
+        if (validArg(args, "port", "port", 1))
         {
-            port = std::stoi(args["port"][0]);
+            int port;
+            try 
+            {
+                port = std::stoi(args["port"][0]);
+            }
+            catch (const std::invalid_argument& e) 
+            {
+                std::cerr << "Error: port is not a number. Given: " << args["port"][0] << std::endl;
+                return 1;
+            }
+            catch (const std::out_of_range& e) 
+            {
+                std::cerr << "Error: the given port (" << args["port"][0] << ") is out of range for an integer" << std::endl;
+                return 1;
+            }
+            config.setUdpEnabled(true);
+            config.setUdpPort(port);
         }
-        catch (const std::invalid_argument& e) 
+        else
         {
-            std::cerr << "Error: port is not a number. Given: " << args["port"][0] << std::endl;
+            cout << "Wrong usage of port option: -port port" << endl;
+            sysExitMessage();
             return 1;
         }
-        catch (const std::out_of_range& e) 
-        {
-            std::cerr << "Error: the given port (" << args["port"][0] << ") is out of range for an integer" << std::endl;
-            return 1;
-        }
-        config.setUdpPort(port);
     }
-
     if (args.count("port2"))
     {
-        config.setUdpEnabled(true);
-        int port;
-        try 
+        if (validArg(args, "port2", "port2", 1))
         {
-            port = std::stoi(args["port2"][0]);
+            int port;
+            try 
+            {
+                port = std::stoi(args["port2"][0]);
+            }
+            catch (const std::invalid_argument& e) 
+            {
+                std::cerr << "Error: port2 is not a number. Given: " << args["port2"][0] << std::endl;
+                return 1;
+            }
+            catch (const std::out_of_range& e) 
+            {
+                std::cerr << "Error: the given port2 (" << args["port2"][0] << ") is out of range for an integer" << std::endl;
+                return 1;
+            }
+            config.setUdpEnabled(true);
+            config.setUdpPort2(port);
         }
-        catch (const std::invalid_argument& e) 
+        else
         {
-            std::cerr << "Error: port2 is not a number. Given: " << args["port2"][0] << std::endl;
+            cout << "Wrong usage of port2 option: -port2 port2" << endl;
+            sysExitMessage();
             return 1;
         }
-        catch (const std::out_of_range& e) 
+    }
+    if (args.count("aci") || args.count("auto_change_ip"))
+    {
+        if (validArg(args, "aci", "auto_change_ip", 0))
         {
-            std::cerr << "Error: the given port2 (" << args["port2"][0] << ") is out of range for an integer" << std::endl;
+            config.setUdpAutoChangeIp(true);
+        }
+        else
+        {
+            cout << "Wrong usage of auto change ip ption: -aci | --auto_change_ip" << endl;
+            sysExitMessage();
             return 1;
         }
-        config.setUdpPort2(port);
     }
 
     debug = config.getDebug();
-    display = config.getDisplay();
-    displayWindows = config.getDisplayOptionalWindows();
+    displayResult = config.getDisplayResult();
+    displayMask = config.getDisplayMask();
+    displayCurrentPrevious = config.getDisplayCurrentPrevious();
+    displayAll = config.getDisplayAll();
     displayDuration = config.getDisplayDuration();
 
     if (debug)
     {
-        displayWindows = true;
+        displayAll = true;
         displayDuration = true;
     }
-    
-    if (displayWindows)
+    if (displayAll)
     {
-        display = true;
+        displayResult = true;
+        displayMask = true;
+        displayCurrentPrevious = true;
     }
-
     if (isSsh)
     {
-        display = false;
-        displayWindows = false;
-        printf("Script launched via SSH. debug, display and display optional windows automatically disabled\n");
+        displayResult = false;
+        displayMask = false;
+        displayCurrentPrevious = false;
+        displayAll = false;
+        printf("Script launched via SSH. debug, display windows automatically disabled\n");
+    }
+    
+    if (displayResult)
+    {
+        displayedWindowsCount++;
+    }
+    if (displayMask)
+    {
+        displayedWindowsCount++;
+    }
+    if (displayCurrentPrevious)
+    {
+        displayedWindowsCount += 2;
     }
     
     if (config.getUdpEnabled())
@@ -589,6 +824,7 @@ int main(int argc, char** argv)
     if (args.count("i") || args.count("image"))
     {
         string keyName = args.count("i") ? "i" : "image";
+        if 
         if (args[keyName].size() != 2)
         {
             closeSocket(sock);
@@ -710,22 +946,24 @@ int main(int argc, char** argv)
 
     Config configCopy = Config(config);
 
-    displayFullConfig(config, debug, display, displayWindows,  displayDuration, remoteEndpoint, remoteEndpoint2);
+    displayFullConfig(config, debug, displayResult, displayMask, displayCurrentPrevious, displayDuration, remoteEndpoint, remoteEndpoint2);
 
     cout << "press [H] to print the help" << endl << endl;
 
-    if (display)
+    if (displayedWindowsCount)
     {
-        if (displayWindows)
+        if (displayResult)
+        {
+            namedWindow(windowResult);
+        }
+        if (displayMask)
+        {
+            namedWindow(windowMask);
+        }
+        if (displayCurrentPrevious)
         {
             namedWindow(windowPrevFrame);
             namedWindow(windowCurrFrame);
-            namedWindow(windowMask);
-            namedWindow(windowResult);
-        }
-        else
-        {
-            namedWindow(windowResult);
         }
         waitKey(500);
     }
@@ -821,6 +1059,8 @@ int main(int argc, char** argv)
                             }
 
                             frame.copyTo(result);
+                            cvtColor(mask, mask, COLOR_GRAY2BGR);
+
                             somethingDetected = false;
 
                             // Dessiner un rectangle autour du plus grand contour
@@ -835,23 +1075,26 @@ int main(int argc, char** argv)
                                 }
                             }
 
-                            if (display)
+                            if (displayedWindowsCount)
                             {
-                                if (displayWindows)
+                                if (displayResult)
+                                {
+                                    imshow(windowResult, result);
+                                }
+                                if (displayMask)
+                                {
+                                    imshow(windowMask, mask);
+                                }
+                                if (displayCurrentPrevious)
                                 {
                                     imshow(windowPrevFrame, previousFrame);
                                     imshow(windowCurrFrame, frame);
-                                    imshow(windowMask, mask);
-                                    imshow(windowResult, result);
-                                }
-                                else
-                                {
-                                    imshow(windowResult, result);
                                 }
                             }
+
                             if (debug)
                             {
-                                if (display)
+                                if (displayedWindowsCount)
                                 {
                                     k = myWaitKey(0);
                                 }
@@ -869,13 +1112,55 @@ int main(int argc, char** argv)
 
                             if (config.getUdpEnabled())
                             {
-                                sendFrameUdpSplit(result, sock, remoteEndpoint);
+                                switch (displayedWindowsCount)
+                                {
+                                    case 1:
+                                        if (displayResult)
+                                        {
+                                            sendFrameUdpSplit(result, sock, remoteEndpoint);
+                                        }
+                                        else
+                                        {
+                                            sendFrameUdpSplit(mask, sock, remoteEndpoint);
+                                        }
+                                        break;
+
+                                    case 2:
+                                        if (displayResult)
+                                        {
+                                            // fusion result and mask
+                                            combine2Images2(result, mask, combinedImage);
+                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
+                                        }
+                                        else
+                                        {
+                                            // fusion current and previous
+                                            sendFrameUdpSplit(mask, sock, remoteEndpoint);
+                                        }
+                                        break;
+
+                                    case 3:
+                                        if (displayResult)
+                                        {
+                                            // fusion result, current and previous
+                                            sendFrameUdpSplit(result, sock, remoteEndpoint);
+                                        }
+                                        else
+                                        {
+                                            // fusion mask, current and previous
+                                            sendFrameUdpSplit(mask, sock, remoteEndpoint);
+                                        }
+                                        break;
+                                    case 4:
+                                        // all fusion
+                                        sendFrameUdpSplit(mask, sock, remoteEndpoint);
+                                        break;
+                                }
                             }
 
                             if (config.getSaveMask())
                             {
-                                cvtColor(mask, tmpMask, COLOR_GRAY2BGR);
-                                videoMask->write(tmpMask);
+                                videoMask->write(mask);
                             }
                             if (config.getSaveResultWithoutDetection())
                             {
@@ -916,7 +1201,7 @@ int main(int argc, char** argv)
                             durationAverage = ((durationAverage * durationAverageCount) + duration) / (double)(durationAverageCount + 1);
                             durationAverageCount++;
 
-                            if (config.getDisplayDuration())
+                            if (displayDuration)
                             {
                                 cout << round3(duration) << " ms" << endl;
                             }
@@ -972,9 +1257,20 @@ int main(int argc, char** argv)
             }
         }
 
-        if (hasToBreak ||                                                   // due to Ctrl+C
-            k == 27 ||                                                      // ESC key
-            ((display || displayWindows) && cv::getWindowProperty(windowResult, WND_PROP_AUTOSIZE) == -1))  // window is closed
+        if (hasToBreak || k == 27)      // Ctrl+C || ESC
+        {
+            break;
+        }
+
+        if (
+            displayedWindowsCount &&
+            (
+            (displayResult && cv::getWindowProperty(windowResult, WND_PROP_AUTOSIZE) == -1) || 
+            (displayMask   && cv::getWindowProperty(windowMask, WND_PROP_AUTOSIZE)   == -1) || 
+            (displayCurrentPrevious && 
+                    (cv::getWindowProperty(windowCurrFrame, WND_PROP_AUTOSIZE) == -1 || 
+                     cv::getWindowProperty(windowPrevFrame, WND_PROP_AUTOSIZE) == -1))
+            ))
         {
             break;
         }
@@ -992,6 +1288,7 @@ int main(int argc, char** argv)
         else if (k == 68 || k == 100)   // D | d
         {
             config.inverseDisplayDuration();
+            displayDuration = config.getDisplayDuration();
             readNextFrame = !(debug || imageMode);
         }
         
@@ -1014,7 +1311,7 @@ int main(int argc, char** argv)
         {
             cout << "new config" << endl;
             config.reset();
-            displayFullConfig(config, debug, display, displayWindows,  displayDuration, remoteEndpoint, remoteEndpoint2);
+            displayFullConfig(config, debug, display, displayResult, displayMask, displayCurrentPrevious, displayDuration, remoteEndpoint, remoteEndpoint2);
             configChanged = true;
             readNextFrame = !(debug || imageMode);
         }

@@ -19,8 +19,10 @@ bool isValidPort(const unsigned int port)
 
 Config::Config() :
 	m_debug(false),
-    m_display(true),
-    m_displayOptionalWindows(false),
+    m_displayResult(true),
+    m_displayMask(false),
+    m_displayCurrentPrevious(false),
+    m_displayAll(false),
     m_displayDuration(false),
     m_saveDetection(false),
     m_saveResultWithoutDetection(false),
@@ -43,8 +45,10 @@ Config::Config() :
 
 Config::Config(const Config& config) :
 	m_debug(config.m_debug),
-    m_display(config.m_display),
-    m_displayOptionalWindows(config.m_displayOptionalWindows),
+    m_displayResult(config.m_displayResult),
+    m_displayMask(config.m_displayMask),
+    m_displayCurrentPrevious(config.m_displayCurrentPrevious),
+    m_displayAll(config.m_displayAll),
     m_displayDuration(config.m_displayDuration),
     m_saveDetection(config.m_saveDetection),
     m_saveResultWithoutDetection(config.m_saveResultWithoutDetection),
@@ -80,24 +84,44 @@ void Config::setDebug(const bool value)
 	m_debug = value;
 }
 
-bool Config::getDisplay() const
+void Config::setDisplayResult(const bool value)
 {
-	return m_display;
+	m_displayResult = value;
 }
 
-void Config::setDisplay(const bool value)
+bool Config::getDisplayResult() const
 {
-	m_display = value;
+	return m_displayResult;
 }
 
-bool Config::getDisplayOptionalWindows() const
+void Config::setDisplayMask(const bool value)
 {
-	return m_displayOptionalWindows;
+	m_displayMask = value;
 }
 
-void Config::setDisplayOptionalWindows(const bool value)
+bool Config::getDisplayMask() const
 {
-	m_displayOptionalWindows = value;
+	return m_displayMask;
+}
+
+void Config::setDisplayCurrentPrevious(const bool value)
+{
+	m_displayCurrentPrevious = value;
+}
+
+bool Config::getDisplayCurrentPrevious() const
+{
+	return m_displayCurrentPrevious;
+}
+
+bool Config::getDisplayAll() const
+{
+	return m_displayAll;
+}
+
+void Config::setDisplayAll(const bool value)
+{
+	m_displayAll = value;
 }
 
 bool Config::getDisplayDuration() const
@@ -472,8 +496,10 @@ Config Config::copy() const
 void Config::setFrom(const Config& config)
 {
 	setDebug(config.m_debug);
-    setDisplay(config.m_display);
-    setDisplayOptionalWindows(config.m_displayOptionalWindows);
+    setDisplayResult(config.m_displayResult);
+    setDisplayMask(config.m_displayMask);
+    setDisplayCurrentPrevious(config.m_displayCurrentPrevious);
+    setDisplayAll(config.m_displayAll);
     setDisplayDuration(config.m_displayDuration);
     setSaveDetection(config.m_saveDetection);
     setSaveResultWithoutDetection(config.m_saveResultWithoutDetection);
@@ -500,8 +526,10 @@ void Config::save() const
     emitter << YAML::Key << "debug" << YAML::Value << m_debug;
     emitter << YAML::Key << "detection area" << YAML::Value << m_detectionArea;
     emitter << YAML::Key << "display duration" << YAML::Value << m_displayDuration;
-    emitter << YAML::Key << "display" << YAML::Value << m_display;
-    emitter << YAML::Key << "display optional windows" << YAML::Value << m_displayOptionalWindows;
+    emitter << YAML::Key << "display result" << YAML::Value << m_displayResult;
+    emitter << YAML::Key << "display mask" << YAML::Value << m_displayMask;
+    emitter << YAML::Key << "display current previous" << YAML::Value << m_displayCurrentPrevious;
+    emitter << YAML::Key << "display all" << YAML::Value << m_displayAll;
     emitter << YAML::Key << "save detection" << YAML::Value << m_saveDetection;
     emitter << YAML::Key << "save result without detection" << YAML::Value << m_saveResultWithoutDetection;
     emitter << YAML::Key << "save result" << YAML::Value << m_saveResult;
@@ -553,8 +581,10 @@ bool Config::read()
 
 	    	setDebug(getValueFromYamlNode<bool>(configNode, "debug"));
 	    	setDisplayDuration(getValueFromYamlNode<bool>(configNode, "display duration"));
-	    	setDisplay(getValueFromYamlNode<bool>(configNode, "display"));
-	    	setDisplayOptionalWindows(getValueFromYamlNode<bool>(configNode, "display optional windows"));
+	    	setDisplayResult(getValueFromYamlNode<bool>(configNode, "display result"));
+	    	setDisplayMask(getValueFromYamlNode<bool>(configNode, "display mask"));
+	    	setDisplayCurrentPrevious(getValueFromYamlNode<bool>(configNode, "display current previous"));
+	    	setDisplayAll(getValueFromYamlNode<bool>(configNode, "display all"));
 	    	setSaveDetection(getValueFromYamlNode<bool>(configNode, "save detection"));
 	    	setSaveResultWithoutDetection(getValueFromYamlNode<bool>(configNode, "save result without detection"));
 	    	setSaveResult(getValueFromYamlNode<bool>(configNode, "save result"));
@@ -611,8 +641,10 @@ bool Config::read()
 void Config::reset()
 {
 	setDebug(false);
-    setDisplay(true);
-    setDisplayOptionalWindows(false);
+    setDisplayResult(true);
+    setDisplayMask(false);
+    setDisplayCurrentPrevious(false);
+    setDisplayAll(false);
     setDisplayDuration(false);
     setSaveDetection(false);
     setSaveResultWithoutDetection(false);

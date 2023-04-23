@@ -37,8 +37,9 @@ inline void help();
 void displayFullConfig(
     const Config& config,
     const bool debug,
-    const bool display,
-    const bool displayWindows, 
+    const bool displayResult,
+    const bool displayMask,
+    const bool displayCurrentPrevious,
     const bool displayDuration, 
     const boost::asio::ip::udp::endpoint& remoteEndpoint, 
     const boost::asio::ip::udp::endpoint& remoteEndpoint2);
@@ -51,6 +52,8 @@ inline double round3(const double value);
 inline unsigned int myWaitKey(unsigned int millis);
 std::string concatenateFolderNameWithDate(const char* folderName, const char* endName);
 bool isSshConnected(const bool displayProccesInfo = true);
+cv::Mat combine2Images(const cv::Mat& img1, const cv::Mat& img2);
+void combine2Images2(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& dst);
 void sendFrameUdpSplit(
 	const cv::Mat frame,
 	boost::asio::ip::udp::socket* sock, 
@@ -62,4 +65,5 @@ void releaseVideoWriter(cv::VideoWriter* videoWriter);
 void closeSocket(boost::asio::ip::udp::socket* sock);
 void sysExitMessage();
 void parseArgs(int argc, char** argv, std::map<std::string, std::vector<std::string>>& args);
+bool validArg(std::map<std::string, std::vector<std::string>>& args, std::string keyName, std::string keyFullName, int requiredValues);
 int main(int argc, char** argv);

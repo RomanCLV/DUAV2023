@@ -53,10 +53,14 @@ class Config
 
 		bool getDebug() const;
 		void setDebug(const bool value);
-		void setDisplay(const bool value);
-		bool getDisplay() const;
-		bool getDisplayOptionalWindows() const;
-		void setDisplayOptionalWindows(const bool value);
+		void setDisplayResult(const bool value);
+		bool getDisplayResult() const;
+		void setDisplayMask(const bool value);
+		bool getDisplayMask() const;
+		void setDisplayCurrentPrevious(const bool value);
+		bool getDisplayCurrentPrevious() const;
+		bool getDisplayAll() const;
+		void setDisplayAll(const bool value);
 		bool getDisplayDuration() const;
 		void setDisplayDuration(const bool value);
 		bool getSaveDetection() const;
@@ -124,9 +128,11 @@ class Config
 
 	private:
     	bool m_debug;
+    	bool m_displayResult;
+    	bool m_displayMask;
+    	bool m_displayCurrentPrevious;
+    	bool m_displayAll;
     	bool m_displayDuration;
-    	bool m_display;
-    	bool m_displayOptionalWindows;
     	bool m_saveDetection;
     	bool m_saveResultWithoutDetection;
     	bool m_saveResult;
