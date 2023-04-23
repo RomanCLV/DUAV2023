@@ -1448,7 +1448,7 @@ int main(int argc, char** argv)
     closeSocket(sock);
     closeSocket(sock2);
 
-    if (display)
+    if (displayedWindowsCount)
     {
         cv::destroyAllWindows();
     }
