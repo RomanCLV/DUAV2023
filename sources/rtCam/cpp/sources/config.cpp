@@ -24,6 +24,7 @@ Config::Config() :
     m_displayCurrentPrevious(false),
     m_displayAll(false),
     m_displayDuration(false),
+    m_rotate(false),
     m_saveDetection(false),
     m_saveResultWithoutDetection(false),
     m_saveResult(false),
@@ -50,6 +51,7 @@ Config::Config(const Config& config) :
     m_displayCurrentPrevious(config.m_displayCurrentPrevious),
     m_displayAll(config.m_displayAll),
     m_displayDuration(config.m_displayDuration),
+    m_rotate(config.m_rotate),
     m_saveDetection(config.m_saveDetection),
     m_saveResultWithoutDetection(config.m_saveResultWithoutDetection),
     m_saveResult(config.m_saveResult),
@@ -132,6 +134,16 @@ bool Config::getDisplayDuration() const
 void Config::setDisplayDuration(const bool value)
 {
 	m_displayDuration = value;
+}
+
+void Config::setRotate(const bool value)
+{
+	m_rotate = value;
+}
+
+bool Config::getRotate() const
+{
+	return m_rotate;
 }
 
 bool Config::getSaveDetection() const
@@ -501,6 +513,7 @@ void Config::setFrom(const Config& config)
     setDisplayCurrentPrevious(config.m_displayCurrentPrevious);
     setDisplayAll(config.m_displayAll);
     setDisplayDuration(config.m_displayDuration);
+    setRotate(config.m_rotate);
     setSaveDetection(config.m_saveDetection);
     setSaveResultWithoutDetection(config.m_saveResultWithoutDetection);
     setSaveResult(config.m_saveResult);
@@ -530,6 +543,7 @@ void Config::save() const
     emitter << YAML::Key << "display mask" << YAML::Value << m_displayMask;
     emitter << YAML::Key << "display current previous" << YAML::Value << m_displayCurrentPrevious;
     emitter << YAML::Key << "display all" << YAML::Value << m_displayAll;
+    emitter << YAML::Key << "rotate" << YAML::Value << m_rotate;
     emitter << YAML::Key << "save detection" << YAML::Value << m_saveDetection;
     emitter << YAML::Key << "save result without detection" << YAML::Value << m_saveResultWithoutDetection;
     emitter << YAML::Key << "save result" << YAML::Value << m_saveResult;
@@ -585,6 +599,7 @@ bool Config::read()
 	    	setDisplayMask(getValueFromYamlNode<bool>(configNode, "display mask"));
 	    	setDisplayCurrentPrevious(getValueFromYamlNode<bool>(configNode, "display current previous"));
 	    	setDisplayAll(getValueFromYamlNode<bool>(configNode, "display all"));
+	    	setRotate(getValueFromYamlNode<bool>(configNode, "rotate"));
 	    	setSaveDetection(getValueFromYamlNode<bool>(configNode, "save detection"));
 	    	setSaveResultWithoutDetection(getValueFromYamlNode<bool>(configNode, "save result without detection"));
 	    	setSaveResult(getValueFromYamlNode<bool>(configNode, "save result"));
@@ -646,6 +661,7 @@ void Config::reset()
     setDisplayCurrentPrevious(false);
     setDisplayAll(false);
     setDisplayDuration(false);
+    setRotate(false);
     setSaveDetection(false);
     setSaveResultWithoutDetection(false);
     setSaveResult(false);

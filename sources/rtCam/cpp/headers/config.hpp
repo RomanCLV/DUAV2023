@@ -63,6 +63,8 @@ class Config
 		void setDisplayAll(const bool value);
 		bool getDisplayDuration() const;
 		void setDisplayDuration(const bool value);
+		void setRotate(const bool value);
+		bool getRotate() const;
 		bool getSaveDetection() const;
 		void setSaveDetection(const bool value);
 		bool getSaveResultWithoutDetection() const;
@@ -133,6 +135,7 @@ class Config
     	bool m_displayCurrentPrevious;
     	bool m_displayAll;
     	bool m_displayDuration;
+    	bool m_rotate;
     	bool m_saveDetection;
     	bool m_saveResultWithoutDetection;
     	bool m_saveResult;

@@ -379,7 +379,7 @@ int main(int argc, char** argv)
 
     if (args.count("h") || args.count("help"))
     {
-        cout << "./main.out [-i img1 img2] [-v vid] [-dr] [-dm] [-dcp] [-da] [-dd] [-dbg] [-sd] [-srwd] [-sr] [-sm] [-udp] [-ip] [-port] [-port2] [-aci]" << endl << endl;
+        cout << "./main.out [-i img1 img2] [-v vid] [-dr] [-dm] [-dcp] [-da] [-dd] [-dbg] [-rot] [-sd] [-srwd] [-sr] [-sm] [-udp] [-ip] [-port] [-port2] [-aci]" << endl << endl;
         cout << "-i     --image                           Process on the two given images" << endl;
         cout << "-v     --video                           Process on the given video" << endl;
         cout << "-dr    --display_result                  Display a window of the resulting frame" << endl;
@@ -388,6 +388,7 @@ int main(int argc, char** argv)
         cout << "-da    --display_all                     Enable all windows: Previous frame, Current frame, Mask, Result" << endl;
         cout << "-dd    --display_duration                Display the process duration to compute a frame" << endl;
         cout << "-dbg   --debug                           Enable all windows, display durayion, additionnal logs, pause on every frame" << endl;
+        cout << "-rot   --rotate                          Rotate the frame of 180°" << endl;
         cout << "-sd    --save_detection                  Save detected objects into a video file" << endl;
         cout << "-srwd  --save_result_without_detection   Save the resulting frames without the rectangle of detection into a video file" << endl;
         cout << "-sr    --save_result                     Save the resulting frames into a video file" << endl;
@@ -558,6 +559,19 @@ int main(int argc, char** argv)
         else
         {
             cout << "Wrong usage of debug option: -dbg | --debug" << endl;
+            sysExitMessage();
+            return 1;
+        }
+    }
+    if (args.count("rot") || args.count("rotate"))
+    {
+        if (validArg(args, "rot", "rotate", 0))
+        {
+            config.setRotate(true);
+        }
+        else
+        {
+            cout << "Wrong usage of rotate option: -rot | --rotate" << endl;
             sysExitMessage();
             return 1;
         }
@@ -982,7 +996,14 @@ int main(int argc, char** argv)
                 {
                     if (imageMode)
                     {
-                        previousFrame = images[0];
+                        if (config.getRotate())
+                        {
+                            rotate(images[0], previousFrame, ROTATE_180);
+                        }
+                        else
+                        {
+                            previousFrame = images[0];
+                        }
                         frame = images[1];
                     }
                     else
@@ -1014,6 +1035,11 @@ int main(int argc, char** argv)
                             frame.cols == previousFrame.cols && 
                             frame.depth() == previousFrame.depth())
                         {
+                            if (config.getRotate())
+                            {
+                                rotate(frame, frame, ROTATE_180);
+                            }
+
                             if (config.getGaussianBlur() == 0)
                             {
                                 // convert a gray frame direclty into the gaussian frame
