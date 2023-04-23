@@ -53,6 +53,7 @@ inline unsigned int myWaitKey(unsigned int millis);
 std::string concatenateFolderNameWithDate(const char* folderName, const char* endName);
 bool isSshConnected(const bool displayProccesInfo = true);
 void combine2Images(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& dst);
+void combine4Images(const cv::Mat& img1, const cv::Mat& img2, const cv::Mat& img3, const cv::Mat& img4, cv::Mat& dst);
 void sendFrameUdpSplit(
 	const cv::Mat frame,
 	boost::asio::ip::udp::socket* sock, 

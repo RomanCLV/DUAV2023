@@ -183,6 +183,26 @@ void combine2Images(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& dst)
     }
 }
 
+void combine4Images(const Mat& img1, const Mat& img2, const Mat& img3, const Mat& img4, Mat& dst) 
+{
+    if (dst.empty() || dst.size() != img1.size() || dst.type() != img1.type())
+    {
+        dst.create(img1.size(), img1.type());
+    }
+
+    Mat resized1, resized2, resized3, resized4;
+    Size newSize(img1.cols / 2, img1.rows / 2);
+    resize(img1, resized1, newSize);
+    resize(img2, resized2, newSize);
+    resize(img3, resized3, newSize);
+    resize(img4, resized4, newSize);
+
+    resized1.copyTo(dst(Rect(0, 0, newSize.width, newSize.height)));
+    resized2.copyTo(dst(Rect(newSize.width, 0, newSize.width, newSize.height)));
+    resized3.copyTo(dst(Rect(0, newSize.height, newSize.width, newSize.height)));
+    resized4.copyTo(dst(Rect(newSize.width, newSize.height, newSize.width, newSize.height)));
+}
+
 void sendFrameUdpSplit(const cv::Mat frame, ip::udp::socket* sock, const ip::udp::endpoint endpoint, int max_packet_size) 
 {
     vector<uchar> data;
@@ -450,6 +470,7 @@ int main(int argc, char** argv)
     Mat mask;
     Mat result;
     Mat combinedImage;
+    Mat blackFilledImage;
 
     string windowPrevFrame = "Previous frame";
     string windowCurrFrame = "Current frame";
@@ -1113,18 +1134,18 @@ int main(int argc, char** argv)
                                     case 3:
                                         if (displayResult)
                                         {
-                                            // fusion result, current and previous
-                                            sendFrameUdpSplit(result, sock, remoteEndpoint);
+                                            combine4Images(result, blackFilledImage, previousFrame, frame, combinedImage);
+                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
                                         }
                                         else
                                         {
-                                            // fusion mask, current and previous
-                                            sendFrameUdpSplit(mask, sock, remoteEndpoint);
+                                            combine4Images(blackFilledImage, mask, previousFrame, frame, combinedImage);
+                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
                                         }
                                         break;
                                     case 4:
-                                        // all fusion
-                                        sendFrameUdpSplit(result, sock, remoteEndpoint);
+                                        combine4Images(result, mask, previousFrame, frame, combinedImage);
+                                        sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
                                         break;
                                 }
                             }
@@ -1191,6 +1212,11 @@ int main(int argc, char** argv)
                     }
                     else
                     {
+                        if (blackFilledImage.empty())
+                        {
+                            blackFilledImage.create(frame.size(), frame.type());
+                            blackFilledImage.setTo(Scalar::all(0));
+                        }
                         frame.copyTo(previousFrame);
                         cvtColor(frame, previousGaussianImage, COLOR_BGR2GRAY);
                     }
