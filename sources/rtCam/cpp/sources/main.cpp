@@ -1141,7 +1141,7 @@ int main(int argc, char** argv)
                                 switch (displayedWindowsCount)
                                 {
                                     case 1:
-                                        if (config.displayResult())
+                                        if (config.getDisplayResult())
                                         {
                                             sendFrameUdpSplit(result, sock, remoteEndpoint);
                                         }
@@ -1152,7 +1152,7 @@ int main(int argc, char** argv)
                                         break;
 
                                     case 2:
-                                        if (config.displayResult())
+                                        if (config.getDisplayResult())
                                         {
                                             combine2Images(result, mask, combinedImage);
                                             sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
@@ -1165,7 +1165,7 @@ int main(int argc, char** argv)
                                         break;
 
                                     case 3:
-                                        if (config.displayResult())
+                                        if (config.getDisplayResult())
                                         {
                                             combine4Images(result, blackFilledImage, previousFrame, frame, combinedImage);
                                             sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
@@ -1176,11 +1176,12 @@ int main(int argc, char** argv)
                                             sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
                                         }
                                         break;
+                                        
                                     case 4:
                                         combine4Images(result, mask, previousFrame, frame, combinedImage);
                                         sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
                                         break;
-                                        
+
                                     default:
                                         sendFrameUdpSplit(result, sock, remoteEndpoint);
                                         break;
