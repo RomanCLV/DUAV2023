@@ -448,6 +448,7 @@ int main(int argc, char** argv)
     bool displayMask = false;
     bool displayCurrentPrevious = false;
     bool displayAll = false;
+    bool displayEnalbed = false;
     unsigned char displayedWindowsCount = 0;
     bool displayDuration = false;
     bool pause = false;
@@ -745,15 +746,7 @@ int main(int argc, char** argv)
         displayMask = true;
         displayCurrentPrevious = true;
     }
-    if (isSsh)
-    {
-        displayResult = false;
-        displayMask = false;
-        displayCurrentPrevious = false;
-        displayAll = false;
-        printf("Script launched via SSH. debug, display windows automatically disabled\n");
-    }
-    
+
     if (displayResult)
     {
         displayedWindowsCount++;
@@ -766,6 +759,17 @@ int main(int argc, char** argv)
     {
         displayedWindowsCount += 2;
     }
+
+    if (isSsh)
+    {
+        displayResult = false;
+        displayMask = false;
+        displayCurrentPrevious = false;
+        displayAll = false;
+        cout << "Script launched via SSH. display windows automatically disabled" << endl;
+    }
+    
+    displayEnalbed = displayResult || displayMask || displayCurrentPrevious;
     
     if (config.getUdpEnabled())
     {
@@ -957,7 +961,7 @@ int main(int argc, char** argv)
 
     cout << "press [H] to print the help" << endl << endl;
 
-    if (displayedWindowsCount)
+    if (displayEnalbed)
     {
         if (displayResult)
         {
@@ -1094,7 +1098,7 @@ int main(int argc, char** argv)
                                 }
                             }
 
-                            if (displayedWindowsCount)
+                            if (displayEnalbed)
                             {
                                 if (displayResult)
                                 {
@@ -1113,7 +1117,7 @@ int main(int argc, char** argv)
 
                             if (debug)
                             {
-                                if (displayedWindowsCount)
+                                if (displayEnalbed)
                                 {
                                     k = myWaitKey(0);
                                 }
@@ -1286,7 +1290,7 @@ int main(int argc, char** argv)
         }
 
         if (
-            displayedWindowsCount &&
+            displayEnalbed &&
             (
             (displayResult && cv::getWindowProperty(windowResult, WND_PROP_AUTOSIZE) == -1) || 
             (displayMask   && cv::getWindowProperty(windowMask, WND_PROP_AUTOSIZE)   == -1) || 
@@ -1479,7 +1483,7 @@ int main(int argc, char** argv)
     closeSocket(sock);
     closeSocket(sock2);
 
-    if (displayedWindowsCount)
+    if (displayEnalbed)
     {
         cv::destroyAllWindows();
     }
