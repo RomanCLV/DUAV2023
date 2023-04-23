@@ -188,18 +188,6 @@ Mat combine2Images(const Mat& img1, const Mat& img2)
 
 void combine2Images2(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& dst)
 {
-    if (img1.empty() || img2.empty()) 
-    {
-        cerr << "Error : one or both images are empty" << endl;
-        return Mat();
-    }
-
-    if (img1.size() != img2.size())
-    {
-        cerr << "Error: the dimensions of the images do not match" << endl;
-        return Mat();
-    }
-
     if (
         dst.empty() ||
         dst.size() != img1.size() ||
@@ -823,9 +811,23 @@ int main(int argc, char** argv)
 
     if (args.count("i") || args.count("image"))
     {
-        string keyName = args.count("i") ? "i" : "image";
-        if 
-        if (args[keyName].size() != 2)
+        if (validArg(args, "i", "image", 2))
+        {
+            string keyName = args.count("i") ? "i" : "image";
+            for (int i = 0; i < 2; i++)
+            {
+                images[i] = imread(args[keyName][i]);
+                if ( !images[i].data )
+                {
+                    closeSocket(sock);
+                    closeSocket(sock2);
+                    cout << "Could not read the image:" << args[keyName][i] << endl;
+                    sysExitMessage();
+                    return 0;
+                }
+            }
+        }
+        else
         {
             closeSocket(sock);
             closeSocket(sock2);
@@ -833,38 +835,28 @@ int main(int argc, char** argv)
             sysExitMessage();
             return -1;
         }
-        for (int i = 0; i < 2; i++)
-        {
-            Mat image = imread(args[keyName][i]);
-            if ( !image.data )
-            {
-                closeSocket(sock);
-                closeSocket(sock2);
-                cout << "Could not read the image:" << args[keyName][i] << endl;
-                sysExitMessage();
-                return 0;
-            }
-            images[i] = image;
-        }
         imageMode = true;
     }
     else if (args.count("v") || args.count("video"))
     {
         string keyName = args.count("v") ? "v" : "video";
-        if (args[keyName].size() != 1)
+        if (validArg(args, "v", "video", 1))
+        {
+            cap = new VideoCapture(args[keyName][0]);
+            if (!cap->isOpened())
+            {
+                closeSocket(sock);
+                closeSocket(sock2);
+                cout << "Can't open video " << args[keyName][0] << endl;
+                sysExitMessage();
+                return -1;
+            }
+        }
+        else
         {
             closeSocket(sock);
             closeSocket(sock2);
             cout << "Wrong usage of video option: -v vid" << endl;
-            sysExitMessage();
-            return -1;
-        }
-        cap = new VideoCapture(args[keyName][0]);
-        if (!cap->isOpened())
-        {
-            closeSocket(sock);
-            closeSocket(sock2);
-            cout << "Can't open video " << args[keyName][0] << endl;
             sysExitMessage();
             return -1;
         }
@@ -1311,7 +1303,7 @@ int main(int argc, char** argv)
         {
             cout << "new config" << endl;
             config.reset();
-            displayFullConfig(config, debug, display, displayResult, displayMask, displayCurrentPrevious, displayDuration, remoteEndpoint, remoteEndpoint2);
+            displayFullConfig(config, debug, displayResult, displayMask, displayCurrentPrevious, displayDuration, remoteEndpoint, remoteEndpoint2);
             configChanged = true;
             readNextFrame = !(debug || imageMode);
         }
