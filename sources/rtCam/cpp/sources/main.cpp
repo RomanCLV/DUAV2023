@@ -199,7 +199,7 @@ void combine2Images2(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& dst)
     for (int col = 0; col < dst.cols; col += 2) 
     {
         img1.col(col).copyTo(dst.col(col / 2)); 
-        img2.col(col).copyTo(dst.col(dst.cols + col / 2)); 
+        img2.col(col).copyTo(dst.col((dst.cols + col) / 2));
     }
 }
 
