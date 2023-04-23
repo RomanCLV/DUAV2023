@@ -417,6 +417,7 @@ int main(int argc, char** argv)
     ip::udp::endpoint remoteEndpoint2;
     ip::udp::socket* sock(nullptr);
     ip::udp::socket* sock2(nullptr);
+    const int UDP_PACKET_MAX_SIZE = 60000; // max : 65507
 
     bool isSsh = isSshConnected(false);
 
@@ -1143,11 +1144,11 @@ int main(int argc, char** argv)
                                     case 1:
                                         if (config.getDisplayResult())
                                         {
-                                            sendFrameUdpSplit(result, sock, remoteEndpoint);
+                                            sendFrameUdpSplit(result, sock, remoteEndpoint, UDP_PACKET_MAX_SIZE);
                                         }
                                         else
                                         {
-                                            sendFrameUdpSplit(mask, sock, remoteEndpoint);
+                                            sendFrameUdpSplit(mask, sock, remoteEndpoint, UDP_PACKET_MAX_SIZE);
                                         }
                                         break;
 
@@ -1155,12 +1156,12 @@ int main(int argc, char** argv)
                                         if (config.getDisplayResult())
                                         {
                                             combine2Images(result, mask, combinedImage);
-                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
+                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint, UDP_PACKET_MAX_SIZE);
                                         }
                                         else
                                         {
                                             combine2Images(previousFrame, frame, combinedImage);
-                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
+                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint, UDP_PACKET_MAX_SIZE);
                                         }
                                         break;
 
@@ -1168,22 +1169,22 @@ int main(int argc, char** argv)
                                         if (config.getDisplayResult())
                                         {
                                             combine4Images(result, blackFilledImage, previousFrame, frame, combinedImage);
-                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
+                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint, UDP_PACKET_MAX_SIZE);
                                         }
                                         else
                                         {
                                             combine4Images(blackFilledImage, mask, previousFrame, frame, combinedImage);
-                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
+                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint, UDP_PACKET_MAX_SIZE);
                                         }
                                         break;
 
                                     case 4:
                                         combine4Images(result, mask, previousFrame, frame, combinedImage);
-                                        sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
+                                        sendFrameUdpSplit(combinedImage, sock, remoteEndpoint, UDP_PACKET_MAX_SIZE);
                                         break;
 
                                     default:
-                                        sendFrameUdpSplit(result, sock, remoteEndpoint);
+                                        sendFrameUdpSplit(result, sock, remoteEndpoint, UDP_PACKET_MAX_SIZE);
                                         break;
                                 }
                             }
