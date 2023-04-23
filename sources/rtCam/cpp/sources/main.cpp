@@ -1176,7 +1176,7 @@ int main(int argc, char** argv)
                                             sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
                                         }
                                         break;
-                                        
+
                                     case 4:
                                         combine4Images(result, mask, previousFrame, frame, combinedImage);
                                         sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
@@ -1255,7 +1255,14 @@ int main(int argc, char** argv)
                             blackFilledImage.create(frame.size(), frame.type());
                             blackFilledImage.setTo(Scalar::all(0));
                         }
-                        frame.copyTo(previousFrame);
+                        if (config.getRotate())
+                        {
+                            rotate(frame, previousFrame, ROTATE_180);
+                        }
+                        else
+                        {
+                            frame.copyTo(previousFrame);
+                        }
                         cvtColor(frame, previousGaussianImage, COLOR_BGR2GRAY);
                     }
 
