@@ -96,6 +96,7 @@ class Config
 		// methods
 
 		void inverseDisplayDuration();
+		void inverseRotate();
 		bool decreaseDetectionArea(const unsigned int decrement=100);
 		bool increaseDetectionArea(const unsigned int increment=100);
 		bool decreaseGaussianBlur(unsigned int decrement=2);

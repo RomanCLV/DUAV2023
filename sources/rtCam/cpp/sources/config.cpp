@@ -352,6 +352,11 @@ void Config::inverseDisplayDuration()
 	setDisplayDuration(!m_displayDuration);
 }
 
+void Config::inverseRotate()
+{
+	setRotate(!m_rotate);
+}
+
 bool Config::decreaseDetectionArea(const unsigned int decrement)
 {
 	if (decrement == 0)

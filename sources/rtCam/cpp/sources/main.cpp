@@ -28,6 +28,7 @@ inline void help()
     cout << "    New config             N" << endl;
     cout << "    Reset config           R" << endl;
     cout << "    Save config            S" << endl;
+    cout << "    Rotate image           O" << endl;
     cout << endl;
     cout << " Select an option:" << endl;
     cout << endl;
@@ -55,6 +56,7 @@ void displayFullConfig(
     cout << "display mask: " << (displayMask ? "true" : "false") << endl;
     cout << "display current previous: " << (displayCurrentPrevious ? "true" : "false") << endl;
     cout << "display duration: " << (displayDuration ? "true" : "false") << endl;
+    cout << "rotate: " << (config.getRotate() ? "true" : "false") << endl;
     cout << "save detection: " << (config.getSaveDetection() ? "true" : "false") << endl;
     cout << "save result without detection: " << (config.getSaveResultWithoutDetection() ? "true" : "false") << endl;
     cout << "save result: " << (config.getSaveResult() ? "true" : "false") << endl;
@@ -417,7 +419,7 @@ int main(int argc, char** argv)
     ip::udp::endpoint remoteEndpoint2;
     ip::udp::socket* sock(nullptr);
     ip::udp::socket* sock2(nullptr);
-    const int UDP_PACKET_MAX_SIZE = 60000; // max : 65507
+    const int UDP_PACKET_MAX_SIZE = 64000; // max : 65507
 
     bool isSsh = isSshConnected(false);
 
@@ -1360,7 +1362,13 @@ int main(int argc, char** argv)
         {
             config.save();
         }
-       
+
+        else if (k == 79 || k == 111)   // O | o
+        {
+            config.inverseRotate();
+            readNextFrame = !(debug || imageMode);
+        }
+
         else if (k == 71 || k == 103)   // G | g
         {
             selectedOption = Option::GaussianBlur;
