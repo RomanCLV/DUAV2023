@@ -1257,12 +1257,9 @@ int main(int argc, char** argv)
                         }
                         if (config.getRotate())
                         {
-                            rotate(frame, previousFrame, ROTATE_180);
+                            rotate(frame, frame, ROTATE_180);
                         }
-                        else
-                        {
-                            frame.copyTo(previousFrame);
-                        }
+                        frame.copyTo(previousFrame);
                         cvtColor(frame, previousGaussianImage, COLOR_BGR2GRAY);
                     }
 
