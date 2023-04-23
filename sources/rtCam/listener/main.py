@@ -43,9 +43,9 @@ def recv_frame_sliced(sock):
             num, offset = struct.unpack('!II', data[:8])
             chunk = data[8:]
 
-            packet_data[offset * (len(data) - 8):] = chunk  # Insérer le morceau de données à l'offset approprié
+            packet_data[offset * (len(data) - 8):] = chunk
 
-            if len(packet_data) >= num * (len(data) - 8):  # Utilisez "num" ici au lieu de "num_packets"
+            if len(packet_data) >= num * (len(data) - 8):
                 break
         except socket.timeout:
             return None
@@ -108,7 +108,7 @@ def main(args):
 
     print(f"Opening a socket to {udp_address[0]}:{udp_address[1]}")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(1.0) # 1 sec
+    sock.settimeout(3.0) # 3 seconds
 
     try:
         sock.bind(udp_address)
