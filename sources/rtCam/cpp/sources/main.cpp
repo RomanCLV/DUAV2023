@@ -62,8 +62,8 @@ void displayFullConfig(
     cout << "udp: " << (config.getUdpEnabled() ? "true" : "false") << endl;
     if (config.getUdpEnabled())
     {
-        cout << "  to  :" << remoteEndpoint.address().to_string() << ":" << to_string(remoteEndpoint.port()) << endl;
-        cout << "  from:" << remoteEndpoint2.address().to_string() << ":" << to_string(remoteEndpoint2.port()) << endl;
+        cout << "  to  : " << remoteEndpoint.address().to_string() << ":" << to_string(remoteEndpoint.port()) << endl;
+        cout << "  from: " << remoteEndpoint2.address().to_string() << ":" << to_string(remoteEndpoint2.port()) << endl;
         cout << "  auto change ip: " << (config.getUdpAutoChangeIp() ? "true" : "false") << endl;
     }
     config.display('\n', '\0');
@@ -166,27 +166,7 @@ bool isSshConnected(const bool displayProccesInfo)
     return isSsh;
 }
 
-Mat combine2Images(const Mat& img1, const Mat& img2) 
-{
-    if (img1.empty() || img2.empty()) 
-    {
-        cerr << "Error : one or both images are empty" << endl;
-        return Mat();
-    }
-
-    if (img1.size() != img2.size())
-    {
-        cerr << "Error: the dimensions of the images do not match" << endl;
-        return Mat();
-    }
-
-    Mat combined;
-    hconcat(img1, img2, combined);
-    resize(combined, combined, img1.size());
-    return combined;
-}
-
-void combine2Images2(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& dst)
+void combine2Images(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& dst)
 {
     if (
         dst.empty() ||
@@ -1120,13 +1100,12 @@ int main(int argc, char** argv)
                                     case 2:
                                         if (displayResult)
                                         {
-                                            combine2Images2(result, mask, combinedImage);
+                                            combine2Images(result, mask, combinedImage);
                                             sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
-                                            imshow("combined result mask", combinedImage);
                                         }
                                         else
                                         {
-                                            combine2Images2(previousFrame, frame, combinedImage);
+                                            combine2Images(previousFrame, frame, combinedImage);
                                             sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
                                         }
                                         break;
