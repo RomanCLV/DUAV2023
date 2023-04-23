@@ -65,6 +65,9 @@ void displayFullConfig(
         cout << "  to  : " << remoteEndpoint.address().to_string() << ":" << to_string(remoteEndpoint.port()) << endl;
         cout << "  from: " << remoteEndpoint2.address().to_string() << ":" << to_string(remoteEndpoint2.port()) << endl;
         cout << "  auto change ip: " << (config.getUdpAutoChangeIp() ? "true" : "false") << endl;
+        cout << "  send result: " << (config.getDisplayResult() ? "true" : "false") << endl;
+        cout << "  send mask: " << (config.getDisplayMask() ? "true" : "false") << endl;
+        cout << "  send current previous: " << (config.getDisplayCurrentPrevious() ? "true" : "false") << endl;
     }
     config.display('\n', '\0');
 }
@@ -1138,7 +1141,7 @@ int main(int argc, char** argv)
                                 switch (displayedWindowsCount)
                                 {
                                     case 1:
-                                        if (displayResult)
+                                        if (config.displayResult())
                                         {
                                             sendFrameUdpSplit(result, sock, remoteEndpoint);
                                         }
@@ -1149,7 +1152,7 @@ int main(int argc, char** argv)
                                         break;
 
                                     case 2:
-                                        if (displayResult)
+                                        if (config.displayResult())
                                         {
                                             combine2Images(result, mask, combinedImage);
                                             sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
@@ -1162,7 +1165,7 @@ int main(int argc, char** argv)
                                         break;
 
                                     case 3:
-                                        if (displayResult)
+                                        if (config.displayResult())
                                         {
                                             combine4Images(result, blackFilledImage, previousFrame, frame, combinedImage);
                                             sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
@@ -1176,6 +1179,10 @@ int main(int argc, char** argv)
                                     case 4:
                                         combine4Images(result, mask, previousFrame, frame, combinedImage);
                                         sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
+                                        break;
+                                        
+                                    default:
+                                        sendFrameUdpSplit(result, sock, remoteEndpoint);
                                         break;
                                 }
                             }
