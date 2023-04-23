@@ -1120,14 +1120,14 @@ int main(int argc, char** argv)
                                     case 2:
                                         if (displayResult)
                                         {
-                                            // fusion result and mask
                                             combine2Images2(result, mask, combinedImage);
                                             sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
+                                            imshow("combined result mask", combinedImage);
                                         }
                                         else
                                         {
-                                            // fusion current and previous
-                                            sendFrameUdpSplit(mask, sock, remoteEndpoint);
+                                            combine2Images2(previousFrame, frame, combinedImage);
+                                            sendFrameUdpSplit(combinedImage, sock, remoteEndpoint);
                                         }
                                         break;
 
@@ -1145,7 +1145,7 @@ int main(int argc, char** argv)
                                         break;
                                     case 4:
                                         // all fusion
-                                        sendFrameUdpSplit(mask, sock, remoteEndpoint);
+                                        sendFrameUdpSplit(result, sock, remoteEndpoint);
                                         break;
                                 }
                             }
