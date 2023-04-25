@@ -31,10 +31,10 @@ def main():
             servo = init_servo(gpio)
             start_servo(servo)
             servo.move(0)
-            print(f"{servo.get_name()} moving to: {deg}")
+            print(f"{servo.get_name()} moving to: 0")
             time.sleep(1)
             if args.angle:
-                servo.move(args.angle)
+                servo.move((int)args.angle)
                 print(f"{servo.get_name()} moving to: {args.angle}")
             time.sleep(1)
 
@@ -79,5 +79,5 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, sigint_handler)
     parser = argparse.ArgumentParser(description="test_servo.py CLI")
     parser.add_argument("gpio", type=int, nargs="+", help="set the communication GPIO PINs to test.")
-    parser.add_argument("-a", "--angle", description="angle to move")
+    parser.add_argument("-a", "--angle", help="angle to move")
     main()
