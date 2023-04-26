@@ -40,8 +40,10 @@ class Logger:
         if display:
             print(msg)
 
-        log_file = "fake_automate.log"
-    
+        log_file = "logs/automate_time.log"
+        
+        create_folder_if_not_exists("logs")
+
         if not os.path.exists(log_file):
             with open(log_file, "x") as file:
                 pass
@@ -58,11 +60,16 @@ global state
 global start_time
 global last_time_state_changed
 global servos
+global can_open
 global is_opened
-global opened_date
 global closed_tank_position
 global opened_tank_position
 global logger
+
+
+def create_folder_if_not_exists(folder_name: str):
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
 
 
 def get_millis():
@@ -85,7 +92,7 @@ def log(o):
     logger.log(o)
 
 
-def main():
+def main(args):
     global run
     global RTH_PATH
     global request
@@ -93,10 +100,10 @@ def main():
     global start_time
     global last_time_state_changed
     global servos
+    global can_open
     global is_opened
     global closed_tank_position
     global opened_tank_position
-    global opened_date
     global logger
 
     run = True
@@ -104,10 +111,10 @@ def main():
     request = STATE.INIT
     state = STATE.INIT
 
+    can_open = False
     is_opened = False
-    opened_date = 0
     closed_tank_position = 0
-    opened_tank_position = 90
+    opened_tank_position = 45
 
     start_time = 0
     last_time_state_changed = 0
@@ -116,15 +123,16 @@ def main():
 
     logger = Logger()
 
-    args = parser.parse_args()
-
     print("current folder:", os.getcwd())
 
     RTH_PATH = "./RTH"
 
+    if not os.path.exists(args.file):
+        raise Exception(f"File {args.file} not found")
+
     if args.gpio and len(args.gpio) > 0:
         for gpio in args.gpio:
-            servo = serv.Servo(gpio, 50)  # pin, frequency
+            servo = serv.Servo(abs(int(gpio)), 50, gpio[0] == '-')  # pin, frequency
             servo.add_log_listener(logger)
             servos.append(servo)
     else:
@@ -133,19 +141,13 @@ def main():
     remove_rth_file()
     
     while run:
-        # read GPS signal
-        if run:
-            time.sleep(0.100)    # delete after
-        else:
-            break
-
         automate_request()
         automate_state()
         
         if not run or state == STATE.SHUTDOWN:
             break
     
-    close_all_servo()
+    before_exit()
     log("Automate exit")
 
 
@@ -157,8 +159,9 @@ def set_state(new_state):
 
 
 def automate_request():
-    global request
+    global run
     global state
+    global request
 
     if request == state and request != STATE.INIT:
         return
@@ -168,12 +171,12 @@ def automate_request():
     
     elif request == STATE.EXPLORATION:
         close_tanks()
-        log("Ready to exploration")
+        log("Exploration engaged")
         set_state(STATE.EXPLORATION)
 
     elif request == STATE.MISSION:
         close_tanks()
-        log("Ready to mission")
+        log("Mission engaged")
         set_state(STATE.MISSION)
 
     elif request == STATE.DO_NOTHING:
@@ -191,21 +194,21 @@ def automate_request():
         set_state(STATE.SHUTDOWN)
 
     else:
-        close_all_servo()
-        raise ValueError(f"Unexpected request value: {request}")
+        before_exit()
+        log(f"Unexpected request value: {request}")
+        run = False
 
 
 def automate_state():
+    global run
     global state
     global request
-    global start_time
-    global last_time_state_changed
+	global start_time
     global servos
+    global can_open
     global is_opened
     global closed_tank_position
-    global opened_date
-
-    delay = get_millis() - last_time_state_changed
+    global opened_tank_position
 
     if state == STATE.INIT:
         start_time = get_millis()
@@ -213,77 +216,65 @@ def automate_state():
             log(f"{servo.get_name()} starting...")
 
             try:
-                servo.start(closed_tank_position)
+                servo.start(opened_tank_position if servo.get_is_inversed() else closed_tank_position)
             except RuntimeError as err:
-                close_all_servo()
+                before_exit()
                 raise err                
 
         log("Automate initialized")
-        request = STATE.EXPLORATION
+        request = STATE.DO_NOTHING
     
     elif state == STATE.EXPLORATION:
-        if rth_file_exists():
-            log("RTH file detected!")
-            request = STATE.RETURN_TO_HOME
-            return
-        if is_opened:
-            close_tanks()
-
-        if delay > 5000:
-            log("Exploration done")
-            request = STATE.MISSION
+        close_tanks()
+        if can_open:
+            if rth_file_exists():
+                log("RTH file detected!")
+                request = STATE.RETURN_TO_HOME
     
     elif state == STATE.MISSION:
-        if rth_file_exists():
-            log("RTH file detected!")
-            request = STATE.RETURN_TO_HOME
-            return
-
-        if is_opened:
-            if get_millis() - opened_date > 3000:
+        if can_open:
+            if rth_file_exists():
                 close_tanks()
-        else:
+                log("RTH file detected!")
+                request = STATE.RETURN_TO_HOME
 
-            if get_millis() - opened_date > 6000 and is_near_to():
+            elif not is_opened:
                 open_tanks()
-
-        if delay > 15000:
-            log("Mission done")
-            request = STATE.DO_NOTHING
+        else:
+            if is_opened:
+                close_tanks()
 
     elif state == STATE.RETURN_TO_HOME:
-
-        if delay > 5000:
-            log("Return to home done")
-            request = STATE.DO_NOTHING
+        close_tanks()
+        request = STATE.DO_NOTHING
 
     elif state == STATE.DO_NOTHING:
-
-        if delay > 3000:
+        close_tanks()
+        if (get_millis() - last_time_state_changed) > 120000:
+            # after 2 minutes
             request = STATE.SHUTDOWN
 
     elif state == STATE.SHUTDOWN:
         log("Shutting down...")
-        close_all_servo()
+        before_exit()
         remove_rth_file()
 
     else:
-        close_all_servo()
-        raise ValueError(f"Unexpected state value: {state}")
-
-
-def is_near_to():
-    return random.random() > 0.95
+        before_exit()
+        log(f"Unexpected state value: {state}")
+        run = False
 
 
 def close_tanks():
     global servos
     global is_opened
     global closed_tank_position
+    global opened_tank_position
+
     if is_opened:
         is_opened = False
         for servo in servos:
-            servo.move(closed_tank_position)
+            servo.move(opened_tank_position if servo.get_is_inversed() else closed_tank_position)
         log("Tanks closing...")
 
 
@@ -291,11 +282,11 @@ def open_tanks():
     global servos
     global is_opened
     global opened_tank_position
-    global opened_date
-    opened_date = get_millis()
+    global closed_tank_position
+    
     is_opened = True
     for servo in servos:
-        servo.move(opened_tank_position)
+        servo.move(closed_tank_position if servo.get_is_inversed() else opened_tank_position)
     log("Tanks opening...")
 
 
@@ -309,6 +300,11 @@ def close_all_servo():
     serv.GPIO_cleanup()    # useless because each servo has already been closed and cleaned up, but to be sure...
 
 
+def before_exit():
+    close_tanks()
+    close_all_servo()
+
+
 def sigint_handler(signal, frame):
     global run
     run = False
@@ -317,15 +313,22 @@ def sigint_handler(signal, frame):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
     parser = argparse.ArgumentParser(description="automate.py CLI")
-    parser.add_argument("gpio", type=int, nargs="+", help="set the servo GPIO PINs.")
+    parser.add_argument("file", type=str, help="file that contains the times with action")
+    parser.add_argument("gpio", type=str, nargs="+", help="set the servo GPIO PINs (if negative, set servo.is_inversed to True). Pin '-32' means pin 32 with inversed mode")
+    args = parser.parse_args()
+
     try:
-        main()
+        main(args)
+
     except SystemExit:
         print("\nProcess finished")
+        before_exit()
         input("Press a key to close...")
-        pass
+        
     except BaseException as e:
         print("\nUnexpected error occured")
         print(f"type: {type(e).__name__}")
         print(f"message: {e.args[0]}")
+        before_exit()
         input("Press a key to close...")
+

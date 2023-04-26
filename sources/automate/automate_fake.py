@@ -14,7 +14,6 @@ import datetime
 import random
 import signal
 import argparse
-from dronekit import connect, VehicleMode
 
 import servo as serv
 
@@ -41,10 +40,10 @@ class Logger:
         if display:
             print(msg)
 
-        log_file = "logs/automate.log"
-        
-        create_folder_if_not_exists("logs")
+        log_file = "logs/automate_fake.log"
 
+        create_folder_if_not_exists("logs")
+    
         if not os.path.exists(log_file):
             with open(log_file, "x") as file:
                 pass
@@ -61,13 +60,11 @@ global state
 global start_time
 global last_time_state_changed
 global servos
-global can_open
 global is_opened
+global opened_date
 global closed_tank_position
 global opened_tank_position
 global logger
-global vehicle
-global take_photo_event_count
 
 
 def create_folder_if_not_exists(folder_name: str):
@@ -103,22 +100,19 @@ def main(args):
     global start_time
     global last_time_state_changed
     global servos
-    global can_open
     global is_opened
     global closed_tank_position
     global opened_tank_position
+    global opened_date
     global logger
-    global vehicle
-    global take_photo_event_count
 
     run = True
 
     request = STATE.INIT
     state = STATE.INIT
 
-    take_photo_event_count = 0
-    can_open = False
     is_opened = False
+    opened_date = 0
     closed_tank_position = 0
     opened_tank_position = 45
 
@@ -129,14 +123,9 @@ def main(args):
 
     logger = Logger()
 
-    vehicle = None
-
     print("current folder:", os.getcwd())
 
     RTH_PATH = "./RTH"
-
-    vehicle = connect_vehicle("/dev/ttyAMA0")
-    vehicle.add_message_listener('RC_CHANNELS', on_rc_channels_receive)
 
     if args.gpio and len(args.gpio) > 0:
         for gpio in args.gpio:
@@ -149,12 +138,18 @@ def main(args):
     remove_rth_file()
     
     while run:
+        # read GPS signal
+        if run:
+            time.sleep(0.100)    # delete after
+        else:
+            break
+
         automate_request()
         automate_state()
         
         if not run or state == STATE.SHUTDOWN:
             break
-
+    
     before_exit()
     log("Automate exit")
 
@@ -164,49 +159,6 @@ def set_state(new_state):
     global last_time_state_changed
     state = new_state
     last_time_state_changed = get_millis()
-
-
-def connect_vehicle(connection_string: str):
-    print("Connecting to vehicle on: %s" % connection_string)
-    vehicle = connect(connection_string, wait_ready=True, baud=57600)
-    return vehicle
-
-
-def on_rc_channels_receive(vehicle, name, message):
-    global can_open
-    global take_photo_event_count
-    # récupération des valeurs des canaux RC
-    rc_channels = message.channels
-
-    # print("on_rc_channels_receive:")
-    # print("Ch1: %s" % channels['1'])
-    # print("Ch2: %s" % channels['2'])
-    # print("Ch3: %s" % channels['3'])
-    # print("Ch4: %s" % channels['4'])
-    # print("Ch5: %s" % channels['5'])
-    # print("Ch6: %s" % channels['6'])
-    # print("Ch7: %s" % channels['7'])
-    # print("Ch8: %s" % channels['8'])
-
-    if rc_channels['6'] > 1500: # start video event
-        can_open = True
-        log("can open tanks")
-
-    if rc_channels['7'] > 1500: # stop video event
-        can_open = False
-        log("can't open tanks")
-
-    if rc_channels['5']: # take photo event
-            take_photo_event_count += 1
-
-            if take_photo_event_count == 1:
-                request = STATE.EXPLORATION
-
-            elif take_photo_event_count == 2:
-                request = STATE.MISSION
-
-            else:
-                request = STATE.SHUTDOWN
 
 
 def automate_request():
@@ -257,10 +209,12 @@ def automate_state():
     global start_time
     global last_time_state_changed
     global servos
-    global can_open
     global is_opened
     global closed_tank_position
     global opened_tank_position
+    global opened_date
+
+    delay = get_millis() - last_time_state_changed
 
     if state == STATE.INIT:
         start_time = get_millis()
@@ -274,37 +228,47 @@ def automate_state():
                 raise err                
 
         log("Automate initialized")
-        request = STATE.DO_NOTHING
+        request = STATE.EXPLORATION
     
     elif state == STATE.EXPLORATION:
         close_tanks()
-        if can_open:
-            if rth_file_exists():
-                log("RTH file detected!")
-                request = STATE.RETURN_TO_HOME
+        
+        if rth_file_exists():
+            log("RTH file detected!")
+            request = STATE.RETURN_TO_HOME
+            
+
+        elif delay > 5000:
+            log("Exploration done")
+            request = STATE.MISSION
     
     elif state == STATE.MISSION:
-        if can_open:
-            if rth_file_exists():
-                close_tanks()
-                log("RTH file detected!")
-                request = STATE.RETURN_TO_HOME
+        if rth_file_exists():
+        	close_tanks()
+            log("RTH file detected!")
+            request = STATE.RETURN_TO_HOME
 
-            elif not is_opened:
-                open_tanks()
-        else:
-            if is_opened:
+        elif is_opened:
+            if get_millis() - opened_date > 3000:
                 close_tanks()
+        else:
+
+            if get_millis() - opened_date > 6000 and is_near_to():
+                open_tanks()
+
+        if delay > 15000:
+            log("Mission done")
+            request = STATE.DO_NOTHING
 
     elif state == STATE.RETURN_TO_HOME:
-        vehicle.mode = VehicleMode("RTL")
         close_tanks()
-        request = STATE.DO_NOTHING
+        if delay > 5000:
+            log("Return to home done")
+            request = STATE.DO_NOTHING
 
     elif state == STATE.DO_NOTHING:
         close_tanks()
-        if (get_millis() - last_time_state_changed) > 120000:
-            # after 2 minutes
+        if delay > 3000:
             request = STATE.SHUTDOWN
 
     elif state == STATE.SHUTDOWN:
@@ -318,12 +282,16 @@ def automate_state():
         run = False
 
 
+def is_near_to():
+    return random.random() > 0.95
+
+
 def close_tanks():
     global servos
     global is_opened
     global closed_tank_position
     global opened_tank_position
-    
+
     if is_opened:
         is_opened = False
         for servo in servos:
@@ -336,7 +304,9 @@ def open_tanks():
     global is_opened
     global opened_tank_position
     global closed_tank_position
+    global opened_date
 
+    opened_date = get_millis()
     is_opened = True
     for servo in servos:
         servo.move(closed_tank_position if servo.get_is_inversed() else opened_tank_position)
@@ -354,13 +324,8 @@ def close_all_servo():
 
 
 def before_exit():
-    global vehicle
-
     close_tanks()
     close_all_servo()
-    if vehicle:
-        vehicle.close()
-        vehicle = None
 
 
 def sigint_handler(signal, frame):

@@ -82,7 +82,7 @@ def GPIO_cleanup():
 
 
 class Servo:
-    def __init__(self, gpio: int, frequency: int):
+    def __init__(self, gpio: int, frequency: int, is_inversed=False):
         """
         Constructor.
         ----------
@@ -92,6 +92,7 @@ class Servo:
                 The pin used to control the servo
             frequency : int (greater than 0)
                 Frequency of communication
+            is_inversed : bool (default: False)
         """
 
         # self._min_voltage = 4

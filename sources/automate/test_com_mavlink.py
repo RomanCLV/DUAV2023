@@ -16,6 +16,7 @@ def connect_vehicle():
 def arm_and_takeoff(vehicle, aTargetAltitude):
     # Arming the drone and taking off to a specified altitude
     # Add your implementation here
+    pass
 
 
 def return_to_launch(vehicle):
@@ -36,13 +37,13 @@ def on_rc_channels_receive(vehicle, name, message):
 
     log_mavlink_message("on_rc_channels_receive:")
     log_mavlink_message("Ch1: %s" % channels['1'])
-	log_mavlink_message("Ch2: %s" % channels['2'])
-	log_mavlink_message("Ch3: %s" % channels['3'])
-	log_mavlink_message("Ch4: %s" % channels['4'])
-	log_mavlink_message("Ch5: %s" % channels['5'])
-	log_mavlink_message("Ch6: %s" % channels['6'])
-	log_mavlink_message("Ch7: %s" % channels['7'])
-	log_mavlink_message("Ch8: %s" % channels['8'])
+    log_mavlink_message("Ch2: %s" % channels['2'])
+    log_mavlink_message("Ch3: %s" % channels['3'])
+    log_mavlink_message("Ch4: %s" % channels['4'])
+    log_mavlink_message("Ch5: %s" % channels['5'])
+    log_mavlink_message("Ch6: %s" % channels['6'])
+    log_mavlink_message("Ch7: %s" % channels['7'])
+    log_mavlink_message("Ch8: %s" % channels['8'])
 
 
 def log_mavlink_message(message):
