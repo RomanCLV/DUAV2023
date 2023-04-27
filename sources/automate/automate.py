@@ -147,6 +147,8 @@ def main(args):
         raise Exception("Require at least one GPIO")
 
     remove_rth_file()
+
+    start_time = get_millis()
     
     while run:
         automate_request()
@@ -263,7 +265,6 @@ def automate_state():
     global opened_tank_position
 
     if state == STATE.INIT:
-        start_time = get_millis()
         for servo in servos:
             log(f"{servo.get_name()} starting...")
 

@@ -130,6 +130,12 @@ def main(args):
     if not os.path.exists(args.file):
         raise Exception(f"File {args.file} not found")
 
+    actions = read_file(args.file)
+
+    if len(actions) == 0:
+        raise Exception(f"No actions")
+
+
     if args.gpio and len(args.gpio) > 0:
         for gpio in args.gpio:
             servo = serv.Servo(abs(int(gpio)), 50, gpio[0] == '-')  # pin, frequency
@@ -139,8 +145,41 @@ def main(args):
         raise Exception("Require at least one GPIO")
 
     remove_rth_file()
-    
-    while run:
+
+    start_time = get_millis()
+    action_index = 0
+    action = ""
+
+    while run and action_index < len(actions):
+
+        if time.time() - start_time > actions[action_index][0]:
+            action = actions[action_index][1]
+            action_index += 1
+
+            if action == "init":
+                request = STATE.INIT
+
+            elif action == "exploration":
+                request = STATE.EXPLORATION
+
+            elif action == "mission":
+                request = STATE.MISSION
+
+            elif action == "rth":
+                request = STATE.RETURN_TO_HOME
+
+            elif action == "do_nothing":
+                request = STATE.DO_NOTHING
+
+            elif action == "shutdown":
+                request = STATE.SHUTDOWN
+
+            elif action == "open":
+                can_open = True
+
+            elif action == "close":
+                can_open = False
+
         automate_request()
         automate_state()
         
@@ -149,6 +188,43 @@ def main(args):
     
     before_exit()
     log("Automate exit")
+
+
+def read_file(filename):
+    result = []
+    valid_words = [
+        "init",
+        "exploration",
+        "mission",
+        "rth",
+        "do_nothing",
+        "shutdown",
+        "open",
+        "close"
+    ]
+
+    with open(filename, 'r') as file:
+        for line in file:
+            splited_line = line.strip().split(" ")
+            time_str = splited_line[0]
+            word = " ".join(splited_line[1:])
+
+            if word not in valid_words:
+                log(f"invalid action: {word}")
+                print(f"valid actions:\n{"\n".join(valid_words)}")
+                return []
+
+            try:
+                hh, mm, ss = map(int, time_str.split(":"))
+                total_seconds = hh * 3600 + mm * 60 + ss
+            except ValueError:
+                print(f"format error of line : {line.strip()}")
+                print("expected format: hh:mm:ss action")
+                return []
+
+            result.append((total_seconds, word))
+
+    return result
 
 
 def set_state(new_state):
@@ -211,7 +287,6 @@ def automate_state():
     global opened_tank_position
 
     if state == STATE.INIT:
-        start_time = get_millis()
         for servo in servos:
             log(f"{servo.get_name()} starting...")
 

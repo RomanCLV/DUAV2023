@@ -1,0 +1,16 @@
+00:00:10 init
+00:00:15 exploration
+00:00:18 open
+00:00:21 close
+00:00:24 open
+00:00:27 close
+00:00:30 open
+00:00:35 close
+00:00:40 mission
+00:00:45 open
+00:00:48 close
+00:00:51 open
+00:00:54 close
+00:00:57 open
+00:01:00 close
+00:01:05 shutdown

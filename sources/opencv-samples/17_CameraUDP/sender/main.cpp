@@ -219,7 +219,7 @@ int main(int argc, char* argv[])
                 video_writer.write(frame);
             }
 
-            send_frame_udp_split(frame, sock, remote_endpoint);
+            send_frame_udp_split(frame, sock, remote_endpoint, 64000);
 
             if (display) 
             {

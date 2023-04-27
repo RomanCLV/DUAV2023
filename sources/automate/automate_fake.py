@@ -136,6 +136,8 @@ def main(args):
         raise Exception("Require at least one GPIO")
 
     remove_rth_file()
+
+    start_time = get_millis()
     
     while run:
         # read GPS signal
@@ -217,7 +219,6 @@ def automate_state():
     delay = get_millis() - last_time_state_changed
 
     if state == STATE.INIT:
-        start_time = get_millis()
         for servo in servos:
             log(f"{servo.get_name()} starting...")
 
