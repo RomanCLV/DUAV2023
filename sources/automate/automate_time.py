@@ -108,7 +108,7 @@ def main(args):
 
     run = True
 
-    request = STATE.DO_NOTHING
+    request = STATE.INIT
     state = STATE.DO_NOTHING
 
     can_open = False
@@ -150,6 +150,8 @@ def main(args):
     remove_rth_file()
 
     start_time = get_millis()
+    last_time_state_changed = start_time
+
     action_index = 0
     action = ""
 
@@ -249,7 +251,7 @@ def automate_request():
     global state
     global request
 
-    if request == state and request != STATE.INIT:
+    if request == state:
         return
     
     if request == STATE.INIT:
@@ -337,6 +339,8 @@ def automate_state():
         close_tanks()
         if (get_millis() - last_time_state_changed) > 120000:
             # after 2 minutes
+
+            print("2 mins")
             request = STATE.SHUTDOWN
 
     elif state == STATE.SHUTDOWN:

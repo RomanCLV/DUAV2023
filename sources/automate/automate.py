@@ -114,7 +114,7 @@ def main(args):
     run = True
 
     request = STATE.INIT
-    state = STATE.INIT
+    state = STATE.DO_NOTHING
 
     take_photo_event_count = 0
     can_open = False
@@ -149,6 +149,7 @@ def main(args):
     remove_rth_file()
 
     start_time = get_millis()
+    last_time_state_changed = start_time
     
     while run:
         automate_request()
@@ -216,7 +217,7 @@ def automate_request():
     global state
     global request
 
-    if request == state and request != STATE.INIT:
+    if request == state:
         return
     
     if request == STATE.INIT:
