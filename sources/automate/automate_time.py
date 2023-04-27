@@ -158,11 +158,8 @@ def main(args):
     while run and action_index < len(actions):
 
         delay = (get_millis() - start_time) / 1000
-        next_delay = actions[action_index][0]
-        print(f"delay: {delay}")
-        print(f"next : {next_delay}")
 
-        if delay >= next_delay:
+        if delay >= actions[action_index][0]:
             action = actions[action_index][1]
             action_index += 1
 
