@@ -212,8 +212,8 @@ def read_file(filename):
             if word not in valid_words:
                 log(f"invalid action: {word}")
                 print("valid actions:\n")
-                #for valid_word in valid_words:
-                #     print(valid_word)
+                for valid_word in valid_words:
+                    print(valid_word)
                 return []
 
             try:
@@ -281,7 +281,7 @@ def automate_state():
     global run
     global state
     global request
-	global start_time
+    global start_time
     global servos
     global can_open
     global is_opened
