@@ -178,7 +178,101 @@ sudo apt-get install libyaml-cpp-dev
 
 ---
 
-## Ready to run (with sudo)
+# Communication with the PixHawk4
+
+MavLink protocol is used. We use `dronekit` python module to simplify the communication.
+
+`dronekit` works on `Python3.8-`. If you use a higher version, it will not works because some code had been removed in the newer Pythons version.
+
+To see your version:
+```
+python3 --version
+```
+
+To install Python3.7 (also works for Python3.8):
+
+```
+sudo apt-get install python3.7
+sudo apt-get install python3.7-venv python3.7-dev
+```
+
+If you got the error `E: Le paquet « python3.7 » n'a pas de version susceptible d'être installée`, try this :
+
+```
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get install python3.7-venv python3.7-dev
+```
+
+Now you have two vesions of python.
+
+```
+python3 --version
+python3.7 --version
+```
+
+That's not all, if you use `pip`, it will install in your default Python version. You have to create a new environment for this verion of Python.
+
+```
+python3.7 -m venv p37venv
+```
+
+Now to enable this virtual environment :
+
+```
+source p37venv/bin/activate
+```
+
+Now all is good, you can execute `pip list` to verify the installed packages (normally only the default one).
+
+To disable it:
+```
+deactivate
+```
+
+Install `mavproxy`, `mavlink` and `dronekit` (in the python3.7 venv):
+
+```
+sudo pip install mavproxy pymavlink dronekit dronekit-sitl
+```
+
+---
+
+## QgroundControl
+
+https://github.com/mavlink/qgroundcontrol/releases/tag/v4.1.5
+
+In a terminal tab run :
+
+```
+dronekit-sitl [model] 
+```
+
+You can find out your models with:
+
+```
+dronekit-sitl --list 
+```
+
+For this example we're going to use the `copter` model, so we'll run :
+
+```
+dronekit-sitl copter
+```
+
+To simulate with QGroundControl, you can configure QGroundControl to open a udp/tcp port and then you can open a seconde terminal and run:
+
+```
+mavproxy.py --master tcp:127.0.0.1:5760 --out 127.0.0.1:14550
+```
+
+Don't forget to change the port.
+
+You dronekit documentation (https://dronekit-python.readthedocs.io/en/latest/) to know how to build a script to connect / simulate your UAV.
+
+---
+
+# Ready to run (with sudo)
 
 Now go back to the DUAV2023 folder and use:
 
@@ -187,6 +281,7 @@ chmod 755 run.sh
 ```
 
 You can modify `run.sh` to change your GPIO (line 34) to suit your use.
+And also to change the automate you want to use. (see in `sources/automate`)
 
 Launch the script with 
 ```
