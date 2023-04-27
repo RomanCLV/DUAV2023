@@ -152,7 +152,8 @@ def main(args):
 
     while run and action_index < len(actions):
 
-        if time.time() - start_time > actions[action_index][0]:
+        print(time.time() - start_time)
+        if (time.time() - start_time) > actions[action_index][0]:
             action = actions[action_index][1]
             action_index += 1
 
