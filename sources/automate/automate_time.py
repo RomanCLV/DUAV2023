@@ -135,6 +135,9 @@ def main(args):
     if len(actions) == 0:
         raise Exception(f"No actions")
 
+    print(f"actions: {len(actions)}")
+    for action in actions:
+        print(f"{action[0]} - {action[1]}")
 
     if args.gpio and len(args.gpio) > 0:
         for gpio in args.gpio:
@@ -152,8 +155,8 @@ def main(args):
 
     while run and action_index < len(actions):
 
-        print(time.time() - start_time)
-        if (time.time() - start_time) > actions[action_index][0]:
+        print(time.time() - start_time * 1000)
+        if (time.time() - start_time * 1000) > actions[action_index][0]:
             action = actions[action_index][1]
             action_index += 1
 
