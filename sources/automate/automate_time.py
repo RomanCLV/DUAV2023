@@ -211,7 +211,9 @@ def read_file(filename):
 
             if word not in valid_words:
                 log(f"invalid action: {word}")
-                print(f"valid actions:\n{"\n".join(valid_words)}")
+                print("valid actions:\n")
+                #for valid_word in valid_words:
+                #     print(valid_word)
                 return []
 
             try:

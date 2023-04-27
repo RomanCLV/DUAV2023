@@ -34,7 +34,7 @@ def main():
             print(f"{servo.get_name()} moving to: 0")
             time.sleep(1)
             if args.angle:
-                servo.move((int)args.angle)
+                servo.move(int(args.angle))
                 print(f"{servo.get_name()} moving to: {args.angle}")
             time.sleep(1)
 
