@@ -108,8 +108,8 @@ def main(args):
 
     run = True
 
-    request = STATE.INIT
-    state = STATE.INIT
+    request = STATE.DO_NOTHING
+    state = STATE.DO_NOTHING
 
     can_open = False
     is_opened = False
