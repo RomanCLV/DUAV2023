@@ -100,6 +100,7 @@ class Servo:
         self._started = False
         self._log_listeners = []
         self._pwm = None
+        self._is_inversed = is_inversed
 
         if is_integer(gpio) and 0 < gpio < 41:
             self._gpio = gpio
@@ -113,6 +114,9 @@ class Servo:
 
     def get_name(self):
         return f"Servo {self._gpio}"
+
+    def get_is_inversed(self):
+        return self._is_inversed
 
     # region log
     def add_log_listener(self, listener):
