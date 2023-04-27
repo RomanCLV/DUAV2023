@@ -108,7 +108,7 @@ def main(args):
 
     run = True
 
-    request = STATE.INIT
+    request = STATE.DO_NOTHING
     state = STATE.DO_NOTHING
 
     can_open = False
@@ -134,10 +134,6 @@ def main(args):
 
     if len(actions) == 0:
         raise Exception(f"No actions")
-
-    #print(f"actions: {len(actions)}")
-    #for action in actions:
-    #    print(f"{action[0]} - {action[1]}")
 
     if args.gpio and len(args.gpio) > 0:
         for gpio in args.gpio:

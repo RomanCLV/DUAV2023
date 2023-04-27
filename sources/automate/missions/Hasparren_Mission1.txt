@@ -1,5 +1,6 @@
-00:00:5 exploration
-00:00:8 open
+00:00:00 init
+00:00:05 exploration
+00:00:08 open
 00:00:11 close
 00:00:14 open
 00:00:17 close
