@@ -459,6 +459,7 @@ int main(int argc, char** argv)
     bool displayDuration = false;
     bool pause = false;
     bool readNextFrame = true;
+    bool isFrameInversed = false;
     bool somethingDetected = false;
     bool clearDetection = false;
     bool configChanged = false;
@@ -911,7 +912,8 @@ int main(int argc, char** argv)
         fps = cap->get(cv::CAP_PROP_FPS);
         frameWidth = cap->get(cv::CAP_PROP_FRAME_WIDTH);
         frameHeight = cap->get(cv::CAP_PROP_FRAME_HEIGHT);
-        frameToTake = (int)(fps / 4);
+        //frameToTake = (int)(fps / 2);
+        frameToTake = 4;
         frameCount = frameToTake;
         frameWaitDelay = (int)(1000.0 / fps);
         cout << "fps: " << fps << endl;
@@ -1019,6 +1021,7 @@ int main(int argc, char** argv)
                     else
                     {
                         *cap >> frame;
+                        isFrameInversed = false;
                     }
                 }
                 else
@@ -1045,9 +1048,11 @@ int main(int argc, char** argv)
                             frame.cols == previousFrame.cols && 
                             frame.depth() == previousFrame.depth())
                         {
-                            if (config.getRotate())
+
+                            if (!isFrameInversed && config.getRotate())
                             {
                                 rotate(frame, frame, ROTATE_180);
+                                isFrameInversed = true;
                             }
 
                             if (config.getGaussianBlur() == 0)
@@ -1347,6 +1352,11 @@ int main(int argc, char** argv)
             config.display();
             configChanged = true;
             readNextFrame = !(debug || imageMode);
+        }
+
+        else if (k == 73 || k == 105)   // I | i
+        {
+            config.display();
         }
 
         else if (k == 78 || k == 110)   // N | n
