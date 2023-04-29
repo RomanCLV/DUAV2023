@@ -46,7 +46,7 @@ def on_rc_channels_receive(vehicle, name, message):
     log_mavlink_message("Ch8: %s" % channels['8'])
 
 
-def log_mavlink_message(message):
+def log_mavlink_message(message, display=True):
     log_file = "mavlink.log"
 
     # Obtention de l'horodatage actuel
@@ -54,6 +54,9 @@ def log_mavlink_message(message):
 
     # Construction du message de log avec horodatage
     log_message = f"{timestamp} - {message}\n"
+
+    if display:
+        print(log_message)
 
     # Écriture du message de log dans le fichier
     with open(log_file, "a") as f:
