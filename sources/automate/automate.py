@@ -289,16 +289,15 @@ def automate_state():
     
     elif state == STATE.MISSION:
         if can_open:
-            if rth_file_exists():
-                close_tanks()
-                log("RTH file detected!")
-                request = STATE.RETURN_TO_HOME
+            open_tanks()
+            #if rth_file_exists():
+            #    close_tanks()
+            #    log("RTH file detected!")
+            #    request = STATE.RETURN_TO_HOME
 
-            elif not is_opened:
-                open_tanks()
         else:
-            if is_opened:
-                close_tanks()
+            close_tanks()
+                
 
     elif state == STATE.RETURN_TO_HOME:
         vehicle.mode = VehicleMode("RTL")
