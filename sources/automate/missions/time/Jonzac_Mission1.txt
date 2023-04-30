@@ -1,6 +1,6 @@
 00:00:00 init
 00:00:05 exploration
-00:00:08 exploration
+00:00:08 mission
 00:00:10 open
 00:00:13 close
 00:00:15 open
