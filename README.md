@@ -196,7 +196,7 @@ sudo apt-get install python3.7
 sudo apt-get install python3.7-venv python3.7-dev
 ```
 
-If you got the error `E: Le paquet « python3.7 » n'a pas de version susceptible d'être installée`, try this :
+If you got the error `Package 'python3.7' has no installation candidate`, try this :
 
 ```
 sudo apt install software-properties-common
@@ -214,26 +214,13 @@ python3.7 --version
 That's not all, if you use `pip`, it will install in your default Python version. You have to create a new environment for this verion of Python.
 
 ```
-python3.7 -m venv p37venv
-```
-
-Now to enable this virtual environment :
-
-```
-source p37venv/bin/activate
-```
-
-Now all is good, you can execute `pip list` to verify the installed packages (normally only the default one).
-
-To disable it:
-```
-deactivate
+python3.7 -m pip install [package]
 ```
 
 Install `mavproxy`, `mavlink` and `dronekit` (in the python3.7 venv):
 
 ```
-sudo pip install mavproxy pymavlink dronekit dronekit-sitl
+sudo python3.7 -m pip install mavproxy pymavlink dronekit dronekit-sitl
 ```
 
 ---

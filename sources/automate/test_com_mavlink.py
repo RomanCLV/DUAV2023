@@ -4,7 +4,7 @@ import os
 
 
 # Connection string
-connection_string = "/dev/ttyAMA0"  # À remplacer par le port série utilisé sur la Raspberry Pi
+connection_string = "/dev/ttyACM1"  # À remplacer par le port série utilisé sur la Raspberry Pi
 
 
 def connect_vehicle():
@@ -33,17 +33,18 @@ def check_for_rth_file(rth_file_path):
 
 def on_rc_channels_receive(vehicle, name, message):
     # récupération des valeurs des canaux RC
-    rc_channels = message.channels
+    #rc_channels = message.channels
+    rc_channels = vehicle.channels
 
     log_mavlink_message("on_rc_channels_receive:")
-    log_mavlink_message("Ch1: %s" % channels['1'])
-    log_mavlink_message("Ch2: %s" % channels['2'])
-    log_mavlink_message("Ch3: %s" % channels['3'])
-    log_mavlink_message("Ch4: %s" % channels['4'])
-    log_mavlink_message("Ch5: %s" % channels['5'])
-    log_mavlink_message("Ch6: %s" % channels['6'])
-    log_mavlink_message("Ch7: %s" % channels['7'])
-    log_mavlink_message("Ch8: %s" % channels['8'])
+    log_mavlink_message("Ch1: %s" % rc_channels['1'])
+    log_mavlink_message("Ch2: %s" % rc_channels['2'])
+    log_mavlink_message("Ch3: %s" % rc_channels['3'])
+    log_mavlink_message("Ch4: %s" % rc_channels['4'])
+    log_mavlink_message("Ch5: %s" % rc_channels['5'])
+    log_mavlink_message("Ch6: %s" % rc_channels['6'])
+    log_mavlink_message("Ch7: %s" % rc_channels['7'])
+    log_mavlink_message("Ch8: %s" % rc_channels['8'])
 
 
 def log_mavlink_message(message, display=True):
@@ -65,6 +66,7 @@ def log_mavlink_message(message, display=True):
 
 def main():
     vehicle = connect_vehicle()
+    print("connection successfull")
     vehicle.add_message_listener('RC_CHANNELS', on_rc_channels_receive)
     rth_file = "./RTH"
 

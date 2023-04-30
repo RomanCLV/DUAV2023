@@ -29,6 +29,7 @@ Config::Config() :
     m_saveResultWithoutDetection(false),
     m_saveResult(false),
     m_saveMask(false),
+    m_frameToTake(1),
     m_detectionArea(500),
     m_gaussianBlur(0),
     m_threshold(70),
@@ -56,6 +57,7 @@ Config::Config(const Config& config) :
     m_saveResultWithoutDetection(config.m_saveResultWithoutDetection),
     m_saveResult(config.m_saveResult),
     m_saveMask(config.m_saveMask),
+    m_frameToTake(config.m_frameToTake),
     m_detectionArea(config.m_detectionArea),
     m_gaussianBlur(config.m_gaussianBlur),
     m_threshold(config.m_threshold),
@@ -186,6 +188,16 @@ void Config::setSaveMask(const bool value)
 	m_saveMask = value;
 }
 
+unsigned int Config::getFrameToTake() const
+{
+	return m_frameToTake;
+}
+
+void Config::setFrameToTake(const unsigned int value)
+{
+	m_frameToTake = value;
+}
+
 unsigned int Config::getDetectionArea() const
 {
 	return m_detectionArea;
@@ -293,7 +305,7 @@ void Config::setUdpEnabled(const bool value)
 	m_udpEnabled = value;
 }
 
-std::string  Config::getUdpIp() const
+std::string Config::getUdpIp() const
 {
 	return m_udpIp;
 }
@@ -523,6 +535,7 @@ void Config::setFrom(const Config& config)
     setSaveResultWithoutDetection(config.m_saveResultWithoutDetection);
     setSaveResult(config.m_saveResult);
     setSaveMask(config.m_saveMask);
+    setFrameToTake(config.m_frameToTake);
     setDetectionArea(config.m_detectionArea);
     setGaussianBlur(config.m_gaussianBlur);
     setThreshold(config.m_threshold);
@@ -549,6 +562,7 @@ void Config::save() const
     emitter << YAML::Key << "display current previous" << YAML::Value << m_displayCurrentPrevious;
     emitter << YAML::Key << "display all" << YAML::Value << m_displayAll;
     emitter << YAML::Key << "rotate" << YAML::Value << m_rotate;
+    emitter << YAML::Key << "frame to take" << YAML::Value << m_frameToTake;
     emitter << YAML::Key << "save detection" << YAML::Value << m_saveDetection;
     emitter << YAML::Key << "save result without detection" << YAML::Value << m_saveResultWithoutDetection;
     emitter << YAML::Key << "save result" << YAML::Value << m_saveResult;
@@ -609,6 +623,7 @@ bool Config::read()
 	    	setSaveResultWithoutDetection(getValueFromYamlNode<bool>(configNode, "save result without detection"));
 	    	setSaveResult(getValueFromYamlNode<bool>(configNode, "save result"));
 	    	setSaveMask(getValueFromYamlNode<bool>(configNode, "save mask"));
+    		setFrameToTake(getValueFromYamlNode<unsigned int>(configNode, "frame to take"));
 	    	setDetectionArea(getValueFromYamlNode<unsigned int>(configNode, "detection area"));
 	    	setGaussianBlur(getValueFromYamlNode<unsigned int>(configNode, "gaussian blur"));
 	    	setThreshold(getValueFromYamlNode<unsigned int>(configNode, "threshold"));
@@ -671,6 +686,7 @@ void Config::reset()
     setSaveResultWithoutDetection(false);
     setSaveResult(false);
     setSaveMask(false);
+    setFrameToTake(1);
     setDetectionArea(500);
     setGaussianBlur(0);
     setThreshold(70);

@@ -584,6 +584,35 @@ int main(int argc, char** argv)
             return 1;
         }
     }
+    if (args.count("ftt") || args.count("frame_to_take"))
+    {
+        if (validArg(args, "ftt", "frame_to_take", 1))
+        {
+            unsigned int ftt;
+            string keyName = args.count("ftt") ? "ftt" : "frame_to_take";
+            try 
+            {
+                ftt = std::stoi(args[keyName][0]);
+            }
+            catch (const std::invalid_argument& e) 
+            {
+                std::cerr << "Error: frame to take is not a number. Given: " << args[keyName][0] << std::endl;
+                return 1;
+            }
+            catch (const std::out_of_range& e) 
+            {
+                std::cerr << "Error: the given frame to take (" << args[keyName][0] << ") is out of range for an integer" << std::endl;
+                return 1;
+            }
+            config.setFrameToTake(ftt);
+        }
+        else
+        {
+            cout << "Wrong usage of rotate option: -ftt number | --frame_to_take number where number is strictly positive" << endl;
+            sysExitMessage();
+            return 1;
+        }
+    }
     if (args.count("sd") || args.count("save_detection"))
     {
         if (validArg(args, "sd", "save_detection", 0))
@@ -913,7 +942,7 @@ int main(int argc, char** argv)
         frameWidth = cap->get(cv::CAP_PROP_FRAME_WIDTH);
         frameHeight = cap->get(cv::CAP_PROP_FRAME_HEIGHT);
         //frameToTake = (int)(fps / 2);
-        frameToTake = 4;
+        frameToTake = config.getFrameToTake();
         frameCount = frameToTake;
         frameWaitDelay = (int)(1000.0 / fps);
         cout << "fps: " << fps << endl;

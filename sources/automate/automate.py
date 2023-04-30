@@ -135,8 +135,9 @@ def main(args):
 
     RTH_PATH = "./RTH"
 
-    vehicle = connect_vehicle("/dev/ttyAMA0")
-    vehicle.add_message_listener('RC_CHANNELS', on_rc_channels_receive)
+    vehicle = connect_vehicle("/dev/ttyACM1")
+    print("connection successfull")
+    #vehicle.add_message_listener('RC_CHANNELS', on_rc_channels_receive)
 
     if args.gpio and len(args.gpio) > 0:
         for gpio in args.gpio:
@@ -179,37 +180,38 @@ def on_rc_channels_receive(vehicle, name, message):
     global can_open
     global take_photo_event_count
     # récupération des valeurs des canaux RC
-    rc_channels = message.channels
+    rc_channels = vehicle.channels
 
     # print("on_rc_channels_receive:")
-    # print("Ch1: %s" % channels['1'])
-    # print("Ch2: %s" % channels['2'])
-    # print("Ch3: %s" % channels['3'])
-    # print("Ch4: %s" % channels['4'])
-    # print("Ch5: %s" % channels['5'])
-    # print("Ch6: %s" % channels['6'])
-    # print("Ch7: %s" % channels['7'])
-    # print("Ch8: %s" % channels['8'])
+    # print("Ch1: %s" % rc_channels['1'])
+    # print("Ch2: %s" % rc_channels['2'])
+    # print("Ch3: %s" % rc_channels['3'])
+    # print("Ch4: %s" % rc_channels['4'])
+    # print("Ch5: %s" % rc_channels['5'])
+    # print("Ch6: %s" % rc_channels['6'])
+    # print("Ch7: %s" % rc_channels['7'])
+    # print("Ch8: %s" % rc_channels['8'])
+    
 
-    if rc_channels['6'] > 1500: # start video event
-        can_open = True
-        log("can open tanks")
+    #if rc_channels['6'] > 1500: # start video event
+    #    can_open = True
+    #    log("can open tanks")
 
-    if rc_channels['7'] > 1500: # stop video event
-        can_open = False
-        log("can't open tanks")
+    #if rc_channels['7'] > 1500: # stop video event
+    #    can_open = False
+    #    log("can't open tanks")
 
-    if rc_channels['5']: # take photo event
-            take_photo_event_count += 1
+    #if rc_channels['5']: # take photo event
+    #        take_photo_event_count += 1
 
-            if take_photo_event_count == 1:
-                request = STATE.EXPLORATION
+    #       if take_photo_event_count == 1:
+    #           request = STATE.EXPLORATION
 
-            elif take_photo_event_count == 2:
-                request = STATE.MISSION
+    #       elif take_photo_event_count == 2:
+    #           request = STATE.MISSION
 
-            else:
-                request = STATE.SHUTDOWN
+    #       else:
+    #           request = STATE.SHUTDOWN
 
 
 def automate_request():

@@ -73,6 +73,8 @@ class Config
 		void setSaveResult(const bool value);
 		bool getSaveMask() const;
 		void setSaveMask(const bool value);
+		unsigned int getFrameToTake() const;
+		void setFrameToTake(const unsigned int value);
 		unsigned int getDetectionArea() const;
 		unsigned int getGaussianBlur() const;
 		cv::Size getGaussianKernel() const;
@@ -141,6 +143,7 @@ class Config
     	bool m_saveResultWithoutDetection;
     	bool m_saveResult;
     	bool m_saveMask;
+    	unsigned int m_frameToTake;
     	unsigned int m_detectionArea;
     	unsigned int m_gaussianBlur;
     	cv::Size m_gaussianKernel;
